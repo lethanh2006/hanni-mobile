@@ -1,4 +1,5 @@
 export { AudioButton } from './audio-button';
+export { Avatar } from './avatar';
 export { Button } from './button';
 export { Card } from './card';
 export { Chip, ChipRow } from './chip';
