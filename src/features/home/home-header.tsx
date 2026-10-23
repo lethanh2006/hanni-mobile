@@ -1,12 +1,12 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
-import { AppText, TextLink } from '@/components/ui';
+import { AppText, Icon, TextLink } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
 
-/** Đầu Trang chủ: logo + lời chào; khách thấy lối đăng nhập. */
+/** Đầu Trang chủ: logo + lời chào; người đã đăng nhập có lối vào Tiến độ, khách thấy lối đăng nhập. */
 export function HomeHeader() {
   const { user } = useAuth();
   return (
@@ -18,7 +18,17 @@ export function HomeHeader() {
           {user ? 'Mỗi ngày một chút tiếng Trung' : 'Bạn đang học ở chế độ khách'}
         </AppText>
       </View>
-      {!user && <TextLink title="Đăng nhập" onPress={() => router.push('/login')} />}
+      {user ? (
+        <Pressable
+          onPress={() => router.push('/progress')}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Tiến độ học tập">
+          <Icon name="chart" size={24} color="primary" />
+        </Pressable>
+      ) : (
+        <TextLink title="Đăng nhập" onPress={() => router.push('/login')} />
+      )}
     </View>
   );
 }
