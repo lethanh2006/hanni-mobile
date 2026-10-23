@@ -96,6 +96,7 @@ export function SessionRunner({ session }: { session: LessonSession }) {
     if (!user) {
       // Khách: giữ kết quả, đăng ký xong mới nạp lên (xem lib/guest-progress.ts).
       savePendingLesson({ lessonId: session.lesson.id, hskLevel: session.lesson.hskLevel, results, durationMs });
+      refreshAfterLesson();
       setFinished({ durationMs, accuracy, result: null, saveError: false });
       return;
     }
