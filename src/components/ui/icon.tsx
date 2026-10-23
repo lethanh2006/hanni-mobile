@@ -47,6 +47,8 @@ const ICONS = {
   shield: { ios: 'shield', android: 'shield' },
   mail: { ios: 'envelope', android: 'mail' },
   history: { ios: 'clock.arrow.circlepath', android: 'history' },
+  message: { ios: 'message', android: 'chat' },
+  sun: { ios: 'sun.max', android: 'light_mode' },
 } as const satisfies Record<string, SymbolViewProps['name']>;
 
 export type IconName = keyof typeof ICONS;
