@@ -1,65 +1,71 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://unistyl.es/), etc.
+ * Bảng màu chép từ `app/globals.css` của hanni-client để app và web cùng nhận diện.
+ * Mọi màn hình lấy màu qua `useTheme()`, không viết mã màu trực tiếp.
  */
-
-import '@/global.css';
-
-import { Platform } from 'react-native';
-
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    background: '#f7f8fa',
+    surface: '#ffffff',
+    surface2: '#f0f2f5',
+    text: '#202b3e',
+    muted: '#646c7b',
+    border: '#e7e9ef',
+    primary: '#bd2b1f',
+    primaryText: '#ffffff',
+    primarySoft: '#fbeceb',
+    hanviet: '#946311',
+    accent: '#85621c',
+    good: '#24784b',
+    goodSoft: '#e6f3ec',
+    warn: '#93600f',
+    danger: '#c0392f',
+    dangerSoft: '#fbeceb',
+    lavender: '#8e5383',
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    background: '#121720',
+    surface: '#1a2230',
+    surface2: '#252e3d',
+    text: '#f1f3f8',
+    muted: '#a2acbc',
+    border: '#303a4a',
+    primary: '#ff796b',
+    primaryText: '#26110d',
+    primarySoft: '#3a2222',
+    hanviet: '#e3b25c',
+    accent: '#d8a24e',
+    good: '#55c489',
+    goodSoft: '#1d3328',
+    warn: '#e0a04a',
+    danger: '#e56b60',
+    dangerSoft: '#3a2222',
+    lavender: '#c489b8',
   },
 } as const;
 
-export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
+export type ThemeColors = { [K in keyof typeof Colors.light]: string };
+export type ThemeColor = keyof ThemeColors;
 
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    sans: 'var(--font-display)',
-    serif: 'var(--font-serif)',
-    rounded: 'var(--font-rounded)',
-    mono: 'var(--font-mono)',
-  },
-});
+/** Màu pinyin theo thanh điệu (giống `TONE_CLASS` của web). Thanh nhẹ dùng màu `muted`. */
+export const ToneColors: Record<string, string> = {
+  '1': '#c23b32',
+  '2': '#2f8f4f',
+  '3': '#2f6fd0',
+  '4': '#8a4fbf',
+};
 
 export const Spacing = {
-  half: 2,
-  one: 4,
-  two: 8,
-  three: 16,
-  four: 24,
-  five: 32,
-  six: 64,
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 24,
+  xxl: 32,
 } as const;
 
-export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
-export const MaxContentWidth = 800;
+export const Radius = {
+  sm: 8,
+  md: 12,
+  lg: 16,
+  pill: 999,
+} as const;

@@ -1,56 +1,46 @@
-# Welcome to your Expo app 👋
+# Hanni mobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+App Hanni (học tiếng Trung theo HSK 3.0) cho Android/iOS, chuyển từ web `hanni-client`.
+Expo SDK 58 + expo-router, gọi cùng API với web (`hanni-server`).
 
-## Get started
-
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Chạy
 
 ```bash
-npm run reset-project
+npm install
+npx expo start          # quét QR bằng Expo Go hoặc development build
+npm run lint
+npm run typecheck
 ```
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
+API mặc định là server production. Muốn trỏ nơi khác thì copy `.env.example` thành `.env.local`.
 
-### Other setup steps
+## Cấu trúc
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```
+src/
+├── app/                 màn hình (mỗi file là 1 route của expo-router)
+│   ├── (tabs)/          5 tab: index (Trang chủ), study, thi-thu-hsk, luyen-tap, tu-dien
+│   └── ...              màn mở từ tab (đăng nhập, bài học, tiến độ...)
+├── features/<tên>/      code riêng của từng tính năng (component, hook)
+├── components/ui/       bộ giao diện dùng chung: AppText, Button, Card, Screen, Icon...
+├── constants/theme.ts   màu sáng/tối, khoảng cách, bo góc
+├── hooks/               hook dùng chung (useTheme)
+└── lib/                 api, auth, types, hook SWR dùng chung
+```
 
-## Learn more
+## Quy ước
 
-To learn more about developing your project with Expo, look at the following resources:
+- Màu lấy qua `useTheme()`, không viết mã màu trong màn hình.
+- Mọi request qua `api` trong `lib/api.ts`; dữ liệu đọc bằng `useSWR('/duong-dan')`.
+- Hook chỉ một tính năng dùng thì để trong `src/features/<tính năng>/`, không thêm vào `lib/hooks.ts`.
+- `lib/types.ts` chép nguyên từ web; chỉ thêm, không sửa kiểu đang có khi chưa báo người kia.
+- Màn cần đăng nhập gọi `useRequireAuth()` ở đầu component.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Chia việc
 
-## Join the community
+| Phần | Người làm |
+|---|---|
+| Nền móng (`lib/`, `components/ui/`, khung tab), đăng nhập, khảo sát, Trang chủ, bài học, Ôn tập, tiến độ, tài khoản, lớp học | lethanh2006 |
+| Từ điển, Luyện thi HSK, Luyện tập (nghe, phát âm, viết, AI, video, trò chơi) | Huy Anh |
 
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Sửa vào phần của người kia thì gửi PR để người đó duyệt.
