@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import { router, type Href } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { AppText, TextLink } from '@/components/ui';
+import { AppText, Button, EmptyState, TextLink } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 
 /** Chỉ nhận đường dẫn nội bộ, và không quay lại chính màn đăng nhập/đăng ký. */
@@ -35,6 +35,18 @@ export function GuestEntry() {
   );
 }
 
+/** Thay nội dung cần tài khoản ở màn khách vào được (vd tab Ôn tập). */
+export function SignInPrompt({ title, description }: { title: string; description: string }) {
+  return (
+    <EmptyState title={title} description={description}>
+      <View style={styles.buttons}>
+        <Button title="Tạo tài khoản" onPress={() => router.push('/register')} />
+        <Button title="Đăng nhập" variant="secondary" onPress={() => router.push('/login')} />
+      </View>
+    </EmptyState>
+  );
+}
+
 export function SwitchLink({ question, action, onPress }: { question: string; action: string; onPress: () => void }) {
   return (
     <View style={styles.row}>
@@ -50,4 +62,5 @@ const styles = StyleSheet.create({
   header: { gap: Spacing.sm, marginBottom: Spacing.sm },
   fox: { width: 56, height: 56 },
   row: { flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap', gap: 6 },
+  buttons: { alignSelf: 'stretch', gap: Spacing.sm },
 });
