@@ -1,38 +1,32 @@
-import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { Pressable, StyleSheet } from 'react-native';
 
-import { mediaUrl } from '@/lib/api';
+import { useTheme } from '@/hooks/use-theme';
+import { playWord } from '@/lib/audio';
 
 import { Icon } from './icon';
 
-/** Nút phát bản thu phát âm của từ. Không có bản thu thì không hiện gì. */
-export function AudioButton({ src, size = 20 }: { src: string | null | undefined; size?: number }) {
-  const url = mediaUrl(src);
-  if (!url) return null;
-  return <Player url={url} size={size} />;
-}
-
-function Player({ url, size }: { url: string; size: number }) {
-  const player = useAudioPlayer(url);
-  const { playing } = useAudioPlayerStatus(player);
-
-  function play() {
-    void player.seekTo(0);
-    player.play();
-  }
-
+/** Nút phát bản thu phát âm của từ. Không có bản thu thì không hiện gì. `big` cho câu hỏi nghe. */
+export function AudioButton({ src, big = false }: { src: string | null | undefined; big?: boolean }) {
+  const theme = useTheme();
+  if (!src) return null;
   return (
     <Pressable
-      onPress={play}
+      onPress={() => playWord(src)}
       hitSlop={8}
       accessibilityRole="button"
       accessibilityLabel="Nghe phát âm"
-      style={styles.button}>
-      <Icon name="sound" size={size} color={playing ? 'primary' : 'muted'} />
+      style={({ pressed }) => [
+        big ? styles.big : styles.small,
+        { backgroundColor: theme.primarySoft },
+        pressed && styles.pressed,
+      ]}>
+      <Icon name="sound" size={big ? 36 : 18} color="primary" />
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  button: { padding: 6 },
+  small: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  big: { width: 80, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center' },
+  pressed: { opacity: 0.7 },
 });

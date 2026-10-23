@@ -9,3 +9,4 @@ export { ProgressBar } from './progress-bar';
 export { Screen } from './screen';
 export { AppText } from './text';
 export { TextField } from './text-field';
+export { TextLink } from './text-link';
