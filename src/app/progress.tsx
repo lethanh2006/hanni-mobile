@@ -43,7 +43,15 @@ export default function ProgressScreen() {
           </View>
           <VocabSummary data={data} />
           <TodaySuggestion data={data} />
-          <StatGrid totals={data.totals} />
+          {/* 4 con số nói 4 chuyện: vốn từ đã nhớ, đang làm quen, việc hôm nay, việc sắp tới. */}
+          <StatGrid
+            stats={[
+              { label: 'Đã thuộc', value: data.totals.learned, hint: 'Vốn từ đã ghi nhớ', icon: 'check', color: 'good' },
+              { label: 'Đang học', value: data.totals.learning, hint: 'Từng bước làm quen', icon: 'book', color: 'primary' },
+              { label: 'Đến hạn ôn', value: data.totals.due, hint: 'Cần gặp lại hôm nay', icon: 'clock', color: 'primary' },
+              { label: 'Ôn trong 24 giờ', value: data.totals.atRisk, hint: 'Sắp tới lịch ôn', icon: 'refresh', color: 'warn' },
+            ]}
+          />
           <ActivityCalendar />
           <LeechList />
           <SuspendedList onChange={() => void mutate()} />
