@@ -6,6 +6,9 @@
 export const API_BASE =
   process.env.EXPO_PUBLIC_API_URL ?? 'https://hanni-api.dangpham.id.vn/api';
 
+/** Trang web Hanni — dùng cho link chia sẻ (người nhận chưa cài app vẫn mở được). */
+export const WEB_ORIGIN = 'https://hanni.dangpham.id.vn';
+
 /** Gốc của server (bỏ "/api") — dùng cho file tĩnh như audio phát âm. */
 export const SERVER_ORIGIN = API_BASE.replace(/\/api\/?$/, '');
 

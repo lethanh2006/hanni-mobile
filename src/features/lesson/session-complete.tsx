@@ -5,6 +5,7 @@ import { Share, StyleSheet, View } from 'react-native';
 import { AppText, Button, Card, Screen } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { WEB_ORIGIN } from '@/lib/api';
 import { goBack } from '@/lib/navigation';
 import type { LessonSession } from '@/lib/types';
 
@@ -39,7 +40,7 @@ export function SessionComplete({
 
   function share() {
     void Share.share({
-      message: `Mình vừa học xong ${total} từ tiếng Trung (${session.lesson.title}) trên Hanni — học qua âm Hán Việt, nhớ nhanh hơn hẳn. Thử bài 1 miễn phí nhé: https://hanni.dangpham.id.vn`,
+      message: `Mình vừa học xong ${total} từ tiếng Trung (${session.lesson.title}) trên Hanni — học qua âm Hán Việt, nhớ nhanh hơn hẳn. Thử bài 1 miễn phí nhé: ${WEB_ORIGIN}`,
     });
   }
 
