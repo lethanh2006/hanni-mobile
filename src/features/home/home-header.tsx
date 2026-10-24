@@ -2,11 +2,11 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { AppText, Icon, TextLink } from '@/components/ui';
+import { AppText, Avatar, TextLink } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
 
-/** Đầu Trang chủ: logo + lời chào; người đã đăng nhập có lối vào Tiến độ, khách thấy lối đăng nhập. */
+/** Đầu Trang chủ: logo + lời chào; bấm ảnh đại diện mở Tài khoản, khách thấy lối đăng nhập. */
 export function HomeHeader() {
   const { user } = useAuth();
   return (
@@ -20,11 +20,11 @@ export function HomeHeader() {
       </View>
       {user ? (
         <Pressable
-          onPress={() => router.push('/progress')}
+          onPress={() => router.push('/account')}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityLabel="Tiến độ học tập">
-          <Icon name="chart" size={24} color="primary" />
+          accessibilityLabel="Tài khoản">
+          <Avatar user={user} size={36} />
         </Pressable>
       ) : (
         <TextLink title="Đăng nhập" onPress={() => router.push('/login')} />
