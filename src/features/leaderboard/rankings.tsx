@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText, Avatar, Button, Card } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
@@ -55,13 +55,16 @@ export function MyRank({ board, user }: { board: Leaderboard; user: Me | null })
   );
 }
 
-/** Danh sách xếp hạng. */
+/** Danh sách xếp hạng; bấm 1 người để xem hồ sơ. */
 export function Rankings({ board }: { board: Leaderboard }) {
   const theme = useTheme();
   return (
     <Card>
       {board.rows.map((row) => (
-        <View key={row.userId} style={[styles.member, row.isMe && { backgroundColor: theme.primarySoft }]}>
+        <Pressable
+          key={row.userId}
+          onPress={() => router.push(`/u/${row.userId}`)}
+          style={[styles.member, row.isMe && { backgroundColor: theme.primarySoft }]}>
           <AppText bold color={row.rank <= 3 ? 'accent' : 'muted'} style={styles.rank}>
             {row.rank}
           </AppText>
@@ -79,7 +82,7 @@ export function Rankings({ board }: { board: Leaderboard }) {
           <AppText variant="small" bold>
             {number(row.value)} {board.unit}
           </AppText>
-        </View>
+        </Pressable>
       ))}
     </Card>
   );
