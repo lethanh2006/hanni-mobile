@@ -17,8 +17,8 @@ export const PRACTICE_SECTIONS: { title: string; items: PracticeTool[] }[] = [
     items: [
       { label: 'Luyện nghe', description: 'Nghe từ của bài đang học, gõ lại bằng pinyin', icon: 'headphones', href: '/listening' },
       { label: 'Luyện phát âm', description: 'Đọc to, Hanni chấm xem bạn nói đúng chưa', icon: 'mic', href: null },
-      { label: 'Luyện nói với AI', description: 'Gọi món, hỏi đường, mua sắm — nói như thật', icon: 'message', href: null },
-      { label: 'Luyện viết chữ Hán', description: 'Xem thứ tự nét rồi tự tô từng chữ', icon: 'pencil', href: null },
+      { label: 'Luyện nói với AI', description: 'Gọi món, hỏi đường, mua sắm — nói như thật', icon: 'message', href: '/roleplay' },
+      { label: 'Luyện viết chữ Hán', description: 'Xem thứ tự nét rồi tự tô từng chữ', icon: 'pencil', href: '/writing' },
     ],
   },
   {
