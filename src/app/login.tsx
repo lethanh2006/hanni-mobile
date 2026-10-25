@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button, ErrorNote, Screen, TextField, TextLink } from '@/components/ui';
-import { AuthHeader, GuestEntry, nextPath, SwitchLink } from '@/features/auth/auth-parts';
+import { AuthHeader, GuestEntry, leaveAuth, SwitchLink } from '@/features/auth/auth-parts';
 import { api, errorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { saveGuestProgress } from '@/lib/guest-progress';
@@ -17,6 +17,7 @@ export default function LoginScreen() {
   const [busy, setBusy] = useState(false);
 
   async function submit() {
+    if (!email || !password || busy) return;
     setBusy(true);
     setError(null);
     try {
@@ -24,7 +25,7 @@ export default function LoginScreen() {
       await refresh();
       // Khách đã học bài/làm đề rồi mới đăng nhập thì tiến độ đó vẫn phải được lưu.
       await saveGuestProgress();
-      router.replace(nextPath(next));
+      leaveAuth(next);
     } catch (err) {
       setError(errorMessage(err, 'Chưa đăng nhập được. Bạn kiểm tra kết nối rồi thử lại nhé.'));
       setBusy(false);

@@ -2,7 +2,7 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 
 import { Button, ErrorNote, Screen, TextField } from '@/components/ui';
-import { AuthHeader, GuestEntry, nextPath, SwitchLink } from '@/features/auth/auth-parts';
+import { AuthHeader, GuestEntry, leaveAuth, SwitchLink } from '@/features/auth/auth-parts';
 import { api, errorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { pendingWordCount, saveGuestProgress } from '@/lib/guest-progress';
@@ -26,6 +26,7 @@ export default function RegisterScreen() {
   const pendingWords = pendingWordCount();
 
   async function submit() {
+    if (!displayName || !email || !password || busy) return;
     if (password.length < 8) {
       setError('Mật khẩu cần ít nhất 8 ký tự.');
       return;
@@ -43,7 +44,8 @@ export default function RegisterScreen() {
       const { hasProgress } = await saveGuestProgress();
       // Đã học thử là đã rõ ý định — vào thẳng lộ trình. Chỉ người đăng ký
       // "tay trắng" mới qua khảo sát để chọn cấp.
-      router.replace(!next && !hasProgress ? '/onboarding' : nextPath(next));
+      if (!next && !hasProgress) router.replace('/onboarding');
+      else leaveAuth(next);
     } catch (err) {
       setError(errorMessage(err, 'Không đăng ký được. Bạn kiểm tra kết nối rồi thử lại nhé.'));
       setBusy(false);

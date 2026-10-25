@@ -6,11 +6,21 @@ import { AppText, Button, EmptyState, TextLink } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 
 /** Chỉ nhận đường dẫn nội bộ, và không quay lại chính màn đăng nhập/đăng ký. */
-export function nextPath(value: string | undefined): Href {
-  if (!value || !value.startsWith('/') || /^\/(login|register|forgot-password)/.test(value)) {
-    return '/';
+function nextPath(value: string | undefined): Href | null {
+  if (!value || !value.startsWith('/') || value === '/' || /^\/(login|register|forgot-password)/.test(value)) {
+    return null;
   }
   return value as Href;
+}
+
+/**
+ * Rời màn đăng nhập/đăng ký: có `next` (màn cần đăng nhập vừa chuyển sang đây) thì mở màn đó,
+ * không thì quay về Trang chủ đang có trong stack — `replace('/')` sẽ chồng thêm một bộ tab nữa.
+ */
+export function leaveAuth(next: string | undefined) {
+  const target = nextPath(next);
+  if (target) router.replace(target);
+  else router.dismissTo('/');
 }
 
 export function AuthHeader({ title, subtitle }: { title: string; subtitle: string }) {
@@ -30,7 +40,7 @@ export function GuestEntry() {
       <AppText variant="small" color="muted">
         Chưa muốn đăng ký?
       </AppText>
-      <TextLink title="Vào học ở chế độ khách" color="text" onPress={() => router.replace('/')} />
+      <TextLink title="Vào học ở chế độ khách" color="text" onPress={() => router.dismissTo('/')} />
     </View>
   );
 }
