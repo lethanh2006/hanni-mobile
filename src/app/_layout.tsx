@@ -5,6 +5,7 @@ import { AppState, useColorScheme } from 'react-native';
 import { SWRConfig, type SWRConfiguration } from 'swr';
 
 import { Colors } from '@/constants/theme';
+import { NotificationCenter } from '@/features/notifications/notification-center';
 import { fetcher } from '@/lib/api';
 import { AuthProvider, useAuth } from '@/lib/auth';
 
@@ -45,6 +46,7 @@ export default function RootLayout() {
       <SWRConfig value={swrConfig}>
         <AuthProvider>
           <HideSplashWhenReady />
+          <NotificationCenter />
           <Stack screenOptions={{ headerBackButtonDisplayMode: 'minimal' }}>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           </Stack>
