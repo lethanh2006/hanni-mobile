@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { mutate } from 'swr';
 
 import { Button, ChipRow, ErrorNote, Loading, Screen, SectionTitle, TextLink } from '@/components/ui';
+import { ClassAssignmentsCard } from '@/features/home/class-assignments-card';
 import { DailyQuests } from '@/features/home/daily-quests';
 import { GuestSaveCard, GuestTryCard } from '@/features/home/guest-cards';
 import { HomeHeader } from '@/features/home/home-header';
@@ -100,6 +101,7 @@ export default function HomeTab() {
       )}
 
       {user ? <TodayCard /> : <GuestSaveCard learned={guestDone.size} />}
+      {user && <ClassAssignmentsCard />}
 
       {path && (
         <>
