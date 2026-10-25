@@ -4,9 +4,10 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText, Avatar, TextLink } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
+import { BellButton } from '@/features/notifications/bell-button';
 import { useAuth } from '@/lib/auth';
 
-/** Đầu Trang chủ: logo + lời chào; bấm ảnh đại diện mở Tài khoản, khách thấy lối đăng nhập. */
+/** Đầu Trang chủ: logo + lời chào; chuông thông báo + ảnh đại diện (mở Tài khoản), khách thấy lối đăng nhập. */
 export function HomeHeader() {
   const { user } = useAuth();
   return (
@@ -18,6 +19,7 @@ export function HomeHeader() {
           {user ? 'Mỗi ngày một chút tiếng Trung' : 'Bạn đang học ở chế độ khách'}
         </AppText>
       </View>
+      {user && <BellButton />}
       {user ? (
         <Pressable
           onPress={() => router.push('/account')}
