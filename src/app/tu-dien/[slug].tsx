@@ -1,8 +1,8 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect } from 'react';
 import useSWR from 'swr';
 
-import { Button, EmptyState, Loading, Screen } from '@/components/ui';
+import { Button, EmptyState, Loading, Screen, TextLink } from '@/components/ui';
 import { HanVietSection } from '@/features/dictionary/hanviet-section';
 import { rememberWord } from '@/features/dictionary/history';
 import { MeaningSection } from '@/features/dictionary/meaning-section';
@@ -52,6 +52,10 @@ export default function WordScreen() {
     <Screen>
       {header}
       <WordHeader word={main} topic={data.topic ?? null} />
+      <TextLink
+        title="Luyện viết chữ này (xem thứ tự nét) →"
+        onPress={() => router.push({ pathname: '/writing', params: { c: Array.from(main.simplified)[0] } })}
+      />
       <MeaningSection words={data.words ?? []} />
       <HanVietSection word={main} characters={data.characters ?? []} compounds={data.compounds ?? []} />
       <MeasuresSection measures={data.measures ?? []} />
