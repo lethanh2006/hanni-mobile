@@ -114,12 +114,11 @@ export default function LessonDetailScreen() {
         <Card>
           <AppText bold>Ngữ pháp trong bài</AppText>
           {relatedGrammar.map((g) => (
-            <AppText key={g.slug} variant="small">
-              <AppText variant="small" bold>
-                {g.titleZh}
-              </AppText>{' '}
-              — {g.titleVi}
-            </AppText>
+            <TextLink
+              key={g.slug}
+              title={`${g.titleZh} — ${g.titleVi} →`}
+              onPress={() => router.push(`/ngu-phap/${encodeURIComponent(g.slug)}`)}
+            />
           ))}
         </Card>
       )}
