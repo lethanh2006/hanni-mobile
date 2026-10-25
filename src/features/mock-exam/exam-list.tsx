@@ -10,6 +10,7 @@ import { hskLabel } from '@/lib/hsk';
 import type { MockExamMeta } from '@/lib/types';
 
 import { SECTION_VI } from './labels';
+import { PracticeSets } from './practice-sets';
 import { readSaved } from './saved-exam';
 
 /** Đề đang làm dở trên máy này: slug → số câu đã làm. Đọc lại mỗi lần quay về tab. */
@@ -79,6 +80,7 @@ export function ExamList() {
           </Card>
         );
       })}
+      <PracticeSets level={current} />
     </View>
   );
 }
