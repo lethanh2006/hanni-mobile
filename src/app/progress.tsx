@@ -6,6 +6,7 @@ import { Button, ErrorNote, Loading, Screen } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { ActivityCalendar } from '@/features/progress/activity-calendar';
 import { LevelProgress } from '@/features/progress/level-progress';
+import { PeriodReport } from '@/features/progress/period-report';
 import { RecentQuizzes } from '@/features/progress/recent-quizzes';
 import { StatGrid } from '@/features/progress/stat-grid';
 import { TodaySuggestion, VocabSummary } from '@/features/progress/vocab-summary';
@@ -52,6 +53,7 @@ export default function ProgressScreen() {
               { label: 'Ôn trong 24 giờ', value: data.totals.atRisk, hint: 'Sắp tới lịch ôn', icon: 'refresh', color: 'warn' },
             ]}
           />
+          <PeriodReport />
           <ActivityCalendar />
           <LeechList />
           <SuspendedList onChange={() => void mutate()} />
