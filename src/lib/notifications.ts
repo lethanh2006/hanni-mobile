@@ -83,13 +83,20 @@ export async function markAllNotificationsRead() {
   await api.post('/notifications/read-all').catch(() => undefined);
 }
 
+/** Đầu đường dẫn các màn có trong app — link server soạn theo web mà app chưa có thì không mở. */
+const APP_PREFIXES = [
+  '/achievements', '/leaderboard', '/lop-hoc', '/progress', '/study', '/review', '/bai-hoc/', '/learn/',
+  '/thi-thu-hsk', '/tu-dien', '/ngu-phap', '/listening', '/minigame', '/writing', '/roleplay', '/phien-am',
+  '/settings', '/account', '/u/', '/notifications',
+];
+
 /**
  * Server soạn `href` theo đường dẫn của web ("/learn#giai-dau", "/lop-hoc/…").
- * Đổi sang màn tương ứng của app; bỏ phần neo `#…`.
+ * Đổi sang màn tương ứng của app (bỏ phần neo `#…`); màn app chưa có thì dùng `fallback`.
  */
 export function appHref(webHref: string | null, fallback: Href): Href {
   if (!webHref) return fallback;
   const path = webHref.split('#')[0];
   if (path === '/learn' || path === '/dashboard') return '/';
-  return path as Href;
+  return APP_PREFIXES.some((p) => path.startsWith(p)) ? (path as Href) : fallback;
 }
