@@ -60,6 +60,7 @@ export default function AccountScreen() {
         <MenuRow icon="chart" title="Tiến độ học tập" hint="Vốn từ, lịch 30 ngày, từ hay quên" href="/progress" />
         <MenuRow icon="trophy" title="Huy hiệu" hint="Bộ sưu tập huy hiệu và danh hiệu" href="/achievements" />
         <MenuRow icon="flame" title="Bảng xếp hạng" hint="Giải đấu tuần, chuỗi ngày học" href="/leaderboard" />
+        <MenuRow icon="users" title="Lớp học" hint="Vào lớp bằng mã, hoặc tạo lớp để giao bài" href="/lop-hoc" />
         <MenuRow icon="user" title="Hồ sơ công khai" hint="Người khác thấy gì về bạn" href={`/u/${user.id}`} />
         <MenuRow icon="settings" title="Cài đặt học tập" hint="Mục tiêu ngày, lịch ôn, múi giờ" href="/settings" />
       </Card>
