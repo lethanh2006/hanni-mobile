@@ -41,7 +41,8 @@ export function Screen({
     <ScrollView
       style={[styles.fill, { backgroundColor: theme.background }]}
       contentContainerStyle={padding}
-      contentInsetAdjustmentBehavior="automatic"
+      // Màn trong tab đã tự chừa tai thỏ (`safeTop`) — để iOS chèn thêm là cách trên 2 lần.
+      contentInsetAdjustmentBehavior={safeTop ? 'never' : 'automatic'}
       keyboardShouldPersistTaps="handled"
       refreshControl={
         onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} /> : undefined
