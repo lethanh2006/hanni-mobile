@@ -7,6 +7,7 @@ import { Spacing } from '@/constants/theme';
 import { DangerZone } from '@/features/account/danger-zone';
 import { MenuRow } from '@/features/account/menu-row';
 import { PasswordForm } from '@/features/account/password-form';
+import { PremiumCard } from '@/features/account/premium-card';
 import { ReferralCard } from '@/features/account/referral-card';
 import { useRequireAuth } from '@/lib/auth';
 import { TIMEZONES } from '@/lib/timezones';
@@ -76,6 +77,7 @@ export default function AccountScreen() {
         <Button title={leaving ? 'Đang đăng xuất…' : 'Đăng xuất'} icon="logout" variant="ghost" loading={leaving} onPress={signOut} />
       </Card>
 
+      <PremiumCard />
       <ReferralCard userId={user.id} />
       <DangerZone hasPassword={user.hasPassword} />
     </Screen>
