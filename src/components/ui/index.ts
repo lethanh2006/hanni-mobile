@@ -1,13 +1,14 @@
 export { AudioButton } from './audio-button';
 export { Avatar } from './avatar';
 export { Button } from './button';
-export { Card } from './card';
+export { Card, IconTile } from './card';
 export { Chip, ChipRow } from './chip';
 export { EmptyState, ErrorNote, Loading } from './feedback';
 export { Icon, type IconName } from './icon';
-export { PageHeader, SectionTitle } from './page-header';
-export { ProgressBar } from './progress-bar';
+export { PageHeader, SectionHeading, SectionTitle } from './page-header';
+export { ProgressBar, ProgressRing } from './progress-bar';
 export { Screen } from './screen';
-export { AppText } from './text';
+export { Skeleton } from './skeleton';
+export { AppText, Hanzi } from './text';
 export { TextField } from './text-field';
 export { TextLink } from './text-link';

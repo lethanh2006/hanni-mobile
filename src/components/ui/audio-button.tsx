@@ -1,12 +1,24 @@
 import { Pressable, StyleSheet } from 'react-native';
 
+import { alpha } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { playWord } from '@/lib/audio';
 
 import { Icon } from './icon';
 
-/** Nút phát bản thu phát âm của từ. Không có bản thu thì không hiện gì. `big` cho câu hỏi nghe. */
-export function AudioButton({ src, big = false }: { src: string | null | undefined; big?: boolean }) {
+/**
+ * Nút nghe phát âm `AudioButton` của web: tròn 32px, biểu tượng loa xám, bấm thì đỏ.
+ * `big` cho câu hỏi nghe (nút tròn to nền đỏ nhạt). Không có bản thu thì không hiện gì.
+ */
+export function AudioButton({
+  src,
+  big = false,
+  size = 18,
+}: {
+  src: string | null | undefined;
+  big?: boolean;
+  size?: number;
+}) {
   const theme = useTheme();
   if (!src) return null;
   return (
@@ -17,16 +29,25 @@ export function AudioButton({ src, big = false }: { src: string | null | undefin
       accessibilityLabel="Nghe phát âm"
       style={({ pressed }) => [
         big ? styles.big : styles.small,
-        { backgroundColor: theme.primarySoft },
-        pressed && styles.pressed,
+        big && { backgroundColor: alpha(theme.primary, 0.1), borderColor: alpha(theme.primary, 0.2) },
+        !big && pressed && { backgroundColor: theme.surface2 },
+        pressed && big && { transform: [{ scale: 0.96 }] },
       ]}>
-      <Icon name="sound" size={big ? 36 : 18} color="primary" />
+      {({ pressed }) => (
+        <Icon name="sound" size={big ? 36 : size} color={big || pressed ? 'primary' : 'muted'} />
+      )}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  small: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  big: { width: 80, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center' },
-  pressed: { opacity: 0.7 },
+  small: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  big: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

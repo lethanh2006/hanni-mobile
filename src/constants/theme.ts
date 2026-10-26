@@ -2,6 +2,8 @@
  * Bảng màu chép từ `app/globals.css` của hanni-client để app và web cùng nhận diện.
  * Mọi màn hình lấy màu qua `useTheme()`, không viết mã màu trực tiếp.
  */
+import { Platform } from 'react-native';
+
 export const Colors = {
   light: {
     background: '#f7f8fa',
@@ -21,6 +23,9 @@ export const Colors = {
     danger: '#c0392f',
     dangerSoft: '#fbeceb',
     lavender: '#8e5383',
+    chartBar: '#dc3526',
+    heroFrom: '#fff8f5',
+    heroTo: '#f9e8df',
   },
   dark: {
     background: '#121720',
@@ -40,11 +45,51 @@ export const Colors = {
     danger: '#e56b60',
     dangerSoft: '#3a2222',
     lavender: '#c489b8',
+    chartBar: '#ec5d50',
+    heroFrom: '#2c1c16',
+    heroTo: '#37231a',
   },
 } as const;
 
 export type ThemeColors = { [K in keyof typeof Colors.light]: string };
 export type ThemeColor = keyof ThemeColors;
+
+function rgb(hex: string): [number, number, number] {
+  const n = parseInt(hex.slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+/** Màu có độ mờ — như `bg-primary/10` của Tailwind: `alpha(theme.primary, 0.1)`. */
+export function alpha(hex: string, a: number) {
+  const [r, g, b] = rgb(hex);
+  return `rgba(${r}, ${g}, ${b}, ${a})`;
+}
+
+/** Trộn 2 màu — như `color-mix(in srgb, a p%, b)` của CSS (`p` từ 0 đến 1). */
+export function mix(a: string, b: string, p: number) {
+  const [r1, g1, b1] = rgb(a);
+  const [r2, g2, b2] = rgb(b);
+  const c = (x: number, y: number) => Math.round(x * p + y * (1 - p));
+  return `rgb(${c(r1, r2)}, ${c(g1, g2)}, ${c(b1, b2)})`;
+}
+
+/** Bóng của khối `.panel` trên web. */
+export function panelShadow(theme: ThemeColors) {
+  return `0 4px 20px -12px ${alpha(theme.text, 0.16)}, 0 1px 3px -1px ${alpha(theme.text, 0.08)}`;
+}
+
+/**
+ * Font giống web: chữ Latin/Việt là Geist (nhúng lúc build qua plugin expo-font), chữ Hán là kiểu chữ có chân
+ * (web: "Kaiti SC", "KaiTi", "Noto Serif CJK SC", "Songti SC", serif — trên Android là Noto Serif CJK).
+ */
+export const Fonts = {
+  sans: 'Geist',
+  hanzi: Platform.select({
+    ios: 'Songti SC',
+    android: 'serif',
+    default: '"Kaiti SC", "KaiTi", "Noto Serif CJK SC", "Songti SC", serif',
+  }),
+};
 
 /** Màu pinyin theo thanh điệu (giống `TONE_CLASS` của web). Thanh nhẹ dùng màu `muted`. */
 export const ToneColors: Record<string, string> = {
@@ -63,6 +108,7 @@ export const Spacing = {
   xxl: 32,
 } as const;
 
+/** Bo góc như quy tắc giao diện của web: thẻ 16px, ô bên trong + nút 12px, chip tròn. */
 export const Radius = {
   sm: 8,
   md: 12,
