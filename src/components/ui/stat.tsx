@@ -34,7 +34,8 @@ export function Stat({
             styles.icon,
             {
               backgroundColor: alpha(color, tone === 'primary' ? 0.1 : 0.08),
-              borderColor: alpha(color, tone === 'primary' ? 0.2 : 0.15),
+              // Web: tông chính có `border-primary/20`; tông khác không ghi màu viền nên viền = màu chữ (đậm).
+              borderColor: tone === 'primary' ? alpha(color, 0.2) : color,
             },
           ]}>
           <Icon name={icon} size={18} color={tone} />
@@ -51,7 +52,8 @@ export function Stat({
 }
 
 const styles = StyleSheet.create({
-  card: { gap: 0 },
+  // Giãn hết ô lưới để 2 thẻ cùng hàng cao bằng nhau như lưới web.
+  card: { flexGrow: 1, gap: 0 },
   head: { marginBottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   label: { flex: 1, letterSpacing: 0.3 },
   icon: { width: 40, height: 40, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },

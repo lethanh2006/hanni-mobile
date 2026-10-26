@@ -26,8 +26,8 @@ export function ShareButton({
         { backgroundColor: alpha(theme.primary, pressed ? 0.15 : 0.1) },
         style,
       ]}>
-      <Icon name="share" size={compact ? 13 : 15} color="primary" />
-      <AppText variant={compact ? 'caption' : 'body'} weight="600" color="primary">
+      <Icon name="share" size={13} color="primary" />
+      <AppText variant="caption" weight="600" color="primary">
         Chia sẻ
       </AppText>
     </Pressable>
@@ -41,8 +41,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
   },
   compact: { alignSelf: 'center', paddingHorizontal: 10, paddingVertical: 4 },
 });

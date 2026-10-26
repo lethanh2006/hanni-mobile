@@ -24,6 +24,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { WEB_ORIGIN } from '@/lib/api';
 import { useRequireAuth } from '@/lib/auth';
 import { useAchievements } from '@/lib/hooks';
+import { pairs } from '@/lib/pairs';
 import type { Achievement } from '@/lib/types';
 
 type Filter = 'all' | 'unlocked' | 'locked';
@@ -45,13 +46,6 @@ function sortForMotivation(list: Achievement[]) {
     if (a.unlocked !== b.unlocked) return a.unlocked ? 1 : -1;
     return a.unlocked ? 0 : ratio(b) - ratio(a);
   });
-}
-
-/** Lưới 2 cột của web: chia thành từng cặp để 2 thẻ cùng hàng cao bằng nhau, thẻ lẻ cuối vẫn rộng nửa hàng. */
-function pairs<T>(list: T[]) {
-  const rows: T[][] = [];
-  for (let i = 0; i < list.length; i += 2) rows.push(list.slice(i, i + 2));
-  return rows;
 }
 
 /** Bộ sưu tập huy hiệu (trang `/achievements` của web) — đạt mốc là mở huy hiệu, mỗi huy hiệu mở thêm một danh hiệu. */

@@ -1,18 +1,17 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
-import { Share, StyleSheet, View } from 'react-native';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { Pressable, StyleSheet, View } from 'react-native';
 
-import { AppText, Avatar, Button, Card, EmptyState, Icon, Loading, Screen, SectionTitle } from '@/components/ui';
-import { Radius, Spacing } from '@/constants/theme';
-import { StatGrid } from '@/features/progress/stat-grid';
+import { AppText, Avatar, Card, ErrorNote, Icon, IconTile, Loading, Screen, ShareButton, Stat } from '@/components/ui';
+import { alpha } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { WEB_ORIGIN } from '@/lib/api';
 import { useRequireAuth } from '@/lib/auth';
 import { usePublicProfile } from '@/lib/hooks';
-import { goBack } from '@/lib/navigation';
+import { pairs } from '@/lib/pairs';
 
 const joinedLabel = (iso: string) => new Date(iso).toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' });
 
-/** Hồ sơ công khai: chuỗi ngày học, số liệu, huy hiệu đã mở. */
+/** Hồ sơ công khai (trang `/u/[id]` của web): chuỗi ngày học, số liệu, huy hiệu đã mở. */
 export default function PublicProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useRequireAuth();
@@ -21,10 +20,13 @@ export default function PublicProfileScreen() {
 
   if (error) {
     return (
-      <Screen>
-        <EmptyState title="Không tải được hồ sơ này" description="Bạn thử lại sau nhé.">
-          <Button title="Quay lại" variant="secondary" onPress={goBack} />
-        </EmptyState>
+      <Screen contentStyle={styles.errorPage}>
+        <ErrorNote>Không tải được hồ sơ này.</ErrorNote>
+        <Pressable onPress={() => router.navigate('/leaderboard')} style={styles.self} hitSlop={6}>
+          <AppText weight="600" color="primary">
+            ← Về bảng xếp hạng
+          </AppText>
+        </Pressable>
       </Screen>
     );
   }
@@ -39,23 +41,25 @@ export default function PublicProfileScreen() {
   return (
     <Screen>
       <Stack.Screen options={{ title: p.isMe ? 'Hồ sơ của bạn' : p.displayName }} />
-      <Card>
-        <View style={styles.row}>
+      <Card style={styles.profile}>
+        <View style={styles.identity}>
           <Avatar user={p} size={64} />
           <View style={styles.flex}>
-            <AppText variant="heading">{p.displayName}</AppText>
-            <View style={styles.badges}>
+            <View style={styles.name}>
+              <AppText weight="700" style={styles.nameText}>
+                {p.displayName}
+              </AppText>
               {p.equippedTitle && (
-                <View style={[styles.badge, { backgroundColor: theme.goodSoft }]}>
-                  <AppText variant="caption" bold color="good">
+                <View style={[styles.badge, { backgroundColor: alpha(theme.good, 0.1) }]}>
+                  <AppText variant="caption" weight="700" color="good">
                     {p.equippedTitle}
                   </AppText>
                 </View>
               )}
               {p.isPremium && (
-                <View style={[styles.badge, { backgroundColor: theme.surface2 }]}>
+                <View style={[styles.badge, { backgroundColor: alpha(theme.accent, 0.1) }]}>
                   <Icon name="crown" size={11} color="accent" />
-                  <AppText variant="caption" bold color="accent">
+                  <AppText variant="caption" weight="700" color="accent">
                     PREMIUM
                   </AppText>
                 </View>
@@ -67,48 +71,58 @@ export default function PublicProfileScreen() {
           </View>
         </View>
         {p.isMe && (
-          <Button
-            title="Chia sẻ hồ sơ"
-            icon="share"
-            variant="secondary"
-            onPress={() =>
-              void Share.share({
-                message: `Mình đã học được ${p.learnedWordsCount} từ và giữ chuỗi ${p.currentStreak} ngày trên Hanni — cùng học tiếng Trung nhé! ${WEB_ORIGIN}/u/${p.id}`,
-              })
-            }
+          <ShareButton
+            message={`Mình đã học được ${p.learnedWordsCount} từ và giữ chuỗi ${p.currentStreak} ngày trên Hanni — cùng học tiếng Trung nhé! ${WEB_ORIGIN}/u/${p.id}`}
           />
         )}
       </Card>
 
-      <StatGrid
-        stats={[
-          { label: 'Chuỗi ngày học', value: p.currentStreak, hint: `Kỷ lục ${p.longestStreak} ngày`, icon: 'flame', color: 'warn' },
-          { label: 'Từ đã thuộc', value: p.learnedWordsCount, icon: 'book', color: 'good' },
-          { label: 'Bài đã xong', value: p.completedLessonsCount, icon: 'route', color: 'lavender' },
-          { label: 'Huy hiệu', value: p.achievements.length, icon: 'trophy', color: 'primary' },
-        ]}
-      />
+      <View style={styles.grid}>
+        {(
+          [
+            { label: 'Chuỗi ngày học', value: p.currentStreak, hint: `Kỷ lục ${p.longestStreak} ngày`, icon: 'flame', tone: 'warn' },
+            { label: 'Từ đã thuộc', value: p.learnedWordsCount, icon: 'book', tone: 'good' },
+            { label: 'Bài đã xong', value: p.completedLessonsCount, icon: 'route', tone: 'lavender' },
+            { label: 'Huy hiệu', value: p.achievements.length, icon: 'trophy', tone: 'primary' },
+          ] as const
+        ).map((s) => (
+          <View key={s.label} style={styles.cell}>
+            <Stat {...s} />
+          </View>
+        ))}
+      </View>
 
-      <Card>
-        <SectionTitle title="Huy hiệu" />
+      <Card style={styles.badges}>
+        <AppText weight="600" style={[styles.heading, { borderColor: theme.border }]}>
+          Huy hiệu
+        </AppText>
         {p.achievements.length === 0 ? (
-          <AppText variant="small" color="muted">
+          <AppText color="muted" center style={styles.empty}>
             Chưa mở khoá huy hiệu nào.
           </AppText>
         ) : (
-          p.achievements.map((a) => (
-            <View key={a.code} style={[styles.achievement, { borderColor: theme.border }]}>
-              <Icon name="trophy" size={18} color="primary" />
-              <View style={styles.flex}>
-                <AppText variant="small" bold>
-                  {a.nameVi}
-                </AppText>
-                <AppText variant="caption" color="muted" numberOfLines={1}>
-                  {a.descriptionVi}
-                </AppText>
+          <View style={styles.achievements}>
+            {pairs(p.achievements).map((row) => (
+              <View key={row[0].code} style={styles.pair}>
+                {row.map((a) => (
+                  <View key={a.code} style={[styles.achievement, { borderColor: theme.border }]}>
+                    <IconTile size={40}>
+                      <Icon name="trophy" size={16} color="primary" />
+                    </IconTile>
+                    <View style={styles.flex}>
+                      <AppText weight="600" numberOfLines={1}>
+                        {a.nameVi}
+                      </AppText>
+                      <AppText variant="caption" color="muted" numberOfLines={1}>
+                        {a.descriptionVi}
+                      </AppText>
+                    </View>
+                  </View>
+                ))}
+                {row.length === 1 && <View style={styles.flex} />}
               </View>
-            </View>
-          ))
+            ))}
+          </View>
         )}
       </Card>
     </Screen>
@@ -116,9 +130,29 @@ export default function PublicProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
-  flex: { flex: 1, gap: 2 },
-  badges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  badge: { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: Radius.pill, paddingHorizontal: 8, paddingVertical: 2 },
-  achievement: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, borderTopWidth: 1, paddingTop: Spacing.sm },
+  errorPage: { gap: 16 },
+  self: { alignSelf: 'flex-start' },
+  profile: { gap: 16 },
+  identity: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  flex: { flex: 1, minWidth: 0 },
+  name: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
+  nameText: { fontSize: 18, lineHeight: 28 },
+  badge: { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -8, rowGap: 16 },
+  cell: { width: '50%', paddingHorizontal: 8 },
+  badges: { gap: 0 },
+  heading: { marginBottom: 16, paddingBottom: 12, borderBottomWidth: 1 },
+  empty: { paddingVertical: 24 },
+  achievements: { gap: 12 },
+  pair: { flexDirection: 'row', gap: 12 },
+  achievement: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+  },
 });
