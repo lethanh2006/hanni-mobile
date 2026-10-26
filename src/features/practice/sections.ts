@@ -24,15 +24,17 @@ export const PRACTICE_SECTIONS: { title: string; items: PracticeTool[] }[] = [
   {
     title: 'Học mà chơi',
     items: [
-      { label: 'Trò chơi luyện từ', description: 'Dịch tốc độ, nghe đoán từ, ghép cặp, chọn pinyin', icon: 'trophy', href: '/minigame' },
       { label: 'Học qua video', description: 'Phim ngắn, phụ đề song ngữ, bấm từ để tra', icon: 'play', href: null },
+      { label: 'Trò chơi luyện từ', description: 'Dịch tốc độ, nghe đoán từ, ghép cặp, chọn pinyin', icon: 'trophy', href: '/minigame' },
     ],
   },
   {
     title: 'Nền tảng & tra cứu',
     items: [
       { label: 'Bảng phiên âm', description: 'Thanh điệu, phụ âm, vần — bấm nghe từng âm', icon: 'sound', href: '/phien-am' },
-      { label: 'Ngữ pháp & mẫu câu', description: 'Điểm ngữ pháp giải thích bằng tiếng Việt', icon: 'book', href: '/ngu-phap' },
+      { label: 'Ngữ pháp & mẫu câu', description: '235 điểm ngữ pháp giải thích bằng tiếng Việt', icon: 'book', href: '/ngu-phap' },
+      { label: 'Quét ảnh học từ', description: 'Chụp thực đơn, biển hiệu, đồ vật — ra từ kèm Hán Việt', icon: 'camera', href: null },
+      { label: 'Từ bạn đã biết sẵn', description: 'Từ trùng nghĩa với tiếng Việt nhờ âm Hán Việt', icon: 'heart', href: null },
     ],
   },
 ];
