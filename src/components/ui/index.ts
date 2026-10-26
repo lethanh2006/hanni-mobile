@@ -10,6 +10,7 @@ export { Icon, type IconName } from './icon';
 export { PageHeader, SectionHeading, SectionTitle } from './page-header';
 export { ProgressBar, ProgressRing } from './progress-bar';
 export { Screen } from './screen';
+export { Select } from './select';
 export { ShareButton } from './share-button';
 export { Skeleton } from './skeleton';
 export { Stat } from './stat';

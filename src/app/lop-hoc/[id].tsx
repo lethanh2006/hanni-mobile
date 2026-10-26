@@ -1,14 +1,16 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
+import { StyleSheet } from 'react-native';
 
-import { Button, EmptyState, Loading, Screen } from '@/components/ui';
+import { Button, ErrorNote, Loading, Screen } from '@/components/ui';
+import { ClassHeader } from '@/features/classroom/class-header';
 import { MemberView } from '@/features/classroom/member-view';
 import { OwnerView } from '@/features/classroom/owner-view';
+import { errorMessage } from '@/lib/api';
 import { useRequireAuth } from '@/lib/auth';
 import { useClassroom } from '@/lib/classrooms';
-import { goBack } from '@/lib/navigation';
 
-/** Trang 1 lớp — giáo viên và học viên thấy 2 giao diện khác nhau. */
+/** Trang 1 lớp (`/lop-hoc/[id]` của web) — giáo viên và học viên thấy 2 giao diện khác nhau. */
 export default function ClassroomScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useRequireAuth();
@@ -23,18 +25,30 @@ export default function ClassroomScreen() {
 
   return (
     <Screen refreshing={refreshing} onRefresh={onRefresh}>
-      <Stack.Screen options={{ title: data?.class.name ?? 'Lớp học' }} />
+      <Stack.Screen options={{ title: 'Lớp học' }} />
       {error ? (
-        <EmptyState title="Không mở được lớp này" description="Có thể lớp đã bị xoá hoặc bạn không còn trong lớp.">
-          <Button title="Quay lại" variant="secondary" onPress={goBack} />
-        </EmptyState>
+        <>
+          <ErrorNote>{errorMessage(error, 'Không mở được lớp này.')}</ErrorNote>
+          <Button
+            title="Về danh sách lớp"
+            leftIcon="back"
+            variant="secondary"
+            onPress={() => router.navigate('/lop-hoc')}
+            style={styles.self}
+          />
+        </>
       ) : !user || !data ? (
         <Loading />
-      ) : data.role === 'owner' ? (
-        <OwnerView data={data} />
       ) : (
-        <MemberView data={data} />
+        <>
+          <ClassHeader data={data} />
+          {data.role === 'owner' ? <OwnerView data={data} /> : <MemberView data={data} />}
+        </>
       )}
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  self: { alignSelf: 'flex-start' },
+});
