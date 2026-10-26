@@ -190,3 +190,14 @@ export function firstSound(
   }
   return null;
 }
+
+const INITIALS = ['zh', 'ch', 'sh', 'b', 'p', 'm', 'f', 'd', 't', 'n', 'l', 'g', 'k', 'h', 'j', 'q', 'x', 'r', 'z', 'c', 's'];
+
+/** Phụ âm đầu của 1 âm tiết; `∅` = bắt đầu bằng nguyên âm, `y/w` = viết bằng y/w. */
+export function initialOf(base: string): string {
+  if (/^[yw]/.test(base)) return 'y/w';
+  return INITIALS.find((i) => base.startsWith(i)) ?? '∅';
+}
+
+/** Các tab của bảng ghép âm: nguyên âm, y/w rồi 21 thanh mẫu theo nhóm. */
+export const CHART_TABS = ['∅', 'y/w', ...INITIAL_GROUPS.flatMap((g) => g.items.map((i) => i.l))];
