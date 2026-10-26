@@ -138,14 +138,17 @@ const styles = StyleSheet.create({
   },
   copy: { flex: 1, minWidth: 0 },
   description: { marginTop: 4, fontSize: 13.5, lineHeight: 21 },
+  // Như web (`flex-wrap`, khối tên `flex: 1 1 200px`): phần bên phải không đủ chỗ thì xuống dòng dưới tên.
   section: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 12,
     paddingBottom: 14,
     borderBottomWidth: 1,
   },
-  sectionIdentity: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, minWidth: 0 },
+  sectionIdentity: { flexGrow: 1, flexShrink: 1, flexBasis: 210, flexDirection: 'row', alignItems: 'center', gap: 12, minWidth: 0 },
   sectionIcon: {
     width: 40,
     height: 40,
