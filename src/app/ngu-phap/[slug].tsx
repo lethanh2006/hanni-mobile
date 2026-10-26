@@ -1,99 +1,145 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { StyleSheet, View } from 'react-native';
 import useSWR from 'swr';
 
-import { AppText, Card, EmptyState, Icon, Loading, Screen, SectionTitle } from '@/components/ui';
-import { Radius, Spacing } from '@/constants/theme';
+import { AppText, Card, EmptyState, Hanzi, Loading, Screen } from '@/components/ui';
+import { alpha } from '@/constants/theme';
+import { LearnCta } from '@/features/grammar/learn-cta';
 import { useTheme } from '@/hooks/use-theme';
-import { speakChinese } from '@/lib/audio';
-import { hskLabel } from '@/lib/hsk';
 import type { GrammarDetail } from '@/lib/types';
 
-/** 1 điểm ngữ pháp: tên, mẫu câu, giải thích tiếng Việt từng đoạn, ví dụ có pinyin (bấm loa để nghe). */
+/** 1 điểm ngữ pháp (`/ngu-phap/[slug]` của web): tên, tóm tắt, mẫu câu, giải thích tiếng Việt từng đoạn, ví dụ có pinyin. */
 export default function GrammarScreen() {
   const theme = useTheme();
   const { slug } = useLocalSearchParams<{ slug: string }>();
-  const { data: g, error } = useSWR<GrammarDetail>(`/grammar/${encodeURIComponent(slug)}`);
+  const { data: p, error } = useSWR<GrammarDetail>(`/grammar/${encodeURIComponent(slug)}`);
 
   if (error) {
     return (
       <Screen>
+        <Stack.Screen options={{ title: 'Ngữ pháp' }} />
         <EmptyState title="Không mở được điểm ngữ pháp này" description="Bạn thử lại sau nhé." />
       </Screen>
     );
   }
-  if (!g) {
+  if (!p) {
     return (
       <Screen>
+        <Stack.Screen options={{ title: 'Ngữ pháp' }} />
         <Loading />
       </Screen>
     );
   }
 
-  const patterns = g.patterns ?? [];
-  const examples = g.examples ?? [];
+  const patterns = p.patterns ?? [];
+  const examples = p.examples ?? [];
+
   return (
-    <Screen>
-      <Stack.Screen options={{ title: g.titleZh }} />
-      <Card>
-        <AppText variant="caption" bold color="primary">
-          {hskLabel(g.hskLevel)}
+    <Screen contentStyle={styles.page}>
+      <Stack.Screen options={{ title: p.titleZh }} />
+      <AppText variant="caption" color="muted">
+        <AppText variant="caption" color="muted" onPress={() => router.navigate('/')}>
+          Hanni
+        </AppText>{' '}
+        ›{' '}
+        <AppText variant="caption" color="muted" onPress={() => router.navigate('/ngu-phap')}>
+          Ngữ pháp
+        </AppText>{' '}
+        › <AppText variant="caption">{p.titleZh}</AppText>
+      </AppText>
+
+      <Card style={styles.article}>
+        <View style={styles.head}>
+          <View style={styles.flex}>
+            <AppText weight="700" style={styles.title}>
+              {p.titleVi}
+            </AppText>
+            <Hanzi size={30} color="primary" style={styles.zh}>
+              {p.titleZh}
+            </Hanzi>
+          </View>
+          <View style={[styles.badge, { backgroundColor: alpha(theme.primary, 0.1) }]}>
+            <AppText variant="caption" weight="600" color="primary">
+              HSK {p.hskLevel}
+            </AppText>
+          </View>
+        </View>
+
+        <AppText color="muted" style={styles.summary}>
+          {p.summaryVi}
         </AppText>
-        <AppText variant="title">{g.titleVi}</AppText>
-        <AppText variant="heading" color="primary">
-          {g.titleZh}
-        </AppText>
+
+        {patterns.length > 0 && (
+          <View style={styles.block}>
+            <AppText weight="600">Mẫu câu</AppText>
+            <View style={styles.patterns}>
+              {patterns.map((pt) => (
+                <View key={pt} style={[styles.pattern, { backgroundColor: theme.surface2 }]}>
+                  <AppText>{pt}</AppText>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
+        <View style={styles.block}>
+          <AppText weight="600">Giải thích</AppText>
+          {/* explanationVi xuống dòng bằng \n — tách thành đoạn thay vì đổ nguyên khối chữ liền. */}
+          <View style={styles.paragraphs}>
+            {p.explanationVi
+              .split('\n')
+              .filter((line) => line.trim())
+              .map((line, i) => (
+                <AppText key={i} style={styles.paragraph}>
+                  {line}
+                </AppText>
+              ))}
+          </View>
+        </View>
+
+        {examples.length > 0 && (
+          <View style={[styles.block, styles.examples, { borderColor: theme.border }]}>
+            <AppText weight="600">Ví dụ</AppText>
+            <View style={styles.exampleList}>
+              {examples.map((ex, i) => (
+                <View key={i}>
+                  <Hanzi size={16}>{ex.zh}</Hanzi>
+                  {ex.pinyin ? (
+                    <AppText variant="caption" color="muted" style={styles.exampleLine}>
+                      {ex.pinyin}
+                    </AppText>
+                  ) : null}
+                  {ex.vi ? <AppText style={styles.exampleLine}>{ex.vi}</AppText> : null}
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
       </Card>
 
-      {patterns.length > 0 && (
-        <Card>
-          <SectionTitle title="Mẫu câu" />
-          {patterns.map((p) => (
-            <View key={p} style={[styles.pattern, { backgroundColor: theme.surface2 }]}>
-              <AppText>{p}</AppText>
-            </View>
-          ))}
-        </Card>
-      )}
-
-      <Card>
-        <SectionTitle title="Giải thích" />
-        {/* explanationVi xuống dòng bằng \n — tách thành đoạn cho dễ đọc. */}
-        {g.explanationVi
-          .split('\n')
-          .filter((line) => line.trim())
-          .map((line, i) => (
-            <AppText key={i}>{line}</AppText>
-          ))}
-      </Card>
-
-      {examples.length > 0 && (
-        <Card>
-          <SectionTitle title="Ví dụ" />
-          {examples.map((ex, i) => (
-            <View key={i} style={[styles.example, { borderColor: theme.border }]}>
-              <Pressable onPress={() => speakChinese(ex.zh)} hitSlop={8} accessibilityLabel="Nghe câu ví dụ">
-                <Icon name="sound" size={18} color="primary" />
-              </Pressable>
-              <View style={styles.flex}>
-                <AppText variant="heading">{ex.zh}</AppText>
-                {ex.pinyin && (
-                  <AppText variant="caption" color="muted">
-                    {ex.pinyin}
-                  </AppText>
-                )}
-                {ex.vi && <AppText variant="small">{ex.vi}</AppText>}
-              </View>
-            </View>
-          ))}
-        </Card>
-      )}
+      <LearnCta
+        title="Hiểu ngữ pháp rồi, giờ dùng được chưa?"
+        text={`Hanni xếp ngữ pháp HSK ${p.hskLevel} cùng với từ vựng cùng cấp thành bài học theo chủ đề, và nhắc bạn ôn đúng lúc sắp quên — miễn phí toàn bộ nội dung học.`}
+      />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  pattern: { borderRadius: Radius.md, padding: Spacing.md },
-  example: { flexDirection: 'row', gap: Spacing.md, borderTopWidth: 1, paddingTop: Spacing.sm },
-  flex: { flex: 1, gap: 2 },
+  page: { gap: 24, paddingTop: 40 },
+  flex: { flex: 1, minWidth: 0 },
+  article: { gap: 0, padding: 24 },
+  head: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 },
+  title: { fontSize: 24, lineHeight: 32, letterSpacing: -0.6 },
+  zh: { marginTop: 8 },
+  badge: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
+  summary: { marginTop: 20, lineHeight: 28 },
+  block: { marginTop: 24 },
+  patterns: { marginTop: 12, gap: 8 },
+  pattern: { borderRadius: 12, paddingHorizontal: 16, paddingVertical: 10 },
+  paragraphs: { marginTop: 12, gap: 8 },
+  paragraph: { lineHeight: 28 },
+  examples: { borderTopWidth: 1, paddingTop: 20 },
+  exampleList: { marginTop: 12, gap: 16 },
+  exampleLine: { marginTop: 2 },
 });
