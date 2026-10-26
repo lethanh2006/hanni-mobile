@@ -1,45 +1,72 @@
 import { router } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import useSWR from 'swr';
 
-import { AppText, Card, Icon, SectionTitle } from '@/components/ui';
-import { Spacing } from '@/constants/theme';
+import { AppText, Icon } from '@/components/ui';
+import { alpha } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import type { MockPracticeSetMeta } from '@/lib/types';
 
 import { partInfo, SECTION_SHORT } from './part-info';
 
-/** "Luyện từng dạng bài" của 1 cấp: mỗi phần đề gom câu từ mọi đề cùng cấp, làm câu nào chấm câu đó. */
+const SECTION_ICON = { listening: 'headphones', reading: 'book', writing: 'pencil' } as const;
+
+/**
+ * "Luyện từng dạng bài" của cấp đang chọn (khối cuối `MockExamList` của web): mỗi phần đề gom câu từ mọi đề cùng
+ * cấp, làm câu nào chữa câu đó.
+ */
 export function PracticeSets({ level }: { level: number }) {
+  const theme = useTheme();
   const { data } = useSWR<MockPracticeSetMeta[]>('/mock-exams/practice');
   const sets = (data ?? []).filter((s) => s.level === level);
   if (sets.length === 0) return null;
 
   return (
-    <Card>
-      <SectionTitle title="Luyện từng dạng bài" />
-      <AppText variant="small" color="muted">
-        Không đồng hồ, làm câu nào chấm và chữa câu đó ngay.
+    <View style={[styles.box, { borderColor: theme.border, backgroundColor: theme.surface }]}>
+      <AppText weight="700">Luyện từng dạng bài</AppText>
+      <AppText variant="caption" color="muted" style={styles.desc}>
+        Chỉ luyện đúng dạng câu mình hay sai — gom từ mọi đề cùng cấp, làm câu nào chữa câu đó.
       </AppText>
-      {sets.map((s) => (
-        <Card key={s.slug} onPress={() => router.push(`/thi-thu-hsk/dang-bai/${s.slug}`)}>
-          <View style={styles.row}>
-            <View style={styles.flex}>
-              <AppText variant="small" bold>
-                {SECTION_SHORT[s.section]} {s.part} · {partInfo(s.section, s.type).label}
-              </AppText>
-              <AppText variant="caption" color="muted">
-                {s.count} câu
-              </AppText>
-            </View>
-            <Icon name="chevron" size={16} color="muted" />
-          </View>
-        </Card>
-      ))}
-    </Card>
+      <View style={styles.list}>
+        {sets.map((s) => (
+          <Pressable
+            key={s.slug}
+            onPress={() => router.push(`/thi-thu-hsk/dang-bai/${s.slug}`)}
+            style={({ pressed }) => [
+              styles.row,
+              pressed
+                ? { borderColor: alpha(theme.primary, 0.4), backgroundColor: alpha(theme.primary, 0.05) }
+                : { borderColor: theme.border },
+            ]}>
+            <Icon name={SECTION_ICON[s.section]} size={15} color="primary" />
+            <AppText numberOfLines={1} style={styles.flex}>
+              <AppText weight="600">
+                {SECTION_SHORT[s.section]} {s.part}
+              </AppText>{' '}
+              · {partInfo(s.section, s.type).label}
+            </AppText>
+            <AppText variant="caption" color="muted">
+              {s.count} câu
+            </AppText>
+          </Pressable>
+        ))}
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
-  flex: { flex: 1, gap: 2 },
+  box: { borderWidth: 1, borderRadius: 16, padding: 16 },
+  desc: { marginTop: 2 },
+  list: { marginTop: 12, gap: 8 },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  flex: { flex: 1, minWidth: 0 },
 });
