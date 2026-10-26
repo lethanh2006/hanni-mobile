@@ -3,6 +3,7 @@ export { Avatar } from './avatar';
 export { Button } from './button';
 export { Card, IconTile } from './card';
 export { Chip, ChipRow } from './chip';
+export { Details } from './details';
 export { EmptyState, ErrorNote, Loading } from './feedback';
 export { Icon, type IconName } from './icon';
 export { PageHeader, SectionHeading, SectionTitle } from './page-header';
