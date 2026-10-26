@@ -168,7 +168,7 @@ function BellButton() {
   );
 }
 
-function ThemeToggle() {
+export function ThemeToggle() {
   const theme = useTheme();
   const dark = useColorScheme() === 'dark';
   return (

@@ -10,20 +10,21 @@ import { AppText } from './text';
 /**
  * Ô nhập `.field` của web: bo 12px, viền mảnh, chữ 14px; đang gõ thì viền đỏ + quầng đỏ nhạt 4px.
  * Nhãn chữ nhỏ đậm phía trên (`text-xs font-semibold`), `labelRight` cho link cùng hàng (vd "Quên mật khẩu?").
- * `secure` thêm nút ẩn/hiện mật khẩu.
+ * `secure` thêm nút ẩn/hiện mật khẩu. `large` = ô ở màn đăng nhập/đăng ký (`.login-input`: cao 48, bo 14, chữ 16px).
  */
 export function TextField({
   label,
   labelRight,
   secure = false,
+  large = false,
   style,
   ...inputProps
-}: TextInputProps & { label?: string; labelRight?: ReactNode; secure?: boolean }) {
+}: TextInputProps & { label?: string; labelRight?: ReactNode; secure?: boolean; large?: boolean }) {
   const theme = useTheme();
   const [hidden, setHidden] = useState(secure);
   const [focused, setFocused] = useState(false);
   return (
-    <View style={styles.wrap}>
+    <View style={[styles.wrap, large && styles.wrapLarge]}>
       {(label || labelRight) && (
         <View style={styles.labelRow}>
           {label && (
@@ -37,14 +38,15 @@ export function TextField({
       <View
         style={[
           styles.box,
+          large && styles.boxLarge,
           {
             borderColor: focused ? theme.primary : alpha(theme.border, 0.8),
-            backgroundColor: focused ? theme.surface : alpha(theme.surface, 0.8),
+            backgroundColor: focused || large ? theme.surface : alpha(theme.surface, 0.8),
             boxShadow: focused ? `0 0 0 4px ${alpha(theme.primary, 0.1)}` : undefined,
           },
         ]}>
         <TextInput
-          style={[styles.input, { color: theme.text }, style]}
+          style={[styles.input, large && styles.inputLarge, { color: theme.text }, style]}
           placeholderTextColor={theme.muted}
           secureTextEntry={hidden}
           accessibilityLabel={label}
@@ -83,6 +85,9 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     minHeight: 46,
   },
+  wrapLarge: { gap: 6 },
+  boxLarge: { minHeight: 48, borderRadius: 14 },
   input: { flex: 1, fontFamily: Fonts.sans, fontSize: 14, paddingHorizontal: 14, paddingVertical: 12 },
+  inputLarge: { fontSize: 16 },
   eye: { paddingHorizontal: 14 },
 });

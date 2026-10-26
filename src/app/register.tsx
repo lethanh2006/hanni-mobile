@@ -1,8 +1,9 @@
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 
-import { Button, ErrorNote, Screen, TextField } from '@/components/ui';
-import { AuthHeader, GuestEntry, leaveAuth, SwitchLink } from '@/features/auth/auth-parts';
+import { ErrorNote, TextField } from '@/components/ui';
+import { AuthShell, AuthSubmit, AuthTitle, GuestEntry, leaveAuth, SectionLabel, SwitchLink } from '@/features/auth/auth-parts';
 import { api, errorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { pendingWordCount, saveGuestProgress } from '@/lib/guest-progress';
@@ -26,7 +27,11 @@ export default function RegisterScreen() {
   const pendingWords = pendingWordCount();
 
   async function submit() {
-    if (!displayName || !email || !password || busy) return;
+    if (busy) return;
+    if (!displayName || !email || !password) {
+      setError('Điền đủ tên hiển thị, email và mật khẩu nhé.');
+      return;
+    }
     if (password.length < 8) {
       setError('Mật khẩu cần ít nhất 8 ký tự.');
       return;
@@ -53,55 +58,59 @@ export default function RegisterScreen() {
   }
 
   return (
-    <Screen>
-      <Stack.Screen options={{ title: 'Tạo tài khoản' }} />
-      <AuthHeader
-        title="Bắt đầu cùng Hanni."
+    <AuthShell>
+      <SectionLabel icon="spark">MỖI NGÀY MỘT CHÚT TIẾNG TRUNG</SectionLabel>
+      <AuthTitle
+        text="Bắt đầu cùng Hanni"
+        mark="."
         subtitle={
           pendingWords > 0
             ? `${pendingWords} từ bạn vừa học sẽ được lưu ngay khi tạo tài khoản xong.`
             : 'Tạo tài khoản để lưu tiến độ và học theo nhịp của riêng bạn.'
         }
       />
-      <TextField
-        label="Tên hiển thị"
-        value={displayName}
-        onChangeText={setDisplayName}
-        placeholder="Tên bạn muốn được gọi"
-        autoComplete="nickname"
-      />
-      <TextField
-        label="Email"
-        value={email}
-        onChangeText={setEmail}
-        placeholder="Email của bạn"
-        keyboardType="email-address"
-        autoCapitalize="none"
-        autoComplete="email"
-      />
-      <TextField
-        label="Mật khẩu"
-        secure
-        value={password}
-        onChangeText={setPassword}
-        placeholder="Ít nhất 8 ký tự"
-        autoComplete="new-password"
-        onSubmitEditing={submit}
-      />
-      {error && <ErrorNote>{error}</ErrorNote>}
-      <Button
-        title={busy ? 'Đang tạo tài khoản…' : 'Đăng ký'}
-        icon="arrow"
-        loading={busy}
-        disabled={!displayName || !email || !password}
-        onPress={submit}
-      />
+      <View style={styles.form}>
+        <TextField
+          large
+          label="Tên hiển thị"
+          value={displayName}
+          onChangeText={setDisplayName}
+          placeholder="Tên bạn muốn được gọi"
+          autoComplete="nickname"
+        />
+        <TextField
+          large
+          label="Email"
+          value={email}
+          onChangeText={setEmail}
+          placeholder="Email của bạn"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoComplete="email"
+        />
+        <TextField
+          large
+          label="Mật khẩu"
+          secure
+          value={password}
+          onChangeText={setPassword}
+          placeholder="Mật khẩu (ít nhất 8 ký tự)"
+          autoComplete="new-password"
+          onSubmitEditing={submit}
+        />
+        {error && <ErrorNote>{error}</ErrorNote>}
+        <AuthSubmit title={busy ? 'Đang tạo tài khoản…' : 'Đăng ký'} busy={busy} onPress={submit} />
+      </View>
       <SwitchLink
         question="Đã có tài khoản?"
         action="Đăng nhập"
         onPress={() => router.replace({ pathname: '/login', params: next ? { next } : {} })}
       />
       <GuestEntry />
-    </Screen>
+    </AuthShell>
   );
 }
+
+const styles = StyleSheet.create({
+  form: { marginTop: 16, gap: 20 },
+});
