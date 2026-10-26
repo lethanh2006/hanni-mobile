@@ -43,7 +43,7 @@ function raw(path: string, method: string, body?: unknown): Promise<Response> {
  */
 let refreshInFlight: Promise<boolean> | null = null;
 
-function refreshSession(): Promise<boolean> {
+export function refreshSession(): Promise<boolean> {
   if (!refreshInFlight) {
     refreshInFlight = raw('/auth/refresh', 'POST')
       .then((r) => r.ok)

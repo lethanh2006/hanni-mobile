@@ -11,6 +11,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/hooks/use-theme';
+import { reportScroll } from '@/lib/scroll-tuck';
 
 /**
  * Khung chung của mọi màn — lề như `.page-wrap` trong khung app của web ở khổ điện thoại (trên 20px, ngang 16px,
@@ -55,6 +56,8 @@ export function Screen({
       // Thanh trên/header đã tự chừa tai thỏ — để iOS chèn thêm là cách trên 2 lần.
       contentInsetAdjustmentBehavior="never"
       keyboardShouldPersistTaps="handled"
+      onScroll={(e) => reportScroll(e.nativeEvent.contentOffset.y)}
+      scrollEventThrottle={32}
       refreshControl={
         onRefresh ? (
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} colors={[theme.primary]} />

@@ -7,6 +7,7 @@ import { SWRConfig, type SWRConfiguration } from 'swr';
 
 import { StackHeader } from '@/components/app-shell/stack-header';
 import { Colors, Fonts } from '@/constants/theme';
+import { AssistantWidget } from '@/features/assistant/assistant-widget';
 import { NotificationCenter } from '@/features/notifications/notification-center';
 import { fetcher } from '@/lib/api';
 import { AuthProvider, useAuth } from '@/lib/auth';
@@ -62,6 +63,8 @@ export default function RootLayout() {
             }}>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           </Stack>
+          {/* Nổi trên mọi màn như bong bóng trợ lý trong khung app của web. */}
+          <AssistantWidget />
         </AuthProvider>
       </SWRConfig>
     </ThemeProvider>
