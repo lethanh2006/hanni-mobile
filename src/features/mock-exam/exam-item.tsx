@@ -1,8 +1,9 @@
-import { useEffect, type Ref } from 'react';
+import { useEffect, useState, type Ref } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View, type HostInstance } from 'react-native';
 
 import { AppText, Hanzi, Icon } from '@/components/ui';
 import { alpha, Fonts } from '@/constants/theme';
+import { HandwritingPad } from '@/features/dictionary/handwriting-pad';
 import { useTheme } from '@/hooks/use-theme';
 import type { MockAnswer, MockItem, MockPart, MockReviewItem, MockSectionKind, Ruby } from '@/lib/types';
 
@@ -134,7 +135,7 @@ export function SharedBoard({ part, pinyin, labels }: { part: MockPart; pinyin: 
   return null;
 }
 
-/** HSK 4 viết phần 2: nhìn tranh, dùng từ cho sẵn đặt 1 câu bằng bàn phím tiếng Trung (web có thêm viết tay). */
+/** HSK 4 viết phần 2: nhìn tranh, dùng từ cho sẵn đặt 1 câu — gõ bằng bàn phím tiếng Trung hoặc viết tay từng chữ. */
 function SentenceWriter({
   picture,
   label,
@@ -153,7 +154,9 @@ function SentenceWriter({
   pinyin: boolean;
 }) {
   const theme = useTheme();
+  const [writing, setWriting] = useState(false);
   const value = typeof given === 'string' ? given : '';
+  const set = (v: string) => onChange?.(v.trim() ? v : null);
   return (
     <View style={styles.writer}>
       <View style={styles.wrapRow}>
@@ -166,15 +169,32 @@ function SentenceWriter({
         </View>
       </View>
       {onChange ? (
-        <TextInput
-          value={value}
-          onChangeText={(v) => onChange(v.trim() ? v : null)}
-          placeholder={`Đặt một câu có từ “${word.zh}”…`}
-          placeholderTextColor={theme.muted}
-          multiline
-          accessibilityLabel={`Câu có từ ${word.zh}`}
-          style={[styles.input, { borderColor: alpha(theme.border, 0.8), color: theme.text, backgroundColor: theme.surface }]}
-        />
+        <>
+          <TextInput
+            value={value}
+            onChangeText={set}
+            placeholder={`Đặt một câu có từ “${word.zh}”…`}
+            placeholderTextColor={theme.muted}
+            multiline
+            accessibilityLabel={`Câu có từ ${word.zh}`}
+            style={[styles.input, { borderColor: alpha(theme.border, 0.8), color: theme.text, backgroundColor: theme.surface }]}
+          />
+          <Pressable
+            onPress={() => setWriting((w) => !w)}
+            accessibilityState={{ selected: writing }}
+            style={({ pressed }) => [styles.handButton, { borderColor: theme.border }, pressed && { backgroundColor: theme.surface2 }]}>
+            <Icon name="pencil" size={15} />
+            <AppText weight="600">Viết tay</AppText>
+          </Pressable>
+          {writing && (
+            <HandwritingPad
+              title="Viết tay chữ Hán"
+              hint="Bấm chữ đúng để thêm vào câu."
+              onPick={(c) => set(value + c)}
+              onClose={() => setWriting(false)}
+            />
+          )}
+        </>
       ) : (
         <Hanzi size={20} color={review ? (review.correct ? 'good' : 'danger') : 'text'}>
           {value || '(bỏ trống)'}
@@ -420,6 +440,16 @@ const styles = StyleSheet.create({
   char: { flex: 1, aspectRatio: 1 },
   writer: { gap: 12 },
   bold: { fontWeight: '700' },
+  handButton: {
+    alignSelf: 'flex-start',
+    minHeight: 40,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+  },
   input: { borderWidth: 1, borderRadius: 12, minHeight: 80, padding: 12, fontFamily: Fonts.hanzi, fontSize: 20, textAlignVertical: 'top' },
   sample: { gap: 4, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8 },
   sampleNote: { lineHeight: 20 },
