@@ -152,15 +152,22 @@ export default function LessonDetailScreen() {
           {words.length > 0 && <Fact label="Đã học" value={`${startedWords}/${words.length} từ`} />}
           {relatedGrammar.length > 0 && <Fact label="Ngữ pháp liên quan" value={String(relatedGrammar.length)} />}
         </View>
-        {/* Web có thêm "Luyện phát âm" và "Bài đọc AI" — app chưa có 2 màn đó. */}
+        {/* Web có thêm "Luyện phát âm" cạnh "Luyện nghe" — app chưa có màn đó. */}
         {words.length > 0 && (
-          <Button
-            title="Luyện nghe"
-            leftIcon="headphones"
-            variant="secondary"
-            onPress={() => router.push({ pathname: '/listening', params: { lesson: lesson.id } })}
-            style={styles.moreButton}
-          />
+          <View style={styles.moreButtons}>
+            <Button
+              title="Luyện nghe"
+              leftIcon="headphones"
+              variant="secondary"
+              onPress={() => router.push({ pathname: '/listening', params: { lesson: lesson.id } })}
+            />
+            <Button
+              title="Bài đọc AI dùng từ của bài"
+              leftIcon="book"
+              variant="secondary"
+              onPress={() => router.push(`/bai-doc/${lesson.id}`)}
+            />
+          </View>
         )}
       </Card>
 
@@ -286,7 +293,7 @@ const styles = StyleSheet.create({
   moreText: { marginTop: 8, lineHeight: 24 },
   facts: { marginTop: 20, gap: 12, borderTopWidth: 1, borderBottomWidth: 1, paddingVertical: 16 },
   fact: { flexDirection: 'row', justifyContent: 'space-between' },
-  moreButton: { marginTop: 20 },
+  moreButtons: { marginTop: 20, gap: 10 },
   grammar: { gap: 16 },
   grammarList: { gap: 8 },
   grammarRow: {

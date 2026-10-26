@@ -125,7 +125,13 @@ export function SessionComplete({
             ) : (
               <Button title="Bạn đã học hết cấp này — xem lộ trình" icon="arrow" onPress={goBack} />
             )}
-            {/* Web có thêm "Đọc hội thoại dùng N từ vừa học" (Bài đọc AI) — app chưa có màn đó. */}
+            {/* Bài đọc AI chỉ dùng từ của bài vừa học — đọc ngay khi từ còn mới. */}
+            <Button
+              title={`Đọc hội thoại dùng ${total} từ vừa học`}
+              leftIcon="book"
+              variant="secondary"
+              onPress={() => router.replace(`/bai-doc/${session.lesson.id}`)}
+            />
             <Button title="Về lộ trình" variant="ghost" onPress={goBack} />
           </>
         )}
