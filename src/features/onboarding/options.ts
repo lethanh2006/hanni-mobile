@@ -19,12 +19,16 @@ export const GOALS: { key: OnboardingGoal; label: string; hint: string; icon: Ic
 ];
 
 /** Gợi ý cách luyện theo mục tiêu (mục tiêu thi HSK có dòng lộ trình riêng). */
-export const GOAL_SUGGESTION: Record<Exclude<OnboardingGoal, 'EXAM'>, { label: string; detail: string; href: Href }> = {
-  TRAVEL: { label: 'Luyện nói với AI', detail: 'gọi món, hỏi đường, mua sắm như thật', href: '/luyen-tap' },
-  WORK: { label: 'Luyện nói với AI', detail: 'luyện phản xạ trao đổi bằng tiếng Trung', href: '/luyen-tap' },
-  ACADEMIC: { label: 'Đề thi thử HSK', detail: 'làm thử 1 đề để biết mình đang ở đâu', href: '/thi-thu-hsk' },
-  INTEREST: { label: 'Học qua video', detail: 'phim ngắn có phụ đề song ngữ, bấm từ để tra', href: '/luyen-tap' },
-  OTHER: { label: 'Luyện tập', detail: 'nghe, nói, viết, trò chơi — chọn cách bạn thích', href: '/luyen-tap' },
+/** `guest` = khách mở được (trang không cần tài khoản). Học qua video chưa có trên app nên trỏ sang Luyện tập. */
+export const GOAL_SUGGESTION: Record<
+  Exclude<OnboardingGoal, 'EXAM'>,
+  { label: string; detail: string; href: Href; guest: boolean }
+> = {
+  TRAVEL: { label: 'Luyện nói với AI', detail: 'gọi món, hỏi đường, mua sắm như thật', href: '/roleplay', guest: false },
+  WORK: { label: 'Luyện nói với AI', detail: 'luyện phản xạ trao đổi bằng tiếng Trung', href: '/roleplay', guest: false },
+  ACADEMIC: { label: 'Đề thi thử HSK', detail: 'làm thử 1 đề để biết mình đang ở đâu', href: '/thi-thu-hsk', guest: true },
+  INTEREST: { label: 'Học qua video', detail: 'phim ngắn có phụ đề song ngữ, bấm từ để tra', href: '/luyen-tap', guest: false },
+  OTHER: { label: 'Luyện tập', detail: 'nghe, nói, viết, trò chơi — chọn cách bạn thích', href: '/luyen-tap', guest: false },
 };
 
 /** Cấp 7 = HSK 7–9 (dữ liệu bài học gộp 3 cấp này). */
