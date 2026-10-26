@@ -1,5 +1,7 @@
 import type { Word } from '@/lib/types';
 
+import type { Glyph } from './glyph-panel';
+
 /** Phản hồi `GET /dictionary/:từ` — giống `LookupResult` ở trang từ của web. */
 export interface RelatedWord {
   simplified: string;
@@ -37,6 +39,7 @@ export interface LookupResult {
   compounds?: RelatedWord[];
   measures?: Measure[];
   topic?: Topic | null;
+  glyphs?: Glyph[];
 }
 
 /** 4 kiểu tra như hàng tab dưới ô tra của web (`DICT_TABS` ở `lib/dictionary.ts`). */
