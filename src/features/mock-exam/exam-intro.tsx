@@ -1,4 +1,3 @@
-import * as Speech from 'expo-speech';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -10,18 +9,8 @@ import type { MockPaper } from '@/lib/types';
 
 import { ExamBackBar } from './exam-chrome';
 import { SECTION_VI } from './labels';
-import { playListening } from './listening';
+import { hasChineseVoice, playListening } from './listening';
 import type { SavedExam } from './saved-exam';
-
-/** Máy có giọng đọc tiếng Trung không (phần nghe đọc bằng giọng máy). */
-async function hasChineseVoice() {
-  try {
-    const voices = await Speech.getAvailableVoicesAsync();
-    return voices.length === 0 || voices.some((v) => v.language.toLowerCase().startsWith('zh'));
-  } catch {
-    return true;
-  }
-}
 
 /**
  * Màn giới thiệu đề (`Intro` của phòng thi web): nhãn "Đề thi thử · đúng cấu trúc đề thật", 4 ô số liệu, cấu trúc
