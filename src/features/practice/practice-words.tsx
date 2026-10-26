@@ -1,10 +1,6 @@
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
 
-import { AppText, Card, ChipRow, TextLink } from '@/components/ui';
-import { Spacing } from '@/constants/theme';
 import { useCurrentLesson, useLesson, useWords } from '@/lib/hooks';
-import { HSK_LEVELS, hskLabel } from '@/lib/hsk';
 import type { Word } from '@/lib/types';
 
 export interface WordScope {
@@ -71,50 +67,5 @@ export function usePracticeWords(lessonId?: string): {
   };
 }
 
-/** Ô chọn nhóm từ: bài đang học, hoặc cấp HSK + nhóm. */
-export function ScopePicker({ scope }: { scope: WordScope }) {
-  const { page, totalPages } = scope;
-  if (scope.lessonTitle) {
-    return (
-      <Card>
-        <AppText variant="small" color="muted">
-          Đang luyện từ của bài
-        </AppText>
-        <AppText bold>{scope.lessonTitle}</AppText>
-        <TextLink title="Luyện tự do theo cấp HSK" onPress={() => scope.chooseLevel(scope.level)} />
-      </Card>
-    );
-  }
-  return (
-    <Card>
-      <ChipRow
-        options={HSK_LEVELS.map((l) => ({ value: l, label: hskLabel(l) }))}
-        value={scope.level}
-        onChange={scope.chooseLevel}
-      />
-      <View style={styles.row}>
-        <TextLink
-          title="← Nhóm trước"
-          color={page > 1 ? 'primary' : 'muted'}
-          onPress={() => page > 1 && scope.choosePage(page - 1)}
-        />
-        <AppText variant="small" color="muted">
-          Nhóm {page}/{totalPages}
-        </AppText>
-        <TextLink
-          title="Nhóm tiếp →"
-          color={page < totalPages ? 'primary' : 'muted'}
-          onPress={() => page < totalPages && scope.choosePage(page + 1)}
-        />
-      </View>
-      {scope.canUseLesson && <TextLink title="Quay về từ của bài đang học" onPress={scope.backToLesson} />}
-    </Card>
-  );
-}
-
 /** Nghĩa ngắn để làm gợi ý / đáp án. */
 export const firstMeaning = (w: Pick<Word, 'meaningVi' | 'meaningEn'>) => (w.meaningVi ?? w.meaningEn ?? '').split(';')[0];
-
-const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.sm },
-});

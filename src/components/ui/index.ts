@@ -7,6 +7,7 @@ export { Details } from './details';
 export { EmptyState, ErrorNote, Loading } from './feedback';
 export { TourButton, type TourStep } from './feature-tour';
 export { Icon, type IconName } from './icon';
+export { NextStep } from './next-step';
 export { PageHeader, SectionHeading, SectionTitle } from './page-header';
 export { ProgressBar, ProgressRing } from './progress-bar';
 export { Screen } from './screen';
