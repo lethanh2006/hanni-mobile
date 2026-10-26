@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { AppText, Card, Details, Icon, IconTile, Screen } from '@/components/ui';
 import { alpha, Radius, tintPanel } from '@/constants/theme';
