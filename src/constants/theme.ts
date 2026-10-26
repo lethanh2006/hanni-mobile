@@ -94,6 +94,8 @@ export function tintPanel(theme: ThemeColors, color: string = theme.primary, amo
  */
 export const Fonts = {
   sans: 'Geist',
+  /** Chữ đều nét cho mã lớp, mã người dùng (`font-mono` của web). */
+  mono: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'ui-monospace, monospace' }),
   hanzi: Platform.select({
     ios: 'Songti SC',
     android: 'serif',

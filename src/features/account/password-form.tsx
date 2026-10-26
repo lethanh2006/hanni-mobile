@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { AppText, Button, ErrorNote, TextField } from '@/components/ui';
-import { Spacing } from '@/constants/theme';
+import { AppText, Button, ErrorNote, Icon, TextField } from '@/components/ui';
 import { api, errorMessage } from '@/lib/api';
 
-/** Đổi mật khẩu; tài khoản đăng nhập bằng Google chưa có mật khẩu thì đặt mới. */
+/** Đổi mật khẩu (`PasswordForm` ở `/account` của web); tài khoản đăng nhập bằng Google thì đặt mới. */
 export function PasswordForm({ hasPassword, onChanged }: { hasPassword: boolean; onChanged: () => void }) {
   const [open, setOpen] = useState(false);
   const [current, setCurrent] = useState('');
@@ -38,17 +37,25 @@ export function PasswordForm({ hasPassword, onChanged }: { hasPassword: boolean;
   if (!open) {
     return (
       <View style={styles.wrap}>
-        <Button title={hasPassword ? 'Đổi mật khẩu' : 'Đặt mật khẩu'} icon="lock" variant="secondary" onPress={() => setOpen(true)} />
+        <Button
+          title={hasPassword ? 'Đổi mật khẩu' : 'Đặt mật khẩu'}
+          leftIcon="lock"
+          variant="secondary"
+          onPress={() => setOpen(true)}
+          style={styles.self}
+        />
         {done && (
-          <AppText variant="small" color="good">
-            ✓ Đã cập nhật mật khẩu.
-          </AppText>
+          <View style={styles.done}>
+            <Icon name="check" size={15} color="good" />
+            <AppText color="good">Đã cập nhật mật khẩu.</AppText>
+          </View>
         )}
       </View>
     );
   }
+
   return (
-    <View style={styles.wrap}>
+    <View style={styles.form}>
       {hasPassword && (
         <TextField label="Mật khẩu hiện tại" secure value={current} onChangeText={setCurrent} autoComplete="current-password" />
       )}
@@ -56,15 +63,25 @@ export function PasswordForm({ hasPassword, onChanged }: { hasPassword: boolean;
       <TextField label="Nhập lại mật khẩu mới" secure value={confirm} onChangeText={setConfirm} autoComplete="new-password" />
       {error && <ErrorNote>{error}</ErrorNote>}
       <View style={styles.row}>
-        <Button title="Lưu mật khẩu" loading={busy} onPress={submit} style={styles.flex} />
-        <Button title="Huỷ" variant="ghost" onPress={() => setOpen(false)} />
+        <Button title={busy ? 'Đang lưu…' : 'Lưu mật khẩu'} disabled={busy} onPress={submit} />
+        <Button
+          title="Huỷ"
+          variant="ghost"
+          disabled={busy}
+          onPress={() => {
+            setOpen(false);
+            setError(null);
+          }}
+        />
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: Spacing.md },
-  row: { flexDirection: 'row', gap: Spacing.sm },
-  flex: { flex: 1 },
+  wrap: { marginTop: 20, gap: 8 },
+  self: { alignSelf: 'flex-start' },
+  done: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  form: { marginTop: 20, gap: 12 },
+  row: { flexDirection: 'row', gap: 12 },
 });
