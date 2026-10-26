@@ -7,15 +7,15 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  TextInput,
   View,
   type ScrollViewInstance,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import useSWR from 'swr';
 
+import { ChatComposer } from '@/components/chat-composer';
 import { AppText, Button, ErrorNote, Icon, IconTile, Loading } from '@/components/ui';
-import { alpha, Fonts } from '@/constants/theme';
+import { alpha } from '@/constants/theme';
 import { ChatBubble } from '@/features/roleplay/chat-bubble';
 import { SimpleMarkdown } from '@/features/roleplay/simple-markdown';
 import { useTheme } from '@/hooks/use-theme';
@@ -55,7 +55,6 @@ export default function RoleplayChatScreen() {
   const [ending, setEnding] = useState(false);
   // Mặc định đọc to câu trả lời — luyện nói mà chỉ đọc chữ thì mất nửa bài tập nghe.
   const [speakOn, setSpeakOn] = useState(readSpeak);
-  const [focused, setFocused] = useState(false);
   const scroll = useRef<ScrollViewInstance>(null);
 
   useEffect(() => () => stopAudio(), []);
@@ -129,9 +128,6 @@ export default function RoleplayChatScreen() {
     await api.del(`/roleplay/sessions/${id}`).catch(() => undefined);
     router.back();
   }
-
-  const length = input.length;
-  const canSend = input.trim().length > 0 && !sending;
 
   return (
     <KeyboardAvoidingView
@@ -233,8 +229,15 @@ export default function RoleplayChatScreen() {
             </View>
           ) : null}
 
-          <View style={[styles.composer, { borderColor: theme.border, backgroundColor: theme.surface, paddingBottom: insets.bottom + 12 }]}>
-            <View style={styles.composerRow}>
+          <ChatComposer
+            value={input}
+            onChange={setInput}
+            onSubmit={() => void send()}
+            maxLength={MAX_LENGTH}
+            placeholder="Nhập tiếng Trung…"
+            busy={sending}
+            bottomInset={insets.bottom}
+            before={
               <Pressable
                 onPress={() => void getHint()}
                 disabled={hinting || sending}
@@ -242,44 +245,8 @@ export default function RoleplayChatScreen() {
                 style={[styles.square, { backgroundColor: theme.surface2 }, (hinting || sending) && styles.faded]}>
                 <Icon name="spark" size={18} color="accent" />
               </Pressable>
-              <TextInput
-                value={input}
-                onChangeText={setInput}
-                placeholder="Nhập tiếng Trung…"
-                placeholderTextColor={theme.muted}
-                maxLength={MAX_LENGTH}
-                multiline
-                numberOfLines={1}
-                onFocus={() => setFocused(true)}
-                onBlur={() => setFocused(false)}
-                style={[
-                  styles.input,
-                  {
-                    color: theme.text,
-                    borderColor: focused ? theme.primary : alpha(theme.border, 0.8),
-                    backgroundColor: focused ? theme.surface : alpha(theme.surface, 0.8),
-                  },
-                ]}
-              />
-              <Pressable
-                onPress={() => void send()}
-                disabled={!canSend}
-                accessibilityLabel="Gửi"
-                style={[styles.square, { backgroundColor: theme.primary }, !canSend && styles.faded]}>
-                <Icon name="arrow" size={18} color="primaryText" />
-              </Pressable>
-            </View>
-            {length > 0 && (
-              <AppText
-                variant="caption"
-                color={length >= MAX_LENGTH ? 'danger' : length >= MAX_LENGTH * 0.9 ? 'warn' : 'muted'}
-                style={styles.counter}>
-                {length >= MAX_LENGTH
-                  ? `Đã tới giới hạn ${MAX_LENGTH.toLocaleString('vi-VN')} ký tự`
-                  : `${length.toLocaleString('vi-VN')}/${MAX_LENGTH.toLocaleString('vi-VN')} ký tự`}
-              </AppText>
-            )}
-          </View>
+            }
+          />
         </>
       )}
     </KeyboardAvoidingView>
@@ -316,24 +283,8 @@ const styles = StyleSheet.create({
   },
   hintVi: { marginTop: 2 },
   errorWrap: { paddingHorizontal: 16, paddingBottom: 8 },
-  composer: { borderTopWidth: 1, paddingHorizontal: 12, paddingTop: 12 },
-  composerRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
   square: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   faded: { opacity: 0.45 },
-  input: {
-    flex: 1,
-    minWidth: 0,
-    minHeight: 44,
-    maxHeight: 132,
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontFamily: Fonts.sans,
-    fontSize: 14,
-    lineHeight: 24,
-  },
-  counter: { marginTop: 6, textAlign: 'right' },
   feedback: { padding: 20, gap: 16 },
   feedbackTitle: { fontSize: 18, lineHeight: 26 },
   feedbackBox: { borderWidth: 1, borderRadius: 16, padding: 16 },
