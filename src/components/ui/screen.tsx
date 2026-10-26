@@ -1,5 +1,13 @@
-import type { ReactNode } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import type { ReactNode, Ref } from 'react';
+import {
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  View,
+  type ScrollViewInstance,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/hooks/use-theme';
@@ -10,6 +18,7 @@ import { useTheme } from '@/hooks/use-theme';
  * - Màn toàn màn hình (không thanh trên, vd phiên học) truyền `safeTop` để chừa tai thỏ.
  * - Có `onRefresh` thì kéo xuống để tải lại.
  * - `scroll={false}` cho màn tự quản lý cuộn (vd danh sách dài dùng FlatList).
+ * - `scrollRef` để cuộn tới 1 mục (vd mục lục trang từ), `stickyHeaderIndices` để dính 1 khối con lên đầu khi cuộn.
  */
 export function Screen({
   children,
@@ -18,6 +27,8 @@ export function Screen({
   refreshing = false,
   onRefresh,
   contentStyle,
+  scrollRef,
+  stickyHeaderIndices,
 }: {
   children: ReactNode;
   scroll?: boolean;
@@ -25,6 +36,8 @@ export function Screen({
   refreshing?: boolean;
   onRefresh?: () => void;
   contentStyle?: StyleProp<ViewStyle>;
+  scrollRef?: Ref<ScrollViewInstance>;
+  stickyHeaderIndices?: number[];
 }) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -35,6 +48,8 @@ export function Screen({
   }
   return (
     <ScrollView
+      ref={scrollRef}
+      stickyHeaderIndices={stickyHeaderIndices}
       style={[styles.fill, { backgroundColor: theme.background }]}
       contentContainerStyle={padding}
       // Thanh trên/header đã tự chừa tai thỏ — để iOS chèn thêm là cách trên 2 lần.

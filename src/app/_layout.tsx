@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { AppState, useColorScheme } from 'react-native';
 import { SWRConfig, type SWRConfiguration } from 'swr';
 
+import { StackHeader } from '@/components/app-shell/stack-header';
 import { Colors, Fonts } from '@/constants/theme';
 import { NotificationCenter } from '@/features/notifications/notification-center';
 import { fetcher } from '@/lib/api';
@@ -55,9 +56,7 @@ export default function RootLayout() {
           <NotificationCenter />
           <Stack
             screenOptions={{
-              headerBackButtonDisplayMode: 'minimal',
-              headerStyle: { backgroundColor: colors.surface },
-              headerTintColor: colors.text,
+              header: (props) => <StackHeader {...props} />,
               headerTitleStyle: { fontFamily: Fonts.sans, fontWeight: '600', fontSize: 16 },
               contentStyle: { backgroundColor: colors.background },
             }}>
