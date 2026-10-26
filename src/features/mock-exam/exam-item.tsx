@@ -215,6 +215,7 @@ export function ExamItem({
   flagged,
   onFlag,
   itemRef,
+  onAsk,
 }: {
   part: MockPart;
   item: MockItem;
@@ -227,6 +228,8 @@ export function ExamItem({
   flagged?: boolean;
   onFlag?: () => void;
   itemRef?: Ref<HostInstance>;
+  /** Chữa bài: hỏi trợ lý AI về câu này (chỉ người đã đăng nhập). */
+  onAsk?: () => void;
 }) {
   const theme = useTheme();
   const labels = review?.pictureLabels;
@@ -389,7 +392,7 @@ export function ExamItem({
           />
         )}
 
-        {review && <ReviewNotes review={review} pinyin={pinyin} />}
+        {review && <ReviewNotes review={review} pinyin={pinyin} onAsk={onAsk} />}
       </View>
     </View>
   );

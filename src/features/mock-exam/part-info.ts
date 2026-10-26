@@ -1,4 +1,4 @@
-import type { MockAnswer, MockPaper, MockPartType, MockReviewItem, MockSectionKind } from '@/lib/types';
+import type { MockAnswer, MockItem, MockPaper, MockPart, MockPartType, MockReviewItem, MockSectionKind } from '@/lib/types';
 
 import { normalizeSentence, officialIndexes } from './labels';
 
@@ -110,4 +110,64 @@ export function isRightAnswer(r: Pick<MockReviewItem, 'answer' | 'alternatives'>
     );
   }
   return v === r.answer;
+}
+
+/**
+ * Câu hỏi gửi trợ lý AI cho 1 câu đã chữa (`assistantPrompt` của web): nội dung câu, đáp án đúng và đáp án đã chọn —
+ * trợ lý trả lời đúng chỗ vướng, không phải hỏi lại. Dùng chung màn kết quả đề và trang luyện từng dạng bài.
+ */
+export function assistantPrompt({
+  title,
+  section,
+  officialPart,
+  part,
+  item,
+  review,
+  picked,
+}: {
+  title: string;
+  section: MockSectionKind;
+  /** Phần đề chính thức (1-based). */
+  officialPart: number;
+  part: MockPart;
+  item: MockItem;
+  review: MockReviewItem;
+  picked: MockAnswer | null;
+}): string {
+  const describe = (v: MockAnswer | null) => {
+    if (v === null) return 'bỏ trống';
+    if (typeof v === 'string') return `"${v}"`;
+    if (typeof v === 'boolean')
+      return part.type === 'judge'
+        ? v
+          ? '✓ (khớp với tranh)'
+          : '✗ (không khớp tranh)'
+        : v
+          ? '✓ (câu ★ đúng)'
+          : '✗ (câu ★ sai)';
+    if (item.choices) return `chữ ${item.choices[v]}`;
+    const option = item.options?.[v] ?? part.options?.[v];
+    const picture = review.pictureLabels?.[v];
+    return `${String.fromCharCode(65 + v)}${option ? ` (${option.zh})` : picture ? ` (tranh: ${picture})` : ''}`;
+  };
+  const sentence = review.transcript?.length
+    ? `Lời thoại: ${review.transcript.map((l) => l.zh).join(' ')}`
+    : item.pieces
+      ? `Các từ cần sắp xếp: ${item.pieces.map((x) => x.zh).join(' / ')}`
+      : item.blank
+        ? `Câu: ${item.blank.before.zh}（${item.pinyin ?? ' '}）${item.blank.after.zh}`
+        : item.text
+          ? `Đoạn: ${item.text.zh}`
+          : '';
+  const star = item.statement ?? item.question;
+  return [
+    `Giải thích giúp mình câu ${item.no} — ${title}, phần ${SECTION_SHORT[section]} ${officialPart} (${partInfo(section, part.type).label}).`,
+    sentence.slice(0, 400),
+    star ? `★ ${star.zh}` : '',
+    part.type === 'judge' && review.pictureLabels?.[0] ? `Tranh: ${review.pictureLabels[0]}.` : '',
+    `Đáp án đúng: ${describe(review.answer)}. Mình chọn: ${describe(picked)}.`,
+    'Vì sao đáp án đúng là vậy, dựa vào từ khoá nào? Ngắn gọn thôi nhé.',
+  ]
+    .filter(Boolean)
+    .join('\n');
 }

@@ -8,6 +8,7 @@ import { AppText, Button, Hanzi, Icon, ShareButton } from '@/components/ui';
 import { alpha } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { WEB_ORIGIN } from '@/lib/api';
+import { askAssistant, useShowAssistant } from '@/lib/assistant';
 import { addPendingWord } from '@/lib/guest-progress';
 import { addWordToSrs } from '@/lib/hooks';
 import { pairs } from '@/lib/pairs';
@@ -17,7 +18,16 @@ import { ExamBackBar } from './exam-chrome';
 import { ExamItem, SharedBoard } from './exam-item';
 import { mmss, officialIndexes, PART_ZH, SECTION_VI } from './labels';
 import { PaperView } from './paper-view';
-import { isRightAnswer, partCta, partInfo, partScores, practiceHref, SECTION_SHORT, weakest } from './part-info';
+import {
+  assistantPrompt,
+  isRightAnswer,
+  partCta,
+  partInfo,
+  partScores,
+  practiceHref,
+  SECTION_SHORT,
+  weakest,
+} from './part-info';
 
 /** Từ thêm vào ôn tập là đến hạn ôn NGAY — lưu cả đống một lúc thì hàng ôn ngợp. Mỗi lần lưu tối đa 20. */
 const SAVE_MAX = 20;
@@ -72,6 +82,30 @@ export function ExamResult({
   const pct = Math.round((result.score / result.maxScore) * 100);
   const practiceDone = Object.keys(practice).length;
   const practiceRight = wrongItems.filter((r) => isRightAnswer(r, practice[r.no] ?? null)).length;
+  // Phòng thi nằm ngoài khung app nên không có sẵn trợ lý — bật riêng ở màn kết quả cho người đã đăng nhập.
+  useShowAssistant(!isGuest);
+
+  /** Câu hỏi gửi trợ lý AI cho 1 câu đã chữa: nội dung câu, đáp án đúng và đáp án mình chọn. */
+  function askAbout(no: number, picked: MockAnswer | null) {
+    for (const section of paper.sections)
+      for (const [pi, part] of section.parts.entries()) {
+        const item = part.items.find((it) => it.no === no);
+        const r = review.get(no);
+        if (!item || !r) continue;
+        askAssistant(
+          assistantPrompt({
+            title: paper.title,
+            section: section.kind,
+            officialPart: officialIndexes(section.parts)[pi] + 1,
+            part,
+            item,
+            review: r,
+            picked,
+          }),
+        );
+        return;
+      }
+  }
 
   function scrollToView(view: HostInstance | null | undefined) {
     const content = contentRef.current;
@@ -362,6 +396,7 @@ export function ExamResult({
                               onChange={done ? undefined : (v) => v !== null && setPractice((p) => ({ ...p, [item.no]: v }))}
                               review={done ? { ...r, given: picked, correct: isRightAnswer(r, picked) } : undefined}
                               pinyin={pinyin}
+                              onAsk={isGuest || !done ? undefined : () => askAbout(item.no, picked)}
                             />
                           );
                         })}
@@ -463,6 +498,7 @@ export function ExamResult({
                     review={review}
                     only={filter === 'wrong' ? wrongSet : undefined}
                     compactHead
+                    onAsk={isGuest ? undefined : (no) => askAbout(no, answers[no - 1] ?? null)}
                     itemRef={(no) => (view) => {
                       if (view) itemViews.current.set(no, view);
                       else itemViews.current.delete(no);

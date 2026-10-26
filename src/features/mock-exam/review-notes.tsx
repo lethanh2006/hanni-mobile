@@ -1,14 +1,18 @@
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText, Hanzi, Icon } from '@/components/ui';
+import { alpha } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import type { MockReviewItem } from '@/lib/types';
 
 import { SPEAKER_VI } from './labels';
 import { RubyText } from './ruby-text';
 
-/** Phần chữa 1 câu (`ReviewNotes` của web): lời thoại, bản dịch, giải thích và từ vựng kèm âm Hán Việt. */
-export function ReviewNotes({ review, pinyin }: { review: MockReviewItem; pinyin: boolean }) {
+/**
+ * Phần chữa 1 câu (`ReviewNotes` của web): lời thoại, bản dịch, giải thích, từ vựng kèm âm Hán Việt và (người đã đăng
+ * nhập) nút hỏi trợ lý AI đúng câu này.
+ */
+export function ReviewNotes({ review, pinyin, onAsk }: { review: MockReviewItem; pinyin: boolean; onAsk?: () => void }) {
   const theme = useTheme();
   return (
     <View style={[styles.box, { backgroundColor: theme.surface2 }]}>
@@ -50,6 +54,17 @@ export function ReviewNotes({ review, pinyin }: { review: MockReviewItem; pinyin
           ))}
         </View>
       )}
+      {/* Lớp cuối của chữa bài kiểu Migii HSK: hỏi trợ giảng AI đúng câu này. */}
+      {onAsk && (
+        <Pressable
+          onPress={onAsk}
+          style={({ pressed }) => [styles.ask, { backgroundColor: alpha(theme.primary, pressed ? 0.15 : 0.1) }]}>
+          <Icon name="message" size={14} color="primary" />
+          <AppText variant="caption" weight="600" color="primary">
+            Hỏi trợ lý Hanni về câu này
+          </AppText>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -74,4 +89,13 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   wordZh: { fontWeight: '600' },
+  ask: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
 });

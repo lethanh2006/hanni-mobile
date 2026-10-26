@@ -7,9 +7,11 @@ import { AppText, Button, EmptyState, Hanzi, Icon, Loading, Screen } from '@/com
 import { alpha, tintPanel } from '@/constants/theme';
 import { ExamItem, SharedBoard } from '@/features/mock-exam/exam-item';
 import { PART_ZH, SECTION_VI } from '@/features/mock-exam/labels';
-import { partInfo, SECTION_SHORT } from '@/features/mock-exam/part-info';
+import { assistantPrompt, partInfo, SECTION_SHORT } from '@/features/mock-exam/part-info';
 import { useTheme } from '@/hooks/use-theme';
 import { api } from '@/lib/api';
+import { askAssistant } from '@/lib/assistant';
+import { useAuth } from '@/lib/auth';
 import type { MockAnswer, MockPracticeSet, MockPracticeSetMeta, MockReviewItem } from '@/lib/types';
 
 const keyOf = (examSlug: string, no: number) => `${examSlug}:${no}`;
@@ -20,6 +22,7 @@ const keyOf = (examSlug: string, no: number) => `${examSlug}:${no}`;
  */
 export default function PracticeSetScreen() {
   const theme = useTheme();
+  const { user } = useAuth();
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const { data: set, error } = useSWR<MockPracticeSet>(`/mock-exams/practice/${slug}`);
   const { data: all } = useSWR<MockPracticeSetMeta[]>('/mock-exams/practice');
@@ -217,6 +220,22 @@ export default function PracticeSetScreen() {
                     }
                     review={review}
                     pinyin={showPinyin}
+                    onAsk={
+                      user && review
+                        ? () =>
+                            askAssistant(
+                              assistantPrompt({
+                                title: g.examTitle,
+                                section: set.section,
+                                officialPart: set.part,
+                                part: g.part,
+                                item,
+                                review,
+                                picked: answers[k] ?? null,
+                              }),
+                            )
+                        : undefined
+                    }
                   />
                   {typed && !review && (
                     <Button

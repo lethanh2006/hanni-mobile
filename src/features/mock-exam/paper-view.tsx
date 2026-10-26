@@ -36,6 +36,7 @@ export function PaperView({
   flags,
   onFlag,
   itemRef,
+  onAsk,
   compactHead = false,
 }: {
   paper: MockPaper;
@@ -47,6 +48,8 @@ export function PaperView({
   flags?: number[];
   onFlag?: (no: number) => void;
   itemRef?: (no: number) => (view: HostInstance | null) => void;
+  /** Chữa bài: nút hỏi trợ lý AI dưới mỗi câu. */
+  onAsk?: (no: number) => void;
   /** Chữa bài: đầu mỗi phần chỉ 1 dòng "Nghe hiểu · 第一部分", không có khung hướng dẫn. */
   compactHead?: boolean;
 }) {
@@ -100,6 +103,7 @@ export function PaperView({
                     flagged={flags?.includes(item.no)}
                     onFlag={onFlag && (() => onFlag(item.no))}
                     itemRef={itemRef?.(item.no)}
+                    onAsk={onAsk && (() => onAsk(item.no))}
                   />
                 ))}
               </View>
