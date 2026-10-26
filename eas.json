@@ -34,7 +34,8 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
-      }
+      },
+      "channel": "production-apk"
     }
   },
   "submit": {
