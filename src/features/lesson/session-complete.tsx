@@ -1,9 +1,9 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { Share, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { AppText, Button, Card, Screen } from '@/components/ui';
-import { Radius, Spacing } from '@/constants/theme';
+import { AppText, Button, Card, Hanzi, Icon, Screen, ShareButton } from '@/components/ui';
+import { alpha } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { WEB_ORIGIN } from '@/lib/api';
 import { goBack } from '@/lib/navigation';
@@ -38,22 +38,16 @@ export function SessionComplete({
   const total = session.words.length;
   const pct = Math.round(outcome.accuracy * 100);
 
-  function share() {
-    void Share.share({
-      message: `Mình vừa học xong ${total} từ tiếng Trung (${session.lesson.title}) trên Hanni — học qua âm Hán Việt, nhớ nhanh hơn hẳn. Thử bài 1 miễn phí nhé: ${WEB_ORIGIN}`,
-    });
-  }
-
   return (
-    <Screen safeTop contentStyle={styles.center}>
+    <Screen safeTop contentStyle={styles.page}>
       <Image source={require('@/assets/images/mascot.png')} style={styles.mascot} contentFit="contain" />
-      <AppText variant="label" color="primary">
-        Hoàn thành bài {session.lesson.orderIndex}/{session.lesson.totalLessons}
+      <AppText variant="caption" weight="700" color="primary" style={styles.eyebrow}>
+        HOÀN THÀNH BÀI {session.lesson.orderIndex}/{session.lesson.totalLessons}
       </AppText>
-      <AppText variant="title" center>
+      <AppText weight="800" center style={styles.title}>
         {session.lesson.title}
       </AppText>
-      <AppText color="muted" center>
+      <AppText color="muted" center style={styles.praise}>
         {praise(pct)}
       </AppText>
 
@@ -67,7 +61,7 @@ export function SessionComplete({
             <AppText variant="caption" color="muted" center>
               {s.label}
             </AppText>
-            <AppText variant="heading" center>
+            <AppText weight="700" center style={styles.statValue}>
               {s.value}
             </AppText>
           </Card>
@@ -75,12 +69,15 @@ export function SessionComplete({
       </View>
 
       {result && result.currentStreak > 0 && (
-        <AppText bold color="danger">
-          🔥 Chuỗi {result.currentStreak} ngày học
-        </AppText>
+        <View style={[styles.streak, { backgroundColor: alpha(theme.danger, 0.1) }]}>
+          <Icon name="flame" size={16} color="danger" />
+          <AppText weight="600" color="danger">
+            Chuỗi {result.currentStreak} ngày học
+          </AppText>
+        </View>
       )}
       {outcome.saveError && (
-        <AppText variant="small" color="danger" center>
+        <AppText color="danger" center style={styles.saveError}>
           Chưa lưu được kết quả bài này — bạn kiểm tra kết nối mạng nhé.
         </AppText>
       )}
@@ -88,9 +85,11 @@ export function SessionComplete({
       <View style={styles.words}>
         {session.words.map((w) => (
           <View key={w.id} style={[styles.wordChip, { borderColor: theme.border, backgroundColor: theme.surface }]}>
-            <AppText variant="heading">{w.simplified}</AppText>
-            <AppText variant="caption" color="muted">
-              {shortMeaning(w.meaningVi ?? '')}
+            <AppText>
+              <Hanzi size={18}>{w.simplified}</Hanzi>{' '}
+              <AppText variant="caption" color="muted">
+                {shortMeaning(w.meaningVi ?? '')}
+              </AppText>
             </AppText>
           </View>
         ))}
@@ -107,7 +106,13 @@ export function SessionComplete({
                 onPress={() => router.replace(`/bai-hoc/${next.id}`)}
               />
             )}
-            <Button title="Đã có tài khoản? Đăng nhập để lưu" variant="ghost" onPress={() => router.replace('/login')} />
+            <AppText variant="caption" color="muted" center>
+              Đã có tài khoản?{' '}
+              <AppText variant="caption" color="primary" onPress={() => router.replace('/login')}>
+                Đăng nhập để lưu
+              </AppText>{' '}
+              · Toàn bộ bài học miễn phí.
+            </AppText>
           </>
         ) : (
           <>
@@ -120,21 +125,41 @@ export function SessionComplete({
             ) : (
               <Button title="Bạn đã học hết cấp này — xem lộ trình" icon="arrow" onPress={goBack} />
             )}
+            {/* Web có thêm "Đọc hội thoại dùng N từ vừa học" (Bài đọc AI) — app chưa có màn đó. */}
             <Button title="Về lộ trình" variant="ghost" onPress={goBack} />
           </>
         )}
-        <Button title="Chia sẻ với bạn bè" variant="secondary" onPress={share} />
       </View>
+
+      <ShareButton
+        message={`Mình vừa học xong ${total} từ tiếng Trung (${session.lesson.title}) trên Hanni — học qua âm Hán Việt, nhớ nhanh hơn hẳn. Thử bài 1 miễn phí nhé: ${WEB_ORIGIN}`}
+        style={styles.share}
+      />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  center: { alignItems: 'center' },
-  mascot: { width: 180, height: 150 },
-  stats: { flexDirection: 'row', gap: Spacing.md, alignSelf: 'stretch' },
-  stat: { flex: 1, paddingHorizontal: Spacing.sm, gap: 2 },
-  words: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: Spacing.sm },
-  wordChip: { borderWidth: 1, borderRadius: Radius.md, paddingHorizontal: 12, paddingVertical: 6, alignItems: 'center' },
-  actions: { alignSelf: 'stretch', gap: Spacing.md },
+  page: { alignItems: 'center', gap: 0, paddingTop: 40 },
+  mascot: { width: 171, height: 144 },
+  eyebrow: { marginTop: 20, letterSpacing: 0.6 },
+  title: { marginTop: 6, fontSize: 24, lineHeight: 32, letterSpacing: -0.6 },
+  praise: { marginTop: 8 },
+  stats: { marginTop: 28, flexDirection: 'row', gap: 12, alignSelf: 'stretch' },
+  stat: { flex: 1, paddingHorizontal: 8, paddingVertical: 16, gap: 0 },
+  statValue: { marginTop: 4, fontSize: 20, lineHeight: 28 },
+  streak: {
+    marginTop: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: 999,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  saveError: { marginTop: 20 },
+  words: { marginTop: 28, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8 },
+  wordChip: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6 },
+  actions: { marginTop: 32, alignSelf: 'stretch', gap: 12 },
+  share: { marginTop: 24, alignSelf: 'center' },
 });
