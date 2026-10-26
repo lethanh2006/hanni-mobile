@@ -13,10 +13,13 @@ import { Icon } from './icon';
 export function AudioButton({
   src,
   big = false,
+  tint = false,
   size = 18,
 }: {
   src: string | null | undefined;
   big?: boolean;
+  /** Nền đỏ nhạt + loa đỏ (`bg-primary/6 text-primary` — nút loa ở danh sách từ của bài). */
+  tint?: boolean;
   size?: number;
 }) {
   const theme = useTheme();
@@ -30,11 +33,12 @@ export function AudioButton({
       style={({ pressed }) => [
         big ? styles.big : styles.small,
         big && { backgroundColor: alpha(theme.primary, 0.1), borderColor: alpha(theme.primary, 0.2) },
-        !big && pressed && { backgroundColor: theme.surface2 },
+        tint && { backgroundColor: alpha(theme.primary, 0.06) },
+        !big && pressed && { backgroundColor: tint ? alpha(theme.primary, 0.12) : theme.surface2 },
         pressed && big && { transform: [{ scale: 0.96 }] },
       ]}>
       {({ pressed }) => (
-        <Icon name="sound" size={big ? 36 : size} color={big || pressed ? 'primary' : 'muted'} />
+        <Icon name="sound" size={big ? 36 : size} color={big || tint || pressed ? 'primary' : 'muted'} />
       )}
     </Pressable>
   );

@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { AppText, Card, ChipRow, TextLink } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
-import { useCurrentLesson, useWords } from '@/lib/hooks';
+import { useCurrentLesson, useLesson, useWords } from '@/lib/hooks';
 import { HSK_LEVELS, hskLabel } from '@/lib/hsk';
 import type { Word } from '@/lib/types';
 
@@ -23,12 +23,23 @@ export interface WordScope {
  * Bộ từ để luyện: mặc định ĐÚNG BÀI ĐANG HỌC DỞ (khách không có thì theo cấp); người học
  * chủ động chọn cấp thì luyện tự do theo cấp + nhóm 24 từ (như `PracticeLibrary` của web).
  */
-export function usePracticeWords(): { words: Word[]; loading: boolean; error: boolean; scope: WordScope } {
+export function usePracticeWords(lessonId?: string): {
+  words: Word[];
+  loading: boolean;
+  error: boolean;
+  scope: WordScope;
+} {
   const current = useCurrentLesson();
+  // `?lesson=` (nút "Luyện nghe" ở trang bài học) thắng bài đang học dở.
+  const chosen = useLesson(lessonId ?? null);
   const [freeMode, setFreeMode] = useState(false);
   const [level, setLevel] = useState(1);
   const [page, setPage] = useState(1);
-  const lesson = !freeMode ? current.data : null;
+  const lesson = freeMode
+    ? null
+    : lessonId
+      ? { id: lessonId, title: chosen.data?.lesson.title ?? '' }
+      : current.data;
   const words = useWords(lesson ? { lessonId: lesson.id } : { level, page });
 
   return {
@@ -37,7 +48,7 @@ export function usePracticeWords(): { words: Word[]; loading: boolean; error: bo
     error: Boolean(words.error),
     scope: {
       lessonTitle: lesson?.title ?? null,
-      canUseLesson: Boolean(current.data),
+      canUseLesson: Boolean(lessonId || current.data),
       level,
       page,
       totalPages: words.data?.totalPages ?? 1,

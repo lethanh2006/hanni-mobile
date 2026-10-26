@@ -1,4 +1,4 @@
-import { router, Stack } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -14,7 +14,8 @@ import type { Word } from '@/lib/types';
 /** Luyện nghe: nghe 1 từ, gõ lại bằng pinyin hoặc chữ Hán. Khách luyện được, chỉ không lưu lượt luyện. */
 export default function ListeningScreen() {
   const { user } = useAuth();
-  const { words, loading, error, scope } = usePracticeWords();
+  const { lesson } = useLocalSearchParams<{ lesson?: string }>();
+  const { words, loading, error, scope } = usePracticeWords(lesson);
 
   return (
     <Screen>
