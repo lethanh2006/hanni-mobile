@@ -3,14 +3,18 @@
  * Phiên đăng nhập vẫn là cookie như web: fetch của React Native tự lưu cookie
  * mà server gửi về và gửi kèm ở các request sau (`credentials: 'include'`).
  */
-export const API_BASE =
-  process.env.EXPO_PUBLIC_API_URL ?? 'https://hanni-api.dangpham.id.vn/api';
+import { Platform } from 'react-native';
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://hanni-api.dangpham.id.vn/api';
+
+/** Web khi dev (localhost) bị server chặn CORS nên gọi qua proxy `/api` của Metro (metro.config.js). */
+export const API_BASE = Platform.OS === 'web' && __DEV__ ? '/api' : API_URL;
 
 /** Trang web Hanni — dùng cho link chia sẻ (người nhận chưa cài app vẫn mở được). */
 export const WEB_ORIGIN = 'https://hanni.dangpham.id.vn';
 
 /** Gốc của server (bỏ "/api") — dùng cho file tĩnh như audio phát âm. */
-export const SERVER_ORIGIN = API_BASE.replace(/\/api\/?$/, '');
+export const SERVER_ORIGIN = API_URL.replace(/\/api\/?$/, '');
 
 export class ApiError extends Error {
   status: number;
