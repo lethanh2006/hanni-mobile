@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, BackHandler, ScrollView, StyleSheet, View } from 'react-native';
+import { BackHandler, Modal, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { mutate } from 'swr';
 
-import { Spacing } from '@/constants/theme';
+import { AppText, Button } from '@/components/ui';
 import { useTheme } from '@/hooks/use-theme';
 import { api } from '@/lib/api';
 import { playWord } from '@/lib/audio';
@@ -42,11 +42,28 @@ function refreshAfterLesson() {
   );
 }
 
-function confirmExit() {
-  Alert.alert('Dừng bài học?', 'Còn một chút nữa thôi. Nếu thoát bây giờ, kết quả bài này sẽ chưa được lưu.', [
-    { text: 'Học tiếp', style: 'cancel' },
-    { text: 'Thoát', style: 'destructive', onPress: goBack },
-  ]);
+/** Hỏi lại trước khi bỏ bài đang học dở (hộp "Dừng bài học?" của web — điện thoại nằm sát đáy). */
+function ExitDialog({ open, onStay }: { open: boolean; onStay: () => void }) {
+  const theme = useTheme();
+  const insets = useSafeAreaInsets();
+  return (
+    <Modal visible={open} transparent animationType="fade" onRequestClose={onStay}>
+      <View style={[styles.backdrop, { paddingBottom: insets.bottom + 16 }]}>
+        <View style={[styles.dialog, { backgroundColor: theme.surface }]}>
+          <AppText weight="700" center style={styles.dialogTitle}>
+            Dừng bài học?
+          </AppText>
+          <AppText color="muted" center style={styles.dialogText}>
+            Còn một chút nữa thôi. Nếu thoát bây giờ, kết quả bài này sẽ chưa được lưu.
+          </AppText>
+          <View style={styles.dialogActions}>
+            <Button title="Học tiếp" onPress={onStay} />
+            <Button title="Thoát" variant="ghost" onPress={goBack} />
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
 }
 
 export function SessionRunner({ session }: { session: LessonSession }) {
@@ -60,6 +77,7 @@ export function SessionRunner({ session }: { session: LessonSession }) {
   const [index, setIndex] = useState(0);
   const [picked, setPicked] = useState<number | null>(null);
   const [finished, setFinished] = useState<SessionResult | null>(null);
+  const [exiting, setExiting] = useState(false);
   const mistakes = useRef(new Map<string, number>());
   const retries = useRef(new Map<string, number>());
   const startedAt = useRef(0);
@@ -72,7 +90,7 @@ export function SessionRunner({ session }: { session: LessonSession }) {
   useEffect(() => {
     if (finished) return;
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      confirmExit();
+      setExiting(true);
       return true;
     });
     return () => sub.remove();
@@ -141,7 +159,7 @@ export function SessionRunner({ session }: { session: LessonSession }) {
       <SessionHeader
         progress={(index / queue.length) * 100}
         caption={`${hskLabel(session.lesson.hskLevel)} · Bài ${session.lesson.orderIndex}: ${session.lesson.title}`}
-        onClose={confirmExit}
+        onClose={() => setExiting(true)}
       />
 
       <ScrollView key={item.key} contentContainerStyle={styles.body}>
@@ -157,12 +175,18 @@ export function SessionRunner({ session }: { session: LessonSession }) {
         )}
       </ScrollView>
 
-      {(step.kind === 'intro' || answered) && <AnswerFooter correct={correct} word={word} onNext={advance} />}
+      {(step.kind === 'intro' || answered) && <AnswerFooter correct={correct} word={word} retry onNext={advance} />}
+      <ExitDialog open={exiting} onStay={() => setExiting(false)} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  body: { padding: Spacing.lg, paddingBottom: 160 },
+  body: { paddingHorizontal: 16, paddingTop: 32, paddingBottom: 160 },
+  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)', padding: 16 },
+  dialog: { borderRadius: 16, padding: 24, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' },
+  dialogTitle: { fontSize: 18, lineHeight: 28 },
+  dialogText: { marginTop: 8 },
+  dialogActions: { marginTop: 20, gap: 8 },
 });

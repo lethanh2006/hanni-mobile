@@ -3,8 +3,8 @@ import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { TonePinyin } from '@/components/tone-pinyin';
-import { AppText, AudioButton } from '@/components/ui';
-import { Radius, Spacing, ToneColors } from '@/constants/theme';
+import { AppText, Hanzi, Icon } from '@/components/ui';
+import { alpha, ToneColors } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { playWord } from '@/lib/audio';
 import { TONE_RULE_TEXT } from '@/lib/tone-rules';
@@ -21,7 +21,26 @@ export function shortMeaning(meaning: string): string {
   return out.length > 48 ? `${out.slice(0, 47).trimEnd()}…` : out;
 }
 
-/** Thẻ giới thiệu từ mới: Hán tự + pinyin tô màu, âm Hán Việt kèm mẹo thanh điệu, nghĩa, câu ví dụ. */
+/** Nút loa tròn nền đỏ nhạt (`SoundButton` của phiên học web): 40px, `big` = 80px ở câu "Bạn nghe thấy từ nào?". */
+function SoundButton({ src, big = false }: { src: string | null; big?: boolean }) {
+  const theme = useTheme();
+  if (!src) return null;
+  return (
+    <Pressable
+      onPress={() => playWord(src)}
+      accessibilityRole="button"
+      accessibilityLabel="Nghe phát âm"
+      style={({ pressed }) => [
+        big ? styles.soundBig : styles.sound,
+        { backgroundColor: alpha(theme.primary, pressed ? 0.15 : 0.1) },
+        pressed && { transform: [{ scale: 0.96 }] },
+      ]}>
+      <Icon name="sound" size={big ? 36 : 18} color="primary" />
+    </Pressable>
+  );
+}
+
+/** Thẻ giới thiệu từ mới: Hán tự + pinyin tô màu theo thanh, âm Hán Việt kèm mẹo thanh điệu, nghĩa, ảnh, câu ví dụ. */
 export function IntroStep({ word }: { word: SessionWord }) {
   const theme = useTheme();
   useEffect(() => {
@@ -33,42 +52,61 @@ export function IntroStep({ word }: { word: SessionWord }) {
 
   return (
     <View style={styles.center}>
-      <View style={[styles.badge, { backgroundColor: theme.primarySoft }]}>
-        <AppText variant="label" color="primary">
-          Từ mới
+      <View style={[styles.badge, { backgroundColor: alpha(theme.primary, 0.1) }]}>
+        <AppText variant="caption" weight="700" color="primary" style={styles.badgeText}>
+          TỪ MỚI
         </AppText>
       </View>
       {word.imageUrl && <Image source={word.imageUrl} style={styles.image} contentFit="cover" />}
       <View style={styles.wordRow}>
         <TonePinyin zh={word.simplified} pinyin={word.pinyin} pinyinNum={word.pinyinNumeric} size="lg" />
-        <AudioButton src={word.audioUrl} />
+        <SoundButton src={word.audioUrl} />
       </View>
-      <AppText variant="title" center>
+      <AppText weight="700" center style={styles.meaning}>
         {word.meaningVi ?? word.meaningEn ?? 'Đang cập nhật nghĩa'}
       </AppText>
 
       {word.hanViet && (
-        <View style={[styles.box, { borderColor: theme.hanviet, backgroundColor: theme.surface }]}>
+        <View
+          style={[
+            styles.box,
+            styles.hanvietBox,
+            { borderColor: alpha(theme.hanviet, 0.2), backgroundColor: alpha(theme.hanviet, 0.05) },
+          ]}>
           <AppText center>
             Âm Hán Việt:{' '}
-            <AppText bold color="hanviet">
+            <AppText weight="700" color="hanviet">
               {word.hanViet}
             </AppText>
           </AppText>
-          {hints.map((h, i) => (
-            <AppText key={`${h.char}-${i}`} variant="small" color="muted" center>
-              {h.hanViet} →{' '}
-              <Text style={{ color: ToneColors[String(h.tone)], fontWeight: '700' }}>thanh {h.tone}</Text>
-              {h.follows ? ` ✓ ${TONE_RULE_TEXT[h.rule] ?? ''}` : ' (ngoại lệ, nhớ riêng nhé)'}
-            </AppText>
-          ))}
+          {hints.length > 0 && (
+            <View style={styles.hints}>
+              {hints.map((h, i) => (
+                <View
+                  key={`${h.char}-${i}`}
+                  accessibilityHint={h.follows ? TONE_RULE_TEXT[h.rule] : 'Ngoại lệ — chữ này không theo quy luật, nhớ riêng nhé'}
+                  style={[styles.hint, { backgroundColor: theme.surface }]}>
+                  <AppText variant="caption" color="muted">
+                    {h.hanViet} →{' '}
+                    <Text style={{ color: ToneColors[String(h.tone)] ?? theme.muted, fontWeight: '700' }}>thanh {h.tone}</Text>
+                    {h.follows ? ' ✓' : ' (ngoại lệ)'}
+                  </AppText>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
       )}
 
       {word.mnemonicVi && (
-        <View style={[styles.box, { borderColor: theme.accent, backgroundColor: theme.surface }]}>
-          <AppText variant="small">
-            <AppText variant="small" bold color="accent">
+        <View
+          style={[
+            styles.box,
+            styles.mnemonic,
+            { borderColor: alpha(theme.accent, 0.25), backgroundColor: alpha(theme.accent, 0.05) },
+          ]}>
+          <AppText style={styles.line24}>
+            <AppText weight="600" color="accent">
               Mẹo nhớ:{' '}
             </AppText>
             {word.mnemonicVi}
@@ -77,21 +115,21 @@ export function IntroStep({ word }: { word: SessionWord }) {
       )}
 
       {example && (
-        <View style={[styles.box, { borderColor: theme.border, backgroundColor: theme.surface2 }]}>
-          <AppText variant="heading">{example.zh}</AppText>
+        <View style={[styles.box, styles.example, { backgroundColor: theme.surface2 }]}>
+          <Hanzi size={18}>{example.zh}</Hanzi>
           {example.pinyin && (
             <AppText variant="caption" color="muted">
               {example.pinyin}
             </AppText>
           )}
-          {example.vi && <AppText variant="small">{example.vi}</AppText>}
+          {example.vi && <AppText style={styles.exampleVi}>{example.vi}</AppText>}
         </View>
       )}
     </View>
   );
 }
 
-/** Danh sách phương án trắc nghiệm. Sau khi chọn: đáp án đúng xanh, phương án chọn sai đỏ. */
+/** Lưới phương án trắc nghiệm (`OptionGrid` của web). Sau khi chọn: đáp án đúng xanh, phương án chọn sai đỏ. */
 export function OptionList({
   options,
   answer,
@@ -112,9 +150,9 @@ export function OptionList({
         const state = picked === null ? 'idle' : i === answer ? 'right' : i === picked ? 'wrong' : 'dim';
         const look =
           state === 'right'
-            ? { borderColor: theme.good, backgroundColor: theme.goodSoft }
+            ? { borderColor: theme.good, backgroundColor: alpha(theme.good, 0.1) }
             : state === 'wrong'
-              ? { borderColor: theme.danger, backgroundColor: theme.dangerSoft }
+              ? { borderColor: theme.danger, backgroundColor: alpha(theme.danger, 0.1) }
               : { borderColor: theme.border, backgroundColor: theme.surface };
         return (
           <Pressable
@@ -122,15 +160,27 @@ export function OptionList({
             disabled={picked !== null}
             onPress={() => onPick(i)}
             accessibilityRole="button"
-            style={[styles.option, look, state === 'dim' && styles.dim]}>
+            style={({ pressed }) => [
+              styles.option,
+              look,
+              state === 'idle' &&
+                pressed && { borderColor: alpha(theme.primary, 0.4), backgroundColor: alpha(theme.primary, 0.05) },
+              state === 'dim' && styles.dim,
+            ]}>
             <View style={[styles.optionIndex, { borderColor: theme.border }]}>
               <AppText variant="caption" color="muted">
                 {i + 1}
               </AppText>
             </View>
-            <AppText variant={hanzi ? 'title' : 'body'} bold={!hanzi} style={styles.flex}>
-              {opt}
-            </AppText>
+            {hanzi ? (
+              <Hanzi size={24} style={styles.flex}>
+                {opt}
+              </Hanzi>
+            ) : (
+              <AppText weight="600" style={styles.flex}>
+                {opt}
+              </AppText>
+            )}
           </Pressable>
         );
       })}
@@ -155,29 +205,28 @@ export function ChoiceStep({
   picked: number | null;
   onPick: (i: number) => void;
 }) {
-  const theme = useTheme();
   useEffect(() => {
     if (step.prompt === 'audio') playWord(word.audioUrl);
   }, [step.prompt, word.audioUrl]);
 
   return (
     <View style={styles.center}>
-      <AppText variant="small" bold color="muted">
+      <AppText weight="600" color="muted">
         {CHOICE_QUESTION[step.prompt]}
       </AppText>
       <View style={styles.prompt}>
         {step.prompt === 'hanzi' && (
-          <View style={styles.wordRow}>
-            <Text style={[styles.bigHanzi, { color: theme.text }]}>{word.simplified}</Text>
-            <AudioButton src={word.audioUrl} />
+          <View style={styles.promptWord}>
+            <Hanzi size={60}>{word.simplified}</Hanzi>
+            <SoundButton src={word.audioUrl} />
           </View>
         )}
         {step.prompt === 'meaning' && (
-          <AppText variant="title" center>
+          <AppText weight="700" center style={styles.meaningPrompt}>
             {shortMeaning(word.meaningVi ?? '')}
           </AppText>
         )}
-        {step.prompt === 'audio' && <AudioButton src={word.audioUrl} big />}
+        {step.prompt === 'audio' && <SoundButton src={word.audioUrl} big />}
       </View>
       <OptionList
         options={step.options}
@@ -203,18 +252,24 @@ export function SentenceStep({
   const fill = picked === null ? null : step.options[step.answer];
   return (
     <View style={styles.center}>
-      <AppText variant="small" bold color="muted">
+      <AppText weight="600" color="muted">
         Điền từ vào chỗ trống
       </AppText>
-      <Text style={[styles.sentence, { color: theme.text }]}>
+      <Hanzi size={30} style={styles.sentence}>
         {step.before}
-        <Text style={{ color: fill ? theme.good : theme.primary, textDecorationLine: 'underline' }}>
-          {fill ?? '　　'}
+        {/* Web là ô gạch chân 64px; chữ lồng trong câu không có viền nên dùng gạch chân màu. */}
+        <Text
+          style={{
+            color: fill ? theme.good : theme.text,
+            textDecorationLine: 'underline',
+            textDecorationColor: fill ? theme.good : theme.primary,
+          }}>
+          {fill ? ` ${fill} ` : '\u3000\u3000\u3000'}
         </Text>
         {step.after}
-      </Text>
+      </Hanzi>
       {step.vi && (
-        <AppText variant="small" color="muted" center>
+        <AppText color="muted" center style={styles.sentenceVi}>
           “{step.vi}”
         </AppText>
       )}
@@ -272,15 +327,15 @@ export function MatchStep({
   }
 
   function tileStyle(wordId: string, selected: boolean, isWrong: boolean) {
-    if (matched.has(wordId)) return [{ borderColor: theme.good, backgroundColor: theme.goodSoft }, styles.dim];
-    if (isWrong) return { borderColor: theme.danger, backgroundColor: theme.dangerSoft };
-    if (selected) return { borderColor: theme.primary, backgroundColor: theme.primarySoft };
+    if (matched.has(wordId)) return [{ borderColor: alpha(theme.good, 0.4), backgroundColor: alpha(theme.good, 0.1) }, styles.matched];
+    if (isWrong) return { borderColor: theme.danger, backgroundColor: alpha(theme.danger, 0.1) };
+    if (selected) return { borderColor: theme.primary, backgroundColor: alpha(theme.primary, 0.1) };
     return { borderColor: theme.border, backgroundColor: theme.surface };
   }
 
   return (
     <View style={styles.center}>
-      <AppText variant="small" bold color="muted">
+      <AppText weight="600" color="muted">
         Ghép từ với nghĩa
       </AppText>
       <View style={styles.matchGrid}>
@@ -295,7 +350,9 @@ export function MatchStep({
                 else setSelZh(t.wordId);
               }}
               style={[styles.tile, tileStyle(t.wordId, selZh === t.wordId, wrong?.zh === t.wordId)]}>
-              <AppText variant="title">{t.label}</AppText>
+              <Hanzi size={24} color={matched.has(t.wordId) ? 'good' : 'text'}>
+                {t.label}
+              </Hanzi>
             </Pressable>
           ))}
         </View>
@@ -309,7 +366,7 @@ export function MatchStep({
                 else setSelVi(t.wordId);
               }}
               style={[styles.tile, tileStyle(t.wordId, selVi === t.wordId, wrong?.vi === t.wordId)]}>
-              <AppText variant="small" bold center>
+              <AppText weight="600" center color={matched.has(t.wordId) ? 'good' : 'text'}>
                 {t.label}
               </AppText>
             </Pressable>
@@ -321,43 +378,51 @@ export function MatchStep({
 }
 
 const styles = StyleSheet.create({
-  center: { alignItems: 'center', gap: Spacing.lg },
-  flex: { flex: 1 },
-  badge: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: Radius.pill },
-  image: { width: 160, height: 112, borderRadius: Radius.lg },
-  wordRow: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.md },
-  box: { alignSelf: 'stretch', borderWidth: 1, borderRadius: Radius.lg, padding: Spacing.md, gap: 4 },
-  prompt: { minHeight: 112, alignItems: 'center', justifyContent: 'center' },
-  bigHanzi: { fontSize: 56, lineHeight: 70 },
-  sentence: { fontSize: 28, lineHeight: 44, textAlign: 'center' },
-  options: { alignSelf: 'stretch', gap: Spacing.md },
+  center: { alignItems: 'center' },
+  flex: { flex: 1, minWidth: 0 },
+  badge: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4 },
+  badgeText: { letterSpacing: 0.3 },
+  image: { marginTop: 20, width: 160, height: 112, borderRadius: 16 },
+  wordRow: { marginTop: 20, flexDirection: 'row', alignItems: 'flex-end', gap: 16 },
+  sound: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  soundBig: { width: 80, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center' },
+  meaning: { marginTop: 20, fontSize: 24, lineHeight: 32 },
+  box: { alignSelf: 'stretch', borderRadius: 16, paddingHorizontal: 16 },
+  hanvietBox: { marginTop: 16, borderWidth: 1, paddingVertical: 12 },
+  hints: { marginTop: 8, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6 },
+  hint: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
+  mnemonic: { marginTop: 12, borderWidth: 1, paddingVertical: 10 },
+  line24: { lineHeight: 24 },
+  example: { marginTop: 16, paddingVertical: 12 },
+  exampleVi: { marginTop: 4 },
+  prompt: { marginVertical: 28, minHeight: 112, alignItems: 'center', justifyContent: 'center' },
+  promptWord: { flexDirection: 'row', alignItems: 'flex-end', gap: 12 },
+  meaningPrompt: { fontSize: 24, lineHeight: 32 },
+  sentence: { marginVertical: 24, lineHeight: 48, textAlign: 'center' },
+  sentenceVi: { marginTop: -8, marginBottom: 24 },
+  options: { alignSelf: 'stretch', gap: 12 },
   option: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
-    minHeight: 60,
+    gap: 12,
+    minHeight: 64,
     borderWidth: 2,
-    borderRadius: Radius.lg,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
-  optionIndex: {
-    width: 28,
-    height: 28,
-    borderWidth: 1,
-    borderRadius: Radius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  optionIndex: { width: 28, height: 28, borderWidth: 1, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   dim: { opacity: 0.5 },
-  matchGrid: { flexDirection: 'row', gap: Spacing.md, alignSelf: 'stretch' },
-  matchColumn: { flex: 1, gap: Spacing.md },
+  matched: { opacity: 0.6 },
+  matchGrid: { marginTop: 24, flexDirection: 'row', gap: 12, alignSelf: 'stretch' },
+  matchColumn: { flex: 1, gap: 12 },
   tile: {
-    minHeight: 60,
+    minHeight: 56,
     borderWidth: 2,
-    borderRadius: Radius.lg,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: Spacing.sm,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
 });

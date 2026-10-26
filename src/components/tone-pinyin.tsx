@@ -1,9 +1,10 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { ToneColors } from '@/constants/theme';
+import { Fonts, ToneColors } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
-const SIZES = { sm: 20, md: 28, lg: 44 } as const;
+/** Cỡ chữ Hán như web: `sm` text-lg, `md` text-2xl, `lg` text-3xl. */
+const SIZES = { sm: 18, md: 24, lg: 30 } as const;
 
 /** Thanh điệu của 1 âm tiết dạng số, vd "hao3" → "3". */
 function toneOf(numSyllable: string): string {
@@ -39,7 +40,9 @@ export function TonePinyin({
             <Text style={[styles.pinyin, { color: ToneColors[tone] ?? theme.muted }]}>
               {isHan ? (marks[i] ?? '') : ' '}
             </Text>
-            <Text style={{ fontSize, lineHeight: fontSize * 1.25, color: theme.text }}>{ch}</Text>
+            <Text style={{ fontFamily: Fonts.hanzi, fontSize, lineHeight: Math.round(fontSize * 1.25), color: theme.text }}>
+              {ch}
+            </Text>
           </View>
         );
       })}
@@ -48,7 +51,7 @@ export function TonePinyin({
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' },
-  cell: { alignItems: 'center', paddingHorizontal: 1 },
-  pinyin: { fontSize: 13, fontWeight: '600' },
+  row: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'flex-end', columnGap: 4, rowGap: 8 },
+  cell: { alignItems: 'center' },
+  pinyin: { marginBottom: 2, fontFamily: Fonts.sans, fontSize: 12, lineHeight: 14 },
 });

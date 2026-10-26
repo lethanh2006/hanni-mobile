@@ -1,54 +1,77 @@
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AppText, Button } from '@/components/ui';
-import { Spacing } from '@/constants/theme';
+import { AppText, Button, Hanzi, Icon } from '@/components/ui';
+import { alpha, mix } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import type { SessionWord } from '@/lib/types';
 
 import { shortMeaning } from './steps';
 
 /**
- * Thanh dưới đáy sau khi trả lời: báo đúng/sai + nhắc lại từ + nút Tiếp tục.
- * `correct = null`: chưa chấm (thẻ giới thiệu từ) hoặc người học bấm "chưa biết".
+ * Thanh dưới đáy sau khi trả lời (`footer` của phiên học web): báo đúng/sai + nhắc lại từ + nút Tiếp tục.
+ * `correct = null`: chưa chấm (thẻ giới thiệu từ) hoặc người học bấm "chưa biết" (`skipped`, kiểm tra trình độ).
+ * `retry`: phiên học — trả lời sai thì nút thành "Đã hiểu" nền đỏ (câu sai sẽ quay lại cuối bài).
  */
 export function AnswerFooter({
   correct,
   word,
   skipped = false,
+  retry = false,
   onNext,
 }: {
   correct: boolean | null;
   word?: Pick<SessionWord, 'simplified' | 'pinyin' | 'meaningVi'>;
   skipped?: boolean;
+  retry?: boolean;
   onNext: () => void;
 }) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const background = correct === null ? theme.surface : correct ? theme.goodSoft : theme.dangerSoft;
-  const verdict = skipped ? 'Không sao — đáp án là:' : correct ? 'Chính xác!' : 'Chưa đúng';
+  const look =
+    correct === null
+      ? { borderColor: theme.border, backgroundColor: theme.surface }
+      : correct
+        ? { borderColor: alpha(theme.good, 0.3), backgroundColor: mix(theme.good, theme.background, 0.1) }
+        : { borderColor: alpha(theme.danger, 0.3), backgroundColor: mix(theme.danger, theme.background, 0.1) };
+  const wrongButton = retry && correct === false;
 
   return (
-    <View
-      style={[
-        styles.footer,
-        { backgroundColor: background, borderColor: theme.border, paddingBottom: insets.bottom + Spacing.md },
-      ]}>
+    <View style={[styles.footer, look, { paddingBottom: insets.bottom + 16 }]}>
       {word && (correct !== null || skipped) && (
         <View>
-          <AppText bold color={correct === null ? 'text' : correct ? 'good' : 'danger'}>
-            {verdict}
-          </AppText>
-          <AppText variant="small" numberOfLines={1}>
-            {word.simplified} · {word.pinyin} — {shortMeaning(word.meaningVi ?? '')}
+          <View style={styles.verdict}>
+            {correct !== null && <Icon name={correct ? 'check' : 'close'} size={18} color={correct ? 'good' : 'danger'} />}
+            <AppText weight="700" color={correct === null ? 'text' : correct ? 'good' : 'danger'} style={styles.verdictText}>
+              {correct === null ? 'Không sao — đáp án là:' : correct ? 'Chính xác!' : 'Chưa đúng'}
+            </AppText>
+          </View>
+          <AppText numberOfLines={1} style={styles.word}>
+            <Hanzi size={14}>{word.simplified}</Hanzi> <AppText color="muted">{word.pinyin}</AppText> —{' '}
+            {shortMeaning(word.meaningVi ?? '')}
           </AppText>
         </View>
       )}
-      <Button title={correct === false ? 'Đã hiểu' : 'Tiếp tục'} icon="arrow" onPress={onNext} />
+      <Button
+        title={wrongButton ? 'Đã hiểu' : 'Tiếp tục'}
+        icon="arrow"
+        onPress={onNext}
+        style={
+          wrongButton && {
+            backgroundColor: theme.danger,
+            borderColor: theme.danger,
+            backgroundImage: 'none',
+            boxShadow: `0 3px 0 ${mix(theme.danger, theme.text, 0.78)}`,
+          }
+        }
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  footer: { borderTopWidth: 1, padding: Spacing.lg, gap: Spacing.md },
+  footer: { borderTopWidth: 1, paddingHorizontal: 16, paddingTop: 16, gap: 12 },
+  verdict: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  verdictText: { fontSize: 16, lineHeight: 24 },
+  word: { marginTop: 2 },
 });
