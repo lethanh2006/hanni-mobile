@@ -1,16 +1,30 @@
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type HostInstance } from 'react-native';
 
-import { AppText } from '@/components/ui';
-import { Radius, Spacing } from '@/constants/theme';
+import { AppText, Hanzi } from '@/components/ui';
 import { useTheme } from '@/hooks/use-theme';
 import type { MockAnswer, MockPaper, MockReviewItem } from '@/lib/types';
 
 import { ExamItem, SharedBoard } from './exam-item';
 import { instruction, officialIndexes, PART_ZH, SECTION_VI } from './labels';
 
+/** Đầu phần thi: vạch đỏ bên trái, "听力" to + "Nghe hiểu". */
+export function SectionHeading({ kind }: { kind: MockPaper['sections'][number]['kind'] }) {
+  const theme = useTheme();
+  return (
+    <View style={[styles.sectionTitle, { borderColor: theme.primary }]}>
+      <Hanzi size={24} style={styles.bold}>
+        {SECTION_VI[kind].zh}
+      </Hanzi>
+      <AppText weight="600" color="muted">
+        {SECTION_VI[kind].vi}
+      </AppText>
+    </View>
+  );
+}
+
 /**
- * Toàn bộ đề theo phần Nghe/Đọc/Viết. Dùng chung cho lúc làm bài (`onAnswer`) và lúc chữa bài (`review`).
- * `only` = chỉ hiện các câu này (chữa bài: lọc câu sai).
+ * Toàn bộ đề theo phần Nghe/Đọc/Viết (`main` của phòng thi web). Dùng chung cho lúc làm bài (`onAnswer`, đánh dấu)
+ * và lúc chữa bài (`review`). `only` = chỉ hiện các câu này (chữa bài: lọc câu sai). `itemRef` để cuộn tới câu.
  */
 export function PaperView({
   paper,
@@ -19,6 +33,10 @@ export function PaperView({
   onAnswer,
   review,
   only,
+  flags,
+  onFlag,
+  itemRef,
+  compactHead = false,
 }: {
   paper: MockPaper;
   answers: (MockAnswer | null)[];
@@ -26,6 +44,11 @@ export function PaperView({
   onAnswer?: (no: number, v: MockAnswer | null) => void;
   review?: Map<number, MockReviewItem>;
   only?: Set<number>;
+  flags?: number[];
+  onFlag?: (no: number) => void;
+  itemRef?: (no: number) => (view: HostInstance | null) => void;
+  /** Chữa bài: đầu mỗi phần chỉ 1 dòng "Nghe hiểu · 第一部分", không có khung hướng dẫn. */
+  compactHead?: boolean;
 }) {
   const theme = useTheme();
   return (
@@ -36,25 +59,34 @@ export function PaperView({
           .map((part, pi) => ({ part, pi, items: part.items.filter((it) => !only || only.has(it.no)) }))
           .filter((p) => p.items.length > 0);
         if (parts.length === 0) return null;
+        const shared = (type: string) => type === 'match-picture' || type === 'match-text' || type === 'fill-blank';
         return (
-          <View key={section.kind} style={styles.section}>
-            <View style={[styles.sectionTitle, { borderColor: theme.primary }]}>
-              <AppText variant="title">{SECTION_VI[section.kind].zh}</AppText>
-              <AppText bold color="muted">
-                {SECTION_VI[section.kind].vi}
-              </AppText>
-            </View>
+          <View key={section.kind} style={compactHead ? styles.reviewSection : styles.section}>
+            {!compactHead && <SectionHeading kind={section.kind} />}
             {parts.map(({ part, pi, items }) => (
-              <View key={part.no} style={styles.section}>
-                <View style={[styles.partHead, { backgroundColor: theme.surface2 }]}>
-                  <AppText variant="small" bold>
-                    {PART_ZH[official[pi]]} · Câu {part.no}–{part.no + part.items.length - 1}
+              <View key={part.no} style={styles.part}>
+                {compactHead ? (
+                  <AppText weight="700">
+                    {SECTION_VI[section.kind].vi} · <Hanzi size={14}>{PART_ZH[official[pi]]}</Hanzi>
                   </AppText>
-                  <AppText variant="small" color="muted">
-                    {instruction(section.kind, part)}
-                  </AppText>
-                </View>
-                <SharedBoard part={part} pinyin={pinyin} />
+                ) : (
+                  <View style={[styles.partHead, { backgroundColor: theme.surface2 }]}>
+                    <AppText weight="700">
+                      <Hanzi size={14}>{PART_ZH[official[pi]]}</Hanzi>
+                      {'  '}Câu {part.no}–{part.no + part.items.length - 1}
+                    </AppText>
+                    <AppText color="muted" style={styles.instruction}>
+                      {instruction(section.kind, part)}
+                    </AppText>
+                  </View>
+                )}
+                {(!compactHead || shared(part.type)) && (
+                  <SharedBoard
+                    part={part}
+                    pinyin={pinyin}
+                    labels={part.type === 'match-picture' ? review?.get(part.items[0].no)?.pictureLabels : undefined}
+                  />
+                )}
                 {items.map((item) => (
                   <ExamItem
                     key={item.no}
@@ -65,6 +97,9 @@ export function PaperView({
                     onChange={onAnswer && ((v) => onAnswer(item.no, v))}
                     review={review?.get(item.no)}
                     pinyin={pinyin}
+                    flagged={flags?.includes(item.no)}
+                    onFlag={onFlag && (() => onFlag(item.no))}
+                    itemRef={itemRef?.(item.no)}
                   />
                 ))}
               </View>
@@ -77,7 +112,11 @@ export function PaperView({
 }
 
 const styles = StyleSheet.create({
-  section: { gap: Spacing.md },
-  sectionTitle: { flexDirection: 'row', alignItems: 'baseline', gap: Spacing.md, borderLeftWidth: 4, paddingLeft: Spacing.md },
-  partHead: { borderRadius: Radius.lg, padding: Spacing.md, gap: 2 },
+  section: { gap: 24 },
+  reviewSection: { gap: 16 },
+  part: { gap: 12 },
+  sectionTitle: { flexDirection: 'row', alignItems: 'baseline', gap: 12, borderLeftWidth: 4, paddingLeft: 12 },
+  bold: { fontWeight: '700' },
+  partHead: { borderRadius: 16, paddingHorizontal: 16, paddingVertical: 12 },
+  instruction: { marginTop: 2 },
 });

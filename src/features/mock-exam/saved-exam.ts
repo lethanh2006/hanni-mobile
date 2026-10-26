@@ -5,6 +5,8 @@ import type { MockAnswer } from '@/lib/types';
 /** Bài làm dở lưu trên máy — thoát ra rồi quay lại vẫn làm tiếp được (trong thời gian làm bài). */
 export interface SavedExam {
   answers: (MockAnswer | null)[];
+  /** Số các câu đánh dấu xem lại (bản lưu cũ chưa có). */
+  flags?: number[];
   startedAt: number;
 }
 

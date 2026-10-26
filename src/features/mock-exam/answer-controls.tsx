@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { AppText, Icon } from '@/components/ui';
-import { Radius, Spacing } from '@/constants/theme';
+import { alpha } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import type { MockAnswer, MockReviewItem } from '@/lib/types';
 
@@ -33,9 +33,9 @@ export function OptionBox({
   const theme = useTheme();
   const look = {
     idle: { borderColor: theme.border, backgroundColor: theme.surface },
-    picked: { borderColor: theme.text, backgroundColor: theme.surface2 },
-    right: { borderColor: theme.good, backgroundColor: theme.goodSoft },
-    wrong: { borderColor: theme.danger, backgroundColor: theme.dangerSoft },
+    picked: { borderColor: theme.text, backgroundColor: alpha(theme.text, 0.1) },
+    right: { borderColor: theme.good, backgroundColor: alpha(theme.good, 0.1) },
+    wrong: { borderColor: theme.danger, backgroundColor: alpha(theme.danger, 0.1) },
     dim: { borderColor: theme.border, backgroundColor: theme.surface, opacity: 0.6 },
   }[state];
   return (
@@ -44,27 +44,45 @@ export function OptionBox({
       onPress={onPress}
       accessibilityRole="button"
       accessibilityState={{ selected: state === 'picked' }}
-      style={[styles.option, look, style]}>
+      style={({ pressed }) => [
+        styles.option,
+        look,
+        state === 'idle' && pressed && { borderColor: alpha(theme.primary, 0.4), backgroundColor: alpha(theme.primary, 0.05) },
+        style,
+      ]}>
       {children}
     </Pressable>
   );
 }
 
+/** Ô cỡ chữ/khung tranh theo `size` của web: sm 56px (bảng dùng chung), md 80px, lg 96px. */
+const TILE = {
+  sm: { height: 56, minWidth: 64, font: 30 },
+  md: { height: 80, minWidth: 96, font: 36 },
+  lg: { height: 96, minWidth: 112, font: 48 },
+} as const;
+
 /** Tranh của đề là emoji (đề Hanni không dùng ảnh). */
-export function PictureTile({ emoji, label, big = false }: { emoji: string; label?: string; big?: boolean }) {
+export function PictureTile({ emoji, label, size = 'md' }: { emoji: string; label?: string; size?: keyof typeof TILE }) {
   const theme = useTheme();
+  const t = TILE[size];
   return (
     <View style={styles.picture}>
-      <View style={[styles.pictureBox, big && styles.pictureBig, { backgroundColor: theme.surface2 }]}>
-        <Text style={{ fontSize: big ? 44 : 32 }}>{emoji}</Text>
+      <View style={[styles.pictureBox, { height: t.height, minWidth: t.minWidth, backgroundColor: theme.surface2 }]}>
+        <Text style={{ fontSize: t.font, lineHeight: Math.round(t.font * 1.15) }}>{emoji}</Text>
       </View>
       {label && (
-        <AppText variant="caption" color="muted" center>
+        <AppText variant="caption" color="muted" center style={styles.pictureLabel}>
           {label}
         </AppText>
       )}
     </View>
   );
+}
+
+/** Màu chữ trong ô theo trạng thái (đúng xanh, sai đỏ). */
+export function letterColor(state: OptState) {
+  return state === 'right' ? 'good' : state === 'wrong' ? 'danger' : 'text';
 }
 
 /** Hàng chữ A–F để chọn phương án trong bảng dùng chung của cả phần. */
@@ -87,7 +105,9 @@ export function LetterRow({
           state={optionState(i, given, review)}
           onPress={onChange && (() => onChange(i))}
           style={styles.letter}>
-          <AppText bold>{l}</AppText>
+          <AppText weight="700" color={letterColor(optionState(i, given, review))}>
+            {l}
+          </AppText>
         </OptionBox>
       ))}
     </View>
@@ -112,7 +132,7 @@ export function JudgeButtons({
           state={optionState(v, given, review)}
           onPress={onChange && (() => onChange(v))}
           style={styles.judge}>
-          <Icon name={v ? 'check' : 'close'} size={20} />
+          <Icon name={v ? 'check' : 'close'} size={20} color={letterColor(optionState(v, given, review))} />
         </OptionBox>
       ))}
     </View>
@@ -120,11 +140,11 @@ export function JudgeButtons({
 }
 
 const styles = StyleSheet.create({
-  option: { borderWidth: 2, borderRadius: Radius.lg, alignItems: 'center', justifyContent: 'center' },
-  row: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
-  letter: { width: 42, height: 42 },
+  option: { borderWidth: 2, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  row: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  letter: { width: 36, height: 36 },
   judge: { width: 64, height: 44 },
   picture: { alignItems: 'center', gap: 4 },
-  pictureBox: { minWidth: 72, height: 64, borderRadius: Radius.lg, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
-  pictureBig: { minWidth: 96, height: 88 },
+  pictureBox: { borderRadius: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
+  pictureLabel: { maxWidth: 112 },
 });

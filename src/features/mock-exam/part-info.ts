@@ -1,4 +1,6 @@
-import type { MockPartType, MockSectionKind } from '@/lib/types';
+import type { MockAnswer, MockPaper, MockPartType, MockReviewItem, MockSectionKind } from '@/lib/types';
+
+import { normalizeSentence, officialIndexes } from './labels';
 
 export const SECTION_SHORT: Record<MockSectionKind, string> = { listening: 'Nghe', reading: 'Đọc', writing: 'Viết' };
 
@@ -25,6 +27,33 @@ export function partInfo(section: MockSectionKind, type: MockPartType) {
   return PART_INFO[`${section}:${type}`] ?? { label: SECTION_SHORT[section], tip: '' };
 }
 
+const CTA_LISTEN = { label: 'Luyện nghe', href: '/listening' } as const;
+const CTA_WORDS = { label: 'Ôn từ vựng', href: '/study' } as const;
+const CTA_GRAMMAR = { label: 'Xem ngữ pháp', href: '/ngu-phap' } as const;
+
+/** Lối luyện kỹ năng cho dạng câu yếu (cùng `href`/`cta` của `PART_INFO` web) — chỉ người đã đăng nhập thấy. */
+const PART_CTA: Record<string, { label: string; href: '/listening' | '/study' | '/ngu-phap' | '/tu-dien' | '/writing' }> = {
+  'listening:judge': CTA_LISTEN,
+  'listening:choose-picture': CTA_LISTEN,
+  'listening:match-picture': CTA_LISTEN,
+  'listening:choose-text': CTA_LISTEN,
+  'listening:judge-text': CTA_LISTEN,
+  'reading:judge': CTA_WORDS,
+  'reading:match-picture': CTA_WORDS,
+  'reading:judge-text': CTA_WORDS,
+  'reading:choose-text': CTA_WORDS,
+  'reading:match-text': CTA_GRAMMAR,
+  'reading:fill-blank': CTA_GRAMMAR,
+  'reading:order': CTA_GRAMMAR,
+  'writing:order': CTA_GRAMMAR,
+  'writing:write-sentence': { label: 'Tra từ, xem câu ví dụ', href: '/tu-dien' },
+  'writing:pinyin-char': { label: 'Luyện viết chữ', href: '/writing' },
+};
+
+export function partCta(section: MockSectionKind, type: MockPartType) {
+  return PART_CTA[`${section}:${type}`] ?? null;
+}
+
 /** Các phần yếu nhất (dưới 80% câu đúng), yếu trước. */
 export function weakest<T extends { correct: number; total: number }>(parts: T[], n = 2): T[] {
   return parts
@@ -38,4 +67,47 @@ const SECTION_SLUG: Record<MockSectionKind, string> = { listening: 'nghe', readi
 /** Slug bộ "luyện từng dạng bài" của 1 phần đề (cùng quy ước với server), vd `hsk3-viet-1`. */
 export function practiceSlug(level: number, section: MockSectionKind, part: number) {
   return `hsk${level}-${SECTION_SLUG[section]}-${part}`;
+}
+
+/** Đường dẫn "luyện riêng dạng này" (gom câu cùng dạng từ mọi đề cùng cấp). */
+export function practiceHref(level: number, section: MockSectionKind, part: number) {
+  return `/thi-thu-hsk/dang-bai/${practiceSlug(level, section, part)}` as const;
+}
+
+export interface PartScore {
+  section: MockSectionKind;
+  /** Số phần đề chính thức, 1-based. */
+  part: number;
+  type: MockPartType;
+  correct: number;
+  total: number;
+}
+
+/** Điểm từng phần đề (nửa sau `continues` cộng gộp vào phần chính thức). */
+export function partScores(paper: MockPaper, review: Map<number, MockReviewItem>): PartScore[] {
+  return paper.sections.flatMap((s) => {
+    const official = officialIndexes(s.parts);
+    const out: PartScore[] = [];
+    s.parts.forEach((p, i) => {
+      const correct = p.items.filter((it) => review.get(it.no)?.correct).length;
+      const last = out[out.length - 1];
+      if (p.continues && last) {
+        last.correct += correct;
+        last.total += p.items.length;
+      } else out.push({ section: s.kind, part: official[i] + 1, type: p.type, correct, total: p.items.length });
+    });
+    return out;
+  });
+}
+
+/** Đáp án `v` có đúng với câu đã chữa `r` không — luyện lại câu sai chấm ngay trên máy (câu sắp xếp nhận cả cách khác). */
+export function isRightAnswer(r: Pick<MockReviewItem, 'answer' | 'alternatives'>, v: MockAnswer | null): boolean {
+  if (v === null) return false;
+  if (typeof r.answer === 'string') {
+    return (
+      typeof v === 'string' &&
+      [r.answer, ...(r.alternatives ?? [])].some((a) => normalizeSentence(a) === normalizeSentence(v))
+    );
+  }
+  return v === r.answer;
 }

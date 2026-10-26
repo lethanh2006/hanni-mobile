@@ -19,6 +19,7 @@ export function useExamRunner(slug: string, paper: MockPaper | undefined) {
   const { user } = useAuth();
   const [phase, setPhase] = useState<ExamPhase>('intro');
   const [answers, setAnswers] = useState<(MockAnswer | null)[]>([]);
+  const [flags, setFlags] = useState<number[]>([]);
   const [startedAt, setStartedAt] = useState(0);
   const [now, setNow] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -36,6 +37,7 @@ export function useExamRunner(slug: string, paper: MockPaper | undefined) {
     if (!paper) return;
     const t = Date.now();
     setAnswers(resume?.answers ?? new Array<MockAnswer | null>(paper.questionCount).fill(null));
+    setFlags(resume?.flags ?? []);
     setStartedAt(resume?.startedAt ?? t);
     setNow(t);
     setResult(null);
@@ -47,10 +49,15 @@ export function useExamRunner(slug: string, paper: MockPaper | undefined) {
     setAnswers((list) => list.map((x, i) => (i === no - 1 ? v : x)));
   }
 
-  // Mỗi lần trả lời là lưu bài làm dở trên máy.
+  /** Đánh dấu / bỏ đánh dấu câu cần xem lại. */
+  function toggleFlag(no: number) {
+    setFlags((f) => (f.includes(no) ? f.filter((n) => n !== no) : [...f, no]));
+  }
+
+  // Mỗi lần trả lời/đánh dấu là lưu bài làm dở trên máy.
   useEffect(() => {
-    if (phase === 'test') writeSaved(slug, { answers, startedAt });
-  }, [phase, answers, startedAt, slug]);
+    if (phase === 'test') writeSaved(slug, { answers, flags, startedAt });
+  }, [phase, answers, flags, startedAt, slug]);
 
   async function submit() {
     if (!paper || busy) return;
@@ -95,15 +102,18 @@ export function useExamRunner(slug: string, paper: MockPaper | undefined) {
   return {
     phase,
     answers,
+    flags,
     answered,
     remaining,
     saved,
     busy,
     submitError,
+    clearSubmitError: () => setSubmitError(false),
     result,
     usedSec,
     start,
     setAnswer,
+    toggleFlag,
     submit,
   };
 }

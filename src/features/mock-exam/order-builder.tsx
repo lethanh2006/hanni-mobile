@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { AppText, TextLink } from '@/components/ui';
-import { Radius, Spacing } from '@/constants/theme';
+import { AppText, Hanzi, Icon } from '@/components/ui';
+import { alpha } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import type { MockAnswer, MockReviewItem, Ruby } from '@/lib/types';
 
@@ -48,21 +48,35 @@ export function OrderBuilder({
 
   if (review) {
     const mine = typeof given === 'string' ? given : '';
+    // Làm đúng theo 1 cách thì chỉ kể các cách KHÁC; làm sai thì kể các cách thay thế.
+    const others = review.correct
+      ? [String(review.answer), ...(review.alternatives ?? [])].filter(
+          (a) => normalizeSentence(a) !== normalizeSentence(mine),
+        )
+      : (review.alternatives ?? []);
     return (
       <View style={styles.wrap}>
         {mine ? (
-          <AppText variant="heading" color={review.correct ? 'good' : 'danger'}>
+          <Hanzi
+            size={20}
+            color={review.correct ? 'good' : 'danger'}
+            style={[styles.mine, !review.correct && styles.strike]}>
             {mine}
-          </AppText>
+          </Hanzi>
         ) : null}
         {!review.correct && (
-          <AppText variant="heading" color="good">
-            Đáp án: {String(review.answer)}
+          <AppText>
+            <AppText weight="600" color="good">
+              Đáp án:{' '}
+            </AppText>
+            <Hanzi size={20} color="good">
+              {String(review.answer)}
+            </Hanzi>
           </AppText>
         )}
-        {!!review.alternatives?.length && (
-          <AppText variant="small" color="muted">
-            Cũng đúng: {review.alternatives.join(' / ')}
+        {others.length > 0 && (
+          <AppText variant="caption" color="muted">
+            Cũng đúng: <Hanzi size={16}>{others.join(' / ')}</Hanzi>
           </AppText>
         )}
       </View>
@@ -81,7 +95,7 @@ export function OrderBuilder({
     <View style={styles.wrap}>
       <View style={[styles.sentence, { borderColor: theme.border }]}>
         {order.length === 0 ? (
-          <AppText variant="small" color="muted">
+          <AppText color="muted" style={styles.placeholder}>
             Bấm các từ bên dưới theo đúng thứ tự…
           </AppText>
         ) : (
@@ -89,7 +103,9 @@ export function OrderBuilder({
             <Pressable
               key={i}
               onPress={() => update(order.filter((_, j) => j !== k))}
-              style={[styles.piece, { borderColor: theme.text, backgroundColor: theme.surface2 }]}>
+              disabled={!onChange}
+              accessibilityLabel={`Bỏ "${pieces[i].zh}" khỏi câu`}
+              style={[styles.piece, { borderColor: theme.text, backgroundColor: alpha(theme.text, 0.1) }]}>
               <RubyText ruby={pieces[i]} pinyin={pinyin} size={18} />
             </Pressable>
           ))
@@ -101,19 +117,37 @@ export function OrderBuilder({
             <Pressable
               key={i}
               onPress={() => update([...order, i])}
-              style={[styles.piece, { borderColor: theme.border, backgroundColor: theme.surface }]}>
+              disabled={!onChange}
+              accessibilityLabel={`Thêm "${piece.zh}" vào câu`}
+              style={({ pressed }) => [
+                styles.piece,
+                pressed
+                  ? { borderColor: alpha(theme.primary, 0.4), backgroundColor: alpha(theme.primary, 0.05) }
+                  : { borderColor: theme.border, backgroundColor: theme.surface },
+              ]}>
               <RubyText ruby={piece} pinyin={pinyin} size={18} />
             </Pressable>
           ),
         )}
+        {order.length > 0 && onChange && (
+          <Pressable onPress={() => update([])} style={styles.reset} hitSlop={6}>
+            <Icon name="refresh" size={13} color="muted" />
+            <AppText variant="caption" weight="600" color="muted">
+              Xếp lại
+            </AppText>
+          </Pressable>
+        )}
       </View>
-      {order.length > 0 && <TextLink title="Xếp lại" color="muted" onPress={() => update([])} />}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: Spacing.sm },
+  wrap: { gap: 12 },
+  mine: { lineHeight: 34 },
+  strike: { textDecorationLine: 'line-through' },
+  placeholder: { paddingHorizontal: 4 },
+  reset: { marginLeft: 'auto', flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4 },
   sentence: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -122,9 +156,10 @@ const styles = StyleSheet.create({
     minHeight: 56,
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderRadius: Radius.lg,
-    padding: Spacing.sm,
+    borderRadius: 16,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
   },
-  pieces: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  piece: { borderWidth: 2, borderRadius: Radius.md, paddingHorizontal: 10, paddingVertical: 6 },
+  pieces: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
+  piece: { borderWidth: 2, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6 },
 });

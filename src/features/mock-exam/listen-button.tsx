@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 
 import { AppText, Icon } from '@/components/ui';
-import { Radius, Spacing } from '@/constants/theme';
+import { alpha } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import type { MockItem } from '@/lib/types';
 
@@ -34,9 +34,12 @@ export function ListenButton({ audio }: { audio: NonNullable<MockItem['audio']> 
       onPress={play}
       accessibilityRole="button"
       accessibilityLabel="Nghe câu này"
-      style={[styles.button, { backgroundColor: playing ? theme.primary : theme.primarySoft }]}>
-      <Icon name="sound" size={16} color={playing ? 'primaryText' : 'primary'} />
-      <AppText variant="small" bold color={playing ? 'primaryText' : 'primary'}>
+      style={({ pressed }) => [
+        styles.button,
+        { backgroundColor: playing ? theme.primary : alpha(theme.primary, pressed ? 0.15 : 0.1) },
+      ]}>
+      <Icon name={playing ? 'pause' : 'sound'} size={16} color={playing ? 'primaryText' : 'primary'} />
+      <AppText weight="600" color={playing ? 'primaryText' : 'primary'}>
         {playing ? `Đang phát · lần ${round}/2` : played ? 'Nghe lại' : 'Nghe'}
       </AppText>
     </Pressable>
@@ -48,9 +51,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    gap: Spacing.sm,
-    borderRadius: Radius.pill,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
+    gap: 8,
+    borderRadius: 999,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
 });
