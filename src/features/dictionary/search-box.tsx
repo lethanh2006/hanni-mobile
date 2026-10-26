@@ -7,14 +7,15 @@ import { alpha, Fonts, mix } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { hskLabel } from '@/lib/hsk';
 
+import { HandwritingPad } from './handwriting-pad';
 import { DICT_TABS, type DictTab } from './types';
 import { useSuggestions } from './use-suggestions';
 import { firstMeaning } from './word-row';
 
 /**
- * Ô tra `DictionarySearch` của web: viên thuốc cao 56px viền đỏ nhạt, kính lúp · ô gõ · nút xoá · nút mũi tên đỏ
- * nổi khối; đang gõ (tab Từ vựng) thì hiện gợi ý ngay dưới; hàng tab Từ vựng / Hán tự / Ví dụ / Ngữ pháp bên dưới.
- * (Web còn nút micro, viết tay, quét ảnh — app chưa có.)
+ * Ô tra `DictionarySearch` của web: viên thuốc cao 56px viền đỏ nhạt, kính lúp · ô gõ · nút xoá · bút viết tay · nút
+ * mũi tên đỏ nổi khối; đang gõ (tab Từ vựng) thì hiện gợi ý ngay dưới; bút mở ô viết tay; hàng tab Từ vựng / Hán tự /
+ * Ví dụ / Ngữ pháp bên dưới. (Web còn nút micro, quét ảnh — app chưa có.)
  */
 export function DictionarySearch({
   value,
@@ -33,6 +34,7 @@ export function DictionarySearch({
 }) {
   const theme = useTheme();
   const [focused, setFocused] = useState(false);
+  const [writing, setWriting] = useState(false);
   const { items } = useSuggestions(tab === 'tu-vung' && focused ? value : '');
   const placeholder = DICT_TABS.find((t) => t.key === tab)?.placeholder ?? '';
 
@@ -70,6 +72,17 @@ export function DictionarySearch({
             <Icon name="close" size={18} color="muted" />
           </Pressable>
         )}
+        {/* Viết tay như bút ở ô tra của Hanzii — cho chữ không biết đọc, không gõ được pinyin. */}
+        <Pressable
+          onPress={() => setWriting((w) => !w)}
+          accessibilityLabel="Viết tay để tra"
+          accessibilityState={{ selected: writing }}
+          style={({ pressed }) => [
+            styles.clear,
+            writing ? { backgroundColor: alpha(theme.primary, 0.1) } : pressed && { backgroundColor: theme.surface2 },
+          ]}>
+          <Icon name="pencil" size={18} color={writing ? 'primary' : 'muted'} />
+        </Pressable>
         <Pressable
           onPress={() => onSubmit(value)}
           accessibilityLabel="Tra"
@@ -120,6 +133,8 @@ export function DictionarySearch({
           ))}
         </View>
       )}
+
+      {writing && <HandwritingPad onPick={(char) => onChange(value + char)} onClose={() => setWriting(false)} />}
 
       {showTabs && (
         <View style={styles.tabs} accessibilityRole="tablist">
