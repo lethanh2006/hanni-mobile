@@ -1,24 +1,44 @@
+import Storage from 'expo-sqlite/kv-store';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { useRef, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View, type ScrollViewInstance } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+  type ScrollViewInstance,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import useSWR from 'swr';
 
-import { AppText, Button, Card, ErrorNote, Icon, Loading, Screen, TextLink } from '@/components/ui';
-import { Radius, Spacing } from '@/constants/theme';
+import { AppText, Button, ErrorNote, Icon, IconTile, Loading } from '@/components/ui';
+import { alpha, Fonts } from '@/constants/theme';
 import { ChatBubble } from '@/features/roleplay/chat-bubble';
 import { SimpleMarkdown } from '@/features/roleplay/simple-markdown';
 import { useTheme } from '@/hooks/use-theme';
 import { api, errorMessage } from '@/lib/api';
+import { speakChinese, stopAudio } from '@/lib/audio';
 import { useRequireAuth } from '@/lib/auth';
 import type { RoleplayMessage } from '@/lib/types';
 
 /** Giới hạn của server cho 1 lượt nói. */
 const MAX_LENGTH = 1000;
+const SPEAK_KEY = 'hanni:roleplay-speak';
+
+function readSpeak() {
+  try {
+    return Storage.getItemSync(SPEAK_KEY) !== '0';
+  } catch {
+    return true;
+  }
+}
 
 /**
- * 1 buổi luyện nói: gửi 1 câu → đợi AI đáp (kèm pinyin). "Gợi ý" đưa 1 câu mẫu để tự sửa rồi gửi.
- * "Kết thúc" hiện nhận xét TRƯỚC khi xoá buổi — AI lỗi thì vẫn cho thoát.
+ * 1 buổi luyện nói (`ChatView` của web): thanh trên (về tình huống, bật/tắt đọc to, Kết thúc), bong bóng hội thoại,
+ * gợi ý câu tiếp theo, ô soạn có nút gợi ý + gửi. "Kết thúc" hiện nhận xét TRƯỚC khi xoá buổi — AI lỗi vẫn cho thoát.
  */
 export default function RoleplayChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -26,145 +46,296 @@ export default function RoleplayChatScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { data: messages, mutate } = useSWR<RoleplayMessage[]>(user ? `/roleplay/sessions/${id}/messages` : null);
-  const [text, setText] = useState('');
+  const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+  const [hinting, setHinting] = useState(false);
   const [hint, setHint] = useState<{ suggestionZh: string; meaningVi: string } | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState('');
   const [feedback, setFeedback] = useState<string | null>(null);
   const [ending, setEnding] = useState(false);
+  // Mặc định đọc to câu trả lời — luyện nói mà chỉ đọc chữ thì mất nửa bài tập nghe.
+  const [speakOn, setSpeakOn] = useState(readSpeak);
+  const [focused, setFocused] = useState(false);
   const scroll = useRef<ScrollViewInstance>(null);
 
+  useEffect(() => () => stopAudio(), []);
+
+  function toggleSpeak() {
+    const next = !speakOn;
+    setSpeakOn(next);
+    if (!next) stopAudio();
+    try {
+      Storage.setItemSync(SPEAK_KEY, next ? '1' : '0');
+    } catch {
+      // chỉ là tuỳ chọn hiển thị
+    }
+  }
+
   async function send() {
-    const message = text.trim();
-    if (!message || sending) return;
+    const text = input.trim();
+    if (!text || sending) return;
     setSending(true);
-    setError(null);
+    setError('');
     setHint(null);
-    setText('');
+    setInput('');
     // Hiện ngay câu vừa gửi trong lúc chờ AI đáp.
-    const mine: RoleplayMessage = { id: `local-${Date.now()}`, role: 'USER', text: message, pinyin: null, createdAt: new Date().toISOString() };
+    const mine: RoleplayMessage = { id: `local-${Date.now()}`, role: 'USER', text, pinyin: null, createdAt: new Date().toISOString() };
     await mutate((list) => [...(list ?? []), mine], { revalidate: false });
     try {
-      await api.post(`/roleplay/sessions/${id}/reply`, { message });
-      await mutate();
+      const reply = await api.post<RoleplayMessage>(`/roleplay/sessions/${id}/reply`, { message: text });
+      await mutate((list) => [...(list ?? []), reply], { revalidate: false });
+      if (speakOn) speakChinese(reply.text);
     } catch (err) {
-      setError(errorMessage(err, 'AI chưa trả lời được. Thử gửi lại nhé.'));
-      setText(message);
+      setInput(text);
       await mutate();
+      setError(errorMessage(err, 'Chưa gửi được, thử lại nhé.'));
     } finally {
       setSending(false);
     }
   }
 
-  async function askHint() {
-    setError(null);
+  async function getHint() {
+    if (hinting) return;
+    setHinting(true);
+    setError('');
     try {
       setHint(await api.post<{ suggestionZh: string; meaningVi: string }>(`/roleplay/sessions/${id}/hint`));
     } catch (err) {
-      setError(errorMessage(err, 'Chưa lấy được gợi ý.'));
+      setError(errorMessage(err, 'Chưa gợi ý được, thử lại nhé.'));
+    } finally {
+      setHinting(false);
     }
   }
 
-  async function end() {
+  /** Kết thúc = XIN NHẬN XÉT trước, chưa xoá gì. */
+  async function endSession() {
+    if (ending) return;
     setEnding(true);
+    setError('');
     try {
       const r = await api.post<{ feedbackVi: string }>(`/roleplay/sessions/${id}/feedback`, {});
       setFeedback(r.feedbackVi);
-    } catch {
-      setFeedback('Chưa lấy được nhận xét lúc này — bạn vẫn có thể đóng buổi luyện.');
+    } catch (err) {
+      // Không chặn đường thoát chỉ vì AI bận: bỏ qua nhận xét.
+      setError(errorMessage(err, 'Chưa lấy được nhận xét, nhưng bạn vẫn kết thúc được buổi luyện.'));
+      setFeedback('');
     } finally {
       setEnding(false);
     }
   }
 
-  async function close() {
+  /** Đóng hẳn: xoá hội thoại rồi về màn chọn tình huống. */
+  async function closeSession() {
     await api.del(`/roleplay/sessions/${id}`).catch(() => undefined);
     router.back();
   }
 
-  if (feedback !== null) {
-    return (
-      <Screen>
-        <Stack.Screen options={{ title: 'Nhận xét buổi luyện' }} />
-        <Card>
-          <SimpleMarkdown text={feedback} />
-        </Card>
-        <Button title="Đóng buổi luyện" onPress={() => void close()} />
-        <Button title="Nói tiếp" variant="ghost" onPress={() => setFeedback(null)} />
-      </Screen>
-    );
-  }
+  const length = input.length;
+  const canSend = input.trim().length > 0 && !sending;
 
   return (
     <KeyboardAvoidingView
-      style={[styles.fill, { backgroundColor: theme.background }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={insets.top + 44}>
-      <Stack.Screen
-        options={{
-          title: 'Luyện nói',
-          headerRight: () => <TextLink title={ending ? 'Đang chấm…' : 'Kết thúc'} onPress={() => void end()} />,
-        }}
-      />
-      <ScrollView
-        ref={scroll}
-        contentContainerStyle={styles.messages}
-        onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: true })}>
-        {!messages ? <Loading /> : messages.map((m) => <ChatBubble key={m.id} message={m} />)}
-        {sending && (
-          <AppText variant="small" color="muted">
-            Đang trả lời…
+      style={[styles.fill, { backgroundColor: theme.surface }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <Stack.Screen options={{ headerShown: false }} />
+      <View style={[styles.bar, { paddingTop: insets.top + 12, borderColor: theme.border }]}>
+        <Pressable onPress={() => router.back()} style={styles.back} hitSlop={6}>
+          <Icon name="back" size={16} color="muted" />
+          <AppText weight="500" color="muted">
+            Tình huống
           </AppText>
+        </Pressable>
+        {feedback === null && (
+          <View style={styles.actions}>
+            <Pressable
+              onPress={toggleSpeak}
+              accessibilityState={{ selected: speakOn }}
+              accessibilityLabel={speakOn ? 'Đọc to: bật' : 'Đọc to: tắt'}
+              style={[styles.speak, speakOn && { backgroundColor: alpha(theme.primary, 0.1) }]}>
+              <Icon name="sound" size={15} color={speakOn ? 'primary' : 'muted'} />
+            </Pressable>
+            <Button
+              title={ending ? 'Đang tổng kết…' : 'Kết thúc'}
+              leftIcon="check"
+              variant="ghost"
+              disabled={ending}
+              onPress={() => void endSession()}
+              style={styles.end}
+            />
+          </View>
         )}
-      </ScrollView>
-
-      <View style={[styles.composer, { borderColor: theme.border, backgroundColor: theme.surface, paddingBottom: insets.bottom + Spacing.sm }]}>
-        {error && <ErrorNote>{error}</ErrorNote>}
-        {hint && (
-          <Pressable
-            onPress={() => {
-              setText(hint.suggestionZh);
-              setHint(null);
-            }}
-            style={[styles.hint, { backgroundColor: theme.surface2 }]}>
-            <AppText bold>{hint.suggestionZh}</AppText>
-            <AppText variant="caption" color="muted">
-              {hint.meaningVi} · bấm để dùng câu này
-            </AppText>
-          </Pressable>
-        )}
-        <View style={styles.row}>
-          <Pressable onPress={() => void askHint()} hitSlop={8} accessibilityLabel="Gợi ý">
-            <Icon name="spark" size={22} color="accent" />
-          </Pressable>
-          <TextInput
-            value={text}
-            onChangeText={setText}
-            placeholder="Nói bằng tiếng Trung…"
-            placeholderTextColor={theme.muted}
-            maxLength={MAX_LENGTH}
-            multiline
-            style={[styles.input, { borderColor: theme.border, color: theme.text }]}
-          />
-          <Pressable
-            onPress={() => void send()}
-            disabled={!text.trim() || sending}
-            accessibilityLabel="Gửi"
-            style={[styles.send, { backgroundColor: theme.primary, opacity: !text.trim() || sending ? 0.5 : 1 }]}>
-            <Icon name="arrow" size={18} color="primaryText" />
-          </Pressable>
-        </View>
       </View>
+
+      {feedback !== null ? (
+        <ScrollView contentContainerStyle={[styles.feedback, { paddingBottom: insets.bottom + 24 }]}>
+          <IconTile size={56} style={styles.center}>
+            <Icon name="check" size={26} color="good" />
+          </IconTile>
+          <AppText weight="700" center style={styles.feedbackTitle}>
+            Xong buổi luyện!
+          </AppText>
+          {feedback ? (
+            <View style={[styles.feedbackBox, { borderColor: theme.border, backgroundColor: theme.surface2 }]}>
+              <SimpleMarkdown text={feedback} />
+            </View>
+          ) : (
+            <AppText color="muted" center>
+              Lần này chưa lấy được nhận xét từ trợ lý. Bạn vẫn giữ nguyên phần luyện tập vừa rồi nhé.
+            </AppText>
+          )}
+          {error ? <ErrorNote>{error}</ErrorNote> : null}
+          <View style={styles.feedbackActions}>
+            <Button title="Đóng buổi luyện" icon="arrow" onPress={() => void closeSession()} />
+            {/* Chưa xoá gì cho tới khi bấm "Đóng" — đọc nhận xét xong vẫn quay lại nói tiếp được. */}
+            <Button title="Nói tiếp" variant="secondary" onPress={() => setFeedback(null)} />
+          </View>
+        </ScrollView>
+      ) : (
+        <>
+          <ScrollView
+            ref={scroll}
+            style={[styles.fill, { backgroundColor: theme.surface }]}
+            contentContainerStyle={styles.messages}
+            onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: true })}>
+            {!messages ? <Loading /> : messages.map((m) => <ChatBubble key={m.id} message={m} />)}
+          </ScrollView>
+
+          {hint && (
+            <View style={[styles.hint, { borderColor: alpha(theme.accent, 0.2), backgroundColor: alpha(theme.accent, 0.05) }]}>
+              <Icon name="spark" size={16} color="accent" />
+              <View style={styles.flex}>
+                <AppText weight="500">{hint.suggestionZh}</AppText>
+                {hint.meaningVi ? (
+                  <AppText variant="caption" color="muted" style={styles.hintVi}>
+                    {hint.meaningVi}
+                  </AppText>
+                ) : null}
+              </View>
+              <AppText
+                variant="caption"
+                weight="600"
+                color="accent"
+                onPress={() => {
+                  setInput(hint.suggestionZh);
+                  setHint(null);
+                }}>
+                Dùng câu này
+              </AppText>
+              <Pressable onPress={() => setHint(null)} accessibilityLabel="Đóng gợi ý" hitSlop={6}>
+                <Icon name="close" size={14} color="muted" />
+              </Pressable>
+            </View>
+          )}
+
+          {error ? (
+            <View style={styles.errorWrap}>
+              <ErrorNote>{error}</ErrorNote>
+            </View>
+          ) : null}
+
+          <View style={[styles.composer, { borderColor: theme.border, backgroundColor: theme.surface, paddingBottom: insets.bottom + 12 }]}>
+            <View style={styles.composerRow}>
+              <Pressable
+                onPress={() => void getHint()}
+                disabled={hinting || sending}
+                accessibilityLabel="Gợi ý câu trả lời"
+                style={[styles.square, { backgroundColor: theme.surface2 }, (hinting || sending) && styles.faded]}>
+                <Icon name="spark" size={18} color="accent" />
+              </Pressable>
+              <TextInput
+                value={input}
+                onChangeText={setInput}
+                placeholder="Nhập tiếng Trung…"
+                placeholderTextColor={theme.muted}
+                maxLength={MAX_LENGTH}
+                multiline
+                numberOfLines={1}
+                onFocus={() => setFocused(true)}
+                onBlur={() => setFocused(false)}
+                style={[
+                  styles.input,
+                  {
+                    color: theme.text,
+                    borderColor: focused ? theme.primary : alpha(theme.border, 0.8),
+                    backgroundColor: focused ? theme.surface : alpha(theme.surface, 0.8),
+                  },
+                ]}
+              />
+              <Pressable
+                onPress={() => void send()}
+                disabled={!canSend}
+                accessibilityLabel="Gửi"
+                style={[styles.square, { backgroundColor: theme.primary }, !canSend && styles.faded]}>
+                <Icon name="arrow" size={18} color="primaryText" />
+              </Pressable>
+            </View>
+            {length > 0 && (
+              <AppText
+                variant="caption"
+                color={length >= MAX_LENGTH ? 'danger' : length >= MAX_LENGTH * 0.9 ? 'warn' : 'muted'}
+                style={styles.counter}>
+                {length >= MAX_LENGTH
+                  ? `Đã tới giới hạn ${MAX_LENGTH.toLocaleString('vi-VN')} ký tự`
+                  : `${length.toLocaleString('vi-VN')}/${MAX_LENGTH.toLocaleString('vi-VN')} ký tự`}
+              </AppText>
+            )}
+          </View>
+        </>
+      )}
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  messages: { padding: Spacing.lg, gap: Spacing.md },
-  composer: { borderTopWidth: 1, padding: Spacing.sm, gap: Spacing.sm },
-  hint: { borderRadius: Radius.md, padding: Spacing.md, gap: 2 },
-  row: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.sm },
-  input: { flex: 1, borderWidth: 1, borderRadius: Radius.lg, maxHeight: 120, paddingHorizontal: Spacing.md, paddingVertical: 10, fontSize: 16 },
-  send: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  flex: { flex: 1, minWidth: 0 },
+  center: { alignSelf: 'center' },
+  bar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+  },
+  back: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  speak: { height: 36, borderRadius: 12, paddingHorizontal: 10, alignItems: 'center', justifyContent: 'center' },
+  end: { minHeight: 36, paddingHorizontal: 12, paddingVertical: 6 },
+  messages: { padding: 16, gap: 16 },
+  hint: {
+    marginHorizontal: 16,
+    marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  hintVi: { marginTop: 2 },
+  errorWrap: { paddingHorizontal: 16, paddingBottom: 8 },
+  composer: { borderTopWidth: 1, paddingHorizontal: 12, paddingTop: 12 },
+  composerRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
+  square: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  faded: { opacity: 0.45 },
+  input: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 44,
+    maxHeight: 132,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontFamily: Fonts.sans,
+    fontSize: 14,
+    lineHeight: 24,
+  },
+  counter: { marginTop: 6, textAlign: 'right' },
+  feedback: { padding: 20, gap: 16 },
+  feedbackTitle: { fontSize: 18, lineHeight: 26 },
+  feedbackBox: { borderWidth: 1, borderRadius: 16, padding: 16 },
+  feedbackActions: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 10 },
 });
