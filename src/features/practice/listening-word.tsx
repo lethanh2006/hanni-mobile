@@ -1,15 +1,14 @@
-import * as Speech from 'expo-speech';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
-import { AppText, Button, Icon, TextField, TextLink } from '@/components/ui';
-import { Radius, Spacing } from '@/constants/theme';
+import { AppText, Button, Hanzi, Icon } from '@/components/ui';
+import { alpha, Fonts } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { playWord, speakChinese } from '@/lib/audio';
 import type { Word } from '@/lib/types';
 
 import { checkPinyin, type ListenVerdict } from './pinyin-answer';
 import { firstMeaning } from './practice-words';
+import { useWordAudio } from './use-word-audio';
 
 const normalize = (s: string) => s.normalize('NFKC').replace(/[\s。！？.!?,，、]/g, '');
 
@@ -19,9 +18,12 @@ const VERDICT_TEXT: Record<ListenVerdict, string> = {
   wrong: 'Cùng nghe lại và ghi nhớ từ này',
 };
 
+const BARS = [12, 23, 16, 32, 24, 38, 17, 27, 36, 18, 29, 13, 24];
+const SPEEDS = [0.75, 1, 1.25];
+
 /**
- * 1 từ luyện nghe: nghe (thường / chậm) → gõ lại bằng pinyin hoặc chữ Hán → chấm.
- * Gợi ý không đưa pinyin (lộ đáp án) mà đưa số âm tiết + nghĩa.
+ * 1 từ luyện nghe (`ListeningWord` của web): khung tối có sóng âm + nút phát tròn, chọn tốc độ, gợi ý (số âm tiết +
+ * nghĩa — không đưa pinyin vì lộ đáp án), gõ lại bằng pinyin hoặc chữ Hán rồi chấm.
  */
 export function ListeningWord({
   word,
@@ -34,18 +36,14 @@ export function ListeningWord({
 }) {
   const theme = useTheme();
   const [value, setValue] = useState(saved?.value ?? '');
-  const [played, setPlayed] = useState(false);
+  const [rate, setRate] = useState(1);
   const [hint, setHint] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const audio = useWordAudio(word.simplified, word.audioUrl);
   const checked = saved !== undefined;
 
-  function play(slow: boolean) {
-    setPlayed(true);
-    if (slow) Speech.speak(word.simplified, { language: 'zh-CN', rate: 0.6 });
-    else if (word.audioUrl) playWord(word.audioUrl);
-    else speakChinese(word.simplified);
-  }
-
   function check() {
+    if (!value.trim() || checked || !audio.hasPlayed) return;
     // Có chữ Hán thì so mặt chữ; không thì chấm như pinyin (người chưa cài bàn phím tiếng Trung).
     if (/\p{Script=Han}/u.test(value)) {
       const answer = normalize(value);
@@ -58,60 +56,130 @@ export function ListeningWord({
 
   return (
     <View style={styles.wrap}>
-      <View style={styles.players}>
-        <Pressable onPress={() => play(false)} style={[styles.play, { backgroundColor: theme.primary }]} accessibilityLabel="Nghe">
-          <Icon name="sound" size={32} color="primaryText" />
-        </Pressable>
+      <View style={styles.player}>
+        <View style={styles.bars} accessibilityElementsHidden>
+          {BARS.map((h, i) => (
+            <View
+              key={i}
+              style={[styles.bar, { height: h, backgroundColor: audio.playing ? '#ff8679' : 'rgba(255,255,255,0.25)' }]}
+            />
+          ))}
+        </View>
         <Pressable
-          onPress={() => play(true)}
-          style={[styles.slow, { borderColor: theme.border }]}
-          accessibilityLabel="Nghe chậm">
-          <AppText variant="small" bold>
-            Nghe chậm
+          onPress={() => (audio.playing ? audio.stop() : audio.play(rate))}
+          accessibilityLabel={audio.playing ? 'Dừng âm thanh' : 'Nghe từ cần luyện'}
+          style={({ pressed }) => [
+            styles.play,
+            { backgroundColor: theme.primary, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' },
+            pressed && { transform: [{ scale: 1.05 }] },
+          ]}>
+          <Icon name={audio.playing ? 'close' : 'play'} size={27} color="primaryText" />
+        </Pressable>
+        <AppText weight="500" style={styles.playText}>
+          {audio.playing ? 'Đang phát âm thanh…' : 'Nhấn để nghe từ vựng'}
+        </AppText>
+        <AppText variant="caption" style={styles.source}>
+          {audio.synthetic ? 'Giọng đọc tiếng Trung của thiết bị' : 'Bản thu phát âm từ thư viện'}
+        </AppText>
+      </View>
+
+      <View style={styles.controls}>
+        <View style={styles.speeds} accessibilityLabel="Tốc độ phát">
+          <AppText variant="caption" color="muted" style={styles.speedLabel}>
+            Tốc độ
+          </AppText>
+          {SPEEDS.map((speed) => (
+            <Pressable
+              key={speed}
+              onPress={() => {
+                audio.stop();
+                setRate(speed);
+              }}
+              accessibilityState={{ selected: rate === speed }}
+              style={[styles.speed, { backgroundColor: rate === speed ? alpha(theme.primary, 0.1) : theme.surface2 }]}>
+              <AppText variant="caption" weight="500" color={rate === speed ? 'primary' : 'muted'}>
+                {speed}×
+              </AppText>
+            </Pressable>
+          ))}
+        </View>
+        <Pressable onPress={() => setHint(!hint)} accessibilityState={{ expanded: hint }} style={styles.hintToggle}>
+          <AppText variant="caption" weight="500" color="muted">
+            {hint ? 'Ẩn gợi ý' : 'Xem gợi ý'}
           </AppText>
         </Pressable>
       </View>
-
-      <TextLink title={hint ? 'Ẩn gợi ý' : 'Xem gợi ý'} color="muted" onPress={() => setHint(!hint)} />
       {hint && (
-        <AppText variant="small" color="muted">
-          {word.pinyinNumeric.trim().split(/\s+/).length} âm tiết · nghĩa: {firstMeaning(word)}
-        </AppText>
+        <View style={[styles.hint, { backgroundColor: alpha(theme.primary, 0.05) }]}>
+          <AppText weight="500" color="primary" center>
+            {word.pinyinNumeric.trim().split(/\s+/).length} âm tiết · nghĩa: {firstMeaning(word)}
+          </AppText>
+        </View>
       )}
 
-      <TextField
-        label="Gõ pinyin hoặc chữ Hán bạn nghe được"
-        value={value}
-        onChangeText={setValue}
-        editable={!checked}
-        placeholder="Vd: ni3hao3 · nǐ hǎo · 你好"
-        autoCapitalize="none"
-        autoCorrect={false}
-        onSubmitEditing={() => played && value.trim() && !checked && check()}
-      />
-      {!checked && (
-        <>
-          {!played && (
-            <AppText variant="caption" color="muted">
-              Nhấn nghe trước khi kiểm tra đáp án.
-            </AppText>
-          )}
-          <Button title="Kiểm tra đáp án" icon="check" disabled={!played || !value.trim()} onPress={check} />
-        </>
-      )}
+      <View style={styles.form}>
+        <AppText weight="600">Gõ pinyin hoặc chữ Hán bạn nghe được</AppText>
+        <TextInput
+          value={value}
+          onChangeText={setValue}
+          editable={!checked}
+          placeholder="Vd: ni3hao3 · nǐ hǎo · 你好"
+          placeholderTextColor={theme.muted}
+          autoCapitalize="none"
+          autoCorrect={false}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          onSubmitEditing={check}
+          style={[
+            styles.input,
+            {
+              color: theme.text,
+              borderColor: focused ? theme.primary : alpha(theme.border, 0.8),
+              backgroundColor: theme.surface,
+              boxShadow: focused ? `0 0 0 4px ${alpha(theme.primary, 0.1)}` : undefined,
+            },
+            checked && styles.disabled,
+          ]}
+        />
+        {!audio.hasPlayed && !checked && (
+          <AppText variant="caption" color="muted">
+            Nhấn nghe trước khi kiểm tra đáp án.
+          </AppText>
+        )}
+        {!checked && (
+          <Button
+            title="Kiểm tra đáp án"
+            leftIcon="check"
+            disabled={!value.trim() || !audio.hasPlayed}
+            onPress={check}
+            style={styles.checkButton}
+          />
+        )}
+      </View>
 
       {saved && (
         <View
           style={[
             styles.result,
-            { backgroundColor: saved.verdict === 'right' ? theme.goodSoft : theme.surface2 },
+            saved.verdict === 'right'
+              ? { borderColor: alpha(theme.good, 0.2), backgroundColor: alpha(theme.good, 0.05) }
+              : { borderColor: alpha(theme.primary, 0.2), backgroundColor: alpha(theme.primary, 0.05) },
           ]}>
-          <AppText bold color={saved.verdict === 'right' ? 'good' : 'text'}>
-            {VERDICT_TEXT[saved.verdict]}
+          <View style={styles.verdict}>
+            <Icon name={saved.verdict === 'right' ? 'check' : 'info'} size={18} color={saved.verdict === 'right' ? 'good' : 'primary'} />
+            <AppText weight="600" color={saved.verdict === 'right' ? 'good' : 'primary'} style={styles.flex}>
+              {VERDICT_TEXT[saved.verdict]}
+            </AppText>
+          </View>
+          <Hanzi size={30} style={styles.answer}>
+            {word.simplified}
+          </Hanzi>
+          <AppText color="primary" style={styles.answerLine}>
+            {word.pinyin}
           </AppText>
-          <AppText variant="title">{word.simplified}</AppText>
-          <AppText color="primary">{word.pinyin}</AppText>
-          <AppText variant="small">{word.meaningVi ?? word.meaningEn}</AppText>
+          <AppText color="muted" style={styles.answerLine}>
+            {word.meaningVi ?? word.meaningEn ?? 'Nghĩa của từ đang được cập nhật.'}
+          </AppText>
         </View>
       )}
     </View>
@@ -119,9 +187,26 @@ export function ListeningWord({
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: Spacing.md },
-  players: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.lg },
-  play: { width: 80, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center' },
-  slow: { borderWidth: 1, borderRadius: Radius.pill, paddingHorizontal: Spacing.lg, paddingVertical: Spacing.sm },
-  result: { borderRadius: Radius.lg, padding: Spacing.lg, gap: 4, alignItems: 'center' },
+  wrap: { gap: 24 },
+  flex: { flex: 1, minWidth: 0 },
+  player: { overflow: 'hidden', alignItems: 'center', borderRadius: 16, padding: 24, backgroundColor: '#161d2c' },
+  bars: { height: 40, marginBottom: 16, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  bar: { width: 4, borderRadius: 999 },
+  play: { width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center' },
+  playText: { marginTop: 16, color: '#ffffff' },
+  source: { marginTop: 8, color: 'rgba(255,255,255,0.55)' },
+  controls: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  speeds: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  speedLabel: { marginRight: 4 },
+  speed: { minHeight: 36, justifyContent: 'center', borderRadius: 8, paddingHorizontal: 12 },
+  hintToggle: { minHeight: 36, justifyContent: 'center' },
+  hint: { marginTop: -8, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12 },
+  form: { gap: 16 },
+  input: { minHeight: 46, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, fontFamily: Fonts.sans, fontSize: 14 },
+  disabled: { opacity: 0.6 },
+  checkButton: { alignSelf: 'flex-start' },
+  result: { borderWidth: 1, borderRadius: 12, padding: 20 },
+  verdict: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  answer: { marginTop: 16 },
+  answerLine: { marginTop: 8 },
 });

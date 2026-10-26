@@ -166,7 +166,7 @@ export default function LessonDetailScreen() {
 
       {relatedGrammar.length > 0 && (
         <Card style={styles.grammar}>
-          <SectionHeading icon="cards" title="Ngữ pháp liên quan" tone="lavender" />
+          <SectionHeading icon="cards" eyebrow="Dùng ngay trong bài này" title="Ngữ pháp liên quan" tone="lavender" />
           <View style={styles.grammarList}>
             {relatedGrammar.map((g) => (
               <Pressable

@@ -63,12 +63,15 @@ export function PageHeader({
 /** `SectionHeading` của web: đầu mục có biểu tượng 40px, gạch chân mảnh. */
 export function SectionHeading({
   icon,
+  eyebrow,
   title,
   description,
   right,
   tone = 'primary',
 }: {
   icon?: IconName;
+  /** Nhãn nhỏ xám trên tiêu đề (vd "Nghe & viết"). */
+  eyebrow?: string;
   title: string;
   description?: string;
   right?: ReactNode;
@@ -85,6 +88,11 @@ export function SectionHeading({
           </View>
         )}
         <View style={styles.copy}>
+          {eyebrow && (
+            <AppText variant="caption" weight="600" color="muted" style={styles.sectionEyebrow}>
+              {eyebrow}
+            </AppText>
+          )}
           <AppText variant="heading" style={styles.sectionTitle}>
             {title}
           </AppText>
@@ -146,6 +154,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  sectionEyebrow: { marginBottom: 4, lineHeight: 18, letterSpacing: 0.24 },
   sectionTitle: { fontSize: 16, lineHeight: 24 },
   sectionDescription: { marginTop: 4, lineHeight: 22 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },

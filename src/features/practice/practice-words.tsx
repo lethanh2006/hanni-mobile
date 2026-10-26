@@ -10,6 +10,10 @@ import type { Word } from '@/lib/types';
 export interface WordScope {
   /** Tên bài đang học khi đang luyện theo bài; `null` = luyện tự do theo cấp. */
   lessonTitle: string | null;
+  /** Cấp HSK của bài đang luyện (theo bài), để hiện nhãn "HSK N". */
+  lessonLevel: number | null;
+  /** Số từ cả thư viện của cấp đang chọn (luyện tự do). */
+  total: number;
   canUseLesson: boolean;
   level: number;
   page: number;
@@ -27,6 +31,7 @@ export function usePracticeWords(lessonId?: string): {
   words: Word[];
   loading: boolean;
   error: boolean;
+  retry: () => void;
   scope: WordScope;
 } {
   const current = useCurrentLesson();
@@ -46,8 +51,11 @@ export function usePracticeWords(lessonId?: string): {
     words: words.data?.items ?? [],
     loading: !words.data && !words.error,
     error: Boolean(words.error),
+    retry: () => void words.mutate(),
     scope: {
       lessonTitle: lesson?.title ?? null,
+      lessonLevel: lesson ? ((lessonId ? chosen.data?.lesson.hskLevel : current.data?.hskLevel) ?? null) : null,
+      total: words.data?.total ?? 0,
       canUseLesson: Boolean(lessonId || current.data),
       level,
       page,
