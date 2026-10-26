@@ -1,26 +1,41 @@
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Switch, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import useSWR from 'swr';
 
-import { AppText, Button, Card, ErrorNote, Loading, Screen } from '@/components/ui';
-import { Spacing } from '@/constants/theme';
+import { AppText, Avatar, Button, Card, ErrorNote, Icon, Loading, PageHeader, Screen } from '@/components/ui';
+import { alpha } from '@/constants/theme';
 import { GoalSection } from '@/features/settings/goal-section';
 import { SchedulerSection } from '@/features/settings/scheduler-section';
+import { ChoiceButton, SettingCard } from '@/features/settings/setting-card';
 import { TimezoneSection } from '@/features/settings/timezone-section';
 import { useTheme } from '@/hooks/use-theme';
 import { api } from '@/lib/api';
 import { useRequireAuth } from '@/lib/auth';
 import type { Me, UserSettings } from '@/lib/types';
 
-/** Cài đặt học tập: mục tiêu mỗi ngày, cách xếp lịch ôn, múi giờ, email tổng kết tuần. */
+/** Cài đặt học tập (trang `/settings` của web): mục tiêu mỗi ngày, cách xếp lịch ôn, múi giờ, email tổng kết tuần. */
 export default function SettingsScreen() {
   const { user, refresh } = useRequireAuth();
   const { data, error, mutate } = useSWR<UserSettings>(user ? '/users/me/settings' : null);
 
   return (
-    <Screen>
+    <Screen contentStyle={styles.page}>
       <Stack.Screen options={{ title: 'Cài đặt học tập' }} />
+      <View style={styles.head}>
+        <PageHeader
+          icon="settings"
+          tone="lavender"
+          title="Cài đặt học tập"
+          description="Mục tiêu mỗi ngày, giờ nhắc học, cách xếp lịch ôn."
+        />
+        <Pressable onPress={() => router.navigate('/account')} style={styles.back} hitSlop={6}>
+          <Icon name="back" size={16} color="muted" />
+          <AppText weight="500" color="muted">
+            Tài khoản của tôi
+          </AppText>
+        </Pressable>
+      </View>
       {error && !data ? (
         <>
           <ErrorNote>Chưa tải được cài đặt.</ErrorNote>
@@ -29,15 +44,24 @@ export default function SettingsScreen() {
       ) : !user || !data ? (
         <Loading />
       ) : (
-        <SettingsForm
-          key={user.id}
-          user={user}
-          initial={data}
-          onSaved={async (next) => {
-            await mutate(next, { revalidate: false });
-            await refresh();
-          }}
-        />
+        <>
+          <Card style={styles.avatarCard}>
+            <Avatar user={user} size={80} />
+            <View style={styles.flex}>
+              <AppText weight="600">{user.displayName}</AppText>
+              <AppText color="muted">{user.email}</AppText>
+            </View>
+          </Card>
+          <SettingsForm
+            key={user.id}
+            user={user}
+            initial={data}
+            onSaved={async (next) => {
+              await mutate(next, { revalidate: false });
+              await refresh();
+            }}
+          />
+        </>
       )}
     </Screen>
   );
@@ -96,44 +120,74 @@ function SettingsForm({
 
   return (
     <>
-      <GoalSection form={form} update={update} />
-      <SchedulerSection form={form} update={update} />
-      <TimezoneSection
-        value={timezone}
-        onChange={(tz) => {
-          setTimezone(tz);
-          setSaved(false);
-        }}
-      />
-      {mail.data?.configured && (
-        <Card>
-          <View style={styles.row}>
-            <View style={styles.flex}>
-              <AppText bold>Email tổng kết tuần</AppText>
-              <AppText variant="caption" color="muted">
-                Mỗi tuần 1 email: số từ đã học, chuỗi ngày, việc nên làm tuần tới.
-              </AppText>
+      <View style={[styles.fields, saving && styles.saving]} pointerEvents={saving ? 'none' : 'auto'}>
+        <GoalSection form={form} update={update} />
+        <SchedulerSection form={form} update={update} />
+        <TimezoneSection
+          value={timezone}
+          onChange={(tz) => {
+            setTimezone(tz);
+            setSaved(false);
+          }}
+        />
+        {mail.data?.configured && (
+          <SettingCard
+            icon="message"
+            title="Email tổng kết tuần"
+            description="Mỗi thứ Hai, Hanni gửi email tóm tắt số ngày đã học, từ đã ôn/đã thuộc và chuỗi ngày hiện tại của bạn.">
+            <View style={styles.choices}>
+              <ChoiceButton label="Bật" icon="check" active={form.weeklyDigestEnabled} onPress={() => update('weeklyDigestEnabled', true)} />
+              <ChoiceButton label="Tắt" icon="close" active={!form.weeklyDigestEnabled} onPress={() => update('weeklyDigestEnabled', false)} />
             </View>
-            <Switch
-              value={form.weeklyDigestEnabled}
-              onValueChange={(v) => update('weeklyDigestEnabled', v)}
-              trackColor={{ true: theme.primary }}
-            />
-          </View>
-        </Card>
-      )}
+          </SettingCard>
+        )}
+      </View>
       {error && <ErrorNote>{error}</ErrorNote>}
-      {saved && (
-        <AppText variant="small" color="good">
-          ✓ Đã lưu cài đặt.
+      <View style={[styles.saveRow, { borderColor: theme.border }]}>
+        <Button title={saving ? 'Đang lưu…' : 'Lưu thay đổi'} leftIcon={saving ? 'refresh' : 'check'} disabled={saving} onPress={() => void save()} />
+        {saved && (
+          <View style={styles.saved}>
+            <Icon name="check" size={16} color="good" />
+            <AppText color="good">Đã lưu cài đặt của bạn</AppText>
+          </View>
+        )}
+      </View>
+      <Card style={[styles.tip, { borderColor: alpha(theme.primary, 0.15), backgroundColor: alpha(theme.primary, 0.05) }]}>
+        <Icon name="spark" size={25} color="primary" />
+        <AppText weight="600" style={styles.tipTitle}>
+          Đều đặn là đủ tốt
         </AppText>
-      )}
-      <Button title="Lưu cài đặt" loading={saving} onPress={save} />
+        <AppText color="muted" style={styles.tipText}>
+          Bắt đầu với một mục tiêu nhỏ. Khi việc học đã trở thành thói quen, bạn có thể quay lại đây để tăng dần nhịp học.
+        </AppText>
+        <Pressable onPress={() => router.navigate('/progress')} style={styles.link} hitSlop={6}>
+          <AppText weight="600" color="primary">
+            Xem tiến độ của tôi
+          </AppText>
+          <Icon name="arrow" size={16} color="primary" />
+        </Pressable>
+      </Card>
+      <AppText variant="caption" color="muted" style={styles.note}>
+        Cài đặt được lưu vào tài khoản để áp dụng cho những lần học tiếp theo.
+      </AppText>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
-  flex: { flex: 1 },
+  page: { gap: 24 },
+  head: { gap: 10 },
+  back: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start' },
+  flex: { flex: 1, minWidth: 0 },
+  avatarCard: { flexDirection: 'row', alignItems: 'center', gap: 20 },
+  fields: { gap: 20 },
+  saving: { opacity: 0.7 },
+  choices: { flexDirection: 'row', gap: 12 },
+  saveRow: { borderTopWidth: 1, paddingTop: 20, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 16 },
+  saved: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  tip: { gap: 0 },
+  tipTitle: { marginTop: 16 },
+  tipText: { marginTop: 12, lineHeight: 24 },
+  link: { marginTop: 20, flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start' },
+  note: { paddingHorizontal: 8, lineHeight: 20 },
 });
