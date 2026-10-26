@@ -87,7 +87,7 @@ export async function markAllNotificationsRead() {
 const APP_PREFIXES = [
   '/achievements', '/leaderboard', '/lop-hoc', '/progress', '/study', '/review', '/bai-hoc/', '/learn/',
   '/thi-thu-hsk', '/tu-dien', '/ngu-phap', '/listening', '/minigame', '/writing', '/roleplay', '/phien-am',
-  '/settings', '/account', '/u/', '/notifications',
+  '/settings', '/account', '/u/',
 ];
 
 /**

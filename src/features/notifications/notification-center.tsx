@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Modal, StyleSheet, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText, Button, Icon } from '@/components/ui';
-import { Radius, Spacing } from '@/constants/theme';
+import { alpha } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useNotificationSocket } from '@/lib/notifications';
 import { onStreakMilestone } from '@/lib/streak-celebration';
@@ -48,17 +48,31 @@ export function NotificationCenter() {
   return (
     <Modal visible={milestone !== null} transparent animationType="fade" onRequestClose={() => setMilestone(null)}>
       <View style={styles.backdrop}>
-        <View style={[styles.card, { backgroundColor: theme.surface }]}>
-          <View style={[styles.flame, { backgroundColor: theme.dangerSoft }]}>
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: theme.surface,
+              borderColor: theme.border,
+              boxShadow: `0 25px 50px -12px ${alpha('#000000', 0.25)}`,
+            },
+          ]}>
+          <Pressable
+            onPress={() => setMilestone(null)}
+            accessibilityLabel="Đóng"
+            style={({ pressed }) => [styles.close, pressed && { backgroundColor: theme.surface2 }]}>
+            <Icon name="close" size={16} color="muted" />
+          </Pressable>
+          <View style={[styles.flame, { backgroundColor: alpha(theme.danger, 0.1), borderColor: theme.border }]}>
             <Icon name="flame" size={40} color="danger" />
           </View>
-          <AppText variant="label" color="danger">
+          <AppText variant="caption" weight="700" color="danger" style={styles.eyebrow}>
             {copy?.eyebrow}
           </AppText>
-          <AppText variant="title" center>
+          <AppText weight="800" center style={styles.title}>
             Chuỗi {milestone} ngày!
           </AppText>
-          <AppText variant="small" color="muted" center>
+          <AppText color="muted" center style={styles.body}>
             {copy?.body}
           </AppText>
           <Button title="Tiếp tục học" icon="arrow" onPress={() => setMilestone(null)} style={styles.button} />
@@ -69,8 +83,21 @@ export function NotificationCenter() {
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', padding: Spacing.lg },
-  card: { width: '100%', maxWidth: 360, borderRadius: Radius.lg, padding: Spacing.xl, alignItems: 'center', gap: Spacing.sm },
-  flame: { width: 80, height: 80, borderRadius: Radius.lg, alignItems: 'center', justifyContent: 'center', marginBottom: Spacing.sm },
-  button: { alignSelf: 'stretch', marginTop: Spacing.md },
+  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', padding: 16 },
+  card: { width: '100%', maxWidth: 384, borderWidth: 1, borderRadius: 16, padding: 28, alignItems: 'center' },
+  close: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  flame: { width: 80, height: 80, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  eyebrow: { marginTop: 20, textTransform: 'uppercase', letterSpacing: 0.6 },
+  title: { marginTop: 6, fontSize: 24, lineHeight: 32, letterSpacing: -0.6 },
+  body: { marginTop: 12, lineHeight: 24 },
+  button: { alignSelf: 'stretch', marginTop: 24 },
 });

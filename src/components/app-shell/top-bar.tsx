@@ -1,11 +1,13 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, useColorScheme, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import useSWR from 'swr';
 
 import { AppText, Avatar, Icon } from '@/components/ui';
 import { alpha, mix } from '@/constants/theme';
+import { NotificationPanel } from '@/features/notifications/notification-panel';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
 import { useStreak } from '@/lib/hooks';
@@ -146,18 +148,23 @@ function BellButton() {
   const theme = useTheme();
   const { data } = useNotifications();
   const unread = data?.unreadCount ?? 0;
+  const [open, setOpen] = useState(false);
   return (
-    <Pressable
-      onPress={() => router.push('/notifications')}
-      accessibilityLabel={unread > 0 ? `Thông báo, ${unread} chưa đọc` : 'Thông báo'}
-      style={({ pressed }) => [styles.bell, pressed && { backgroundColor: theme.surface2 }]}>
-      <Icon name="bell" size={19} color="muted" />
-      {unread > 0 && (
-        <View style={[styles.badge, { backgroundColor: theme.danger }]}>
-          <Text style={styles.badgeText}>{unread > 9 ? '9+' : unread}</Text>
-        </View>
-      )}
-    </Pressable>
+    <>
+      <Pressable
+        onPress={() => setOpen(!open)}
+        accessibilityState={{ expanded: open }}
+        accessibilityLabel={unread > 0 ? `Thông báo, ${unread} chưa đọc` : 'Thông báo'}
+        style={({ pressed }) => [styles.bell, pressed && { backgroundColor: theme.surface2 }]}>
+        <Icon name="bell" size={19} color="muted" />
+        {unread > 0 && (
+          <View style={[styles.badge, { backgroundColor: theme.danger }]}>
+            <Text style={styles.badgeText}>{unread > 9 ? '9+' : unread}</Text>
+          </View>
+        )}
+      </Pressable>
+      <NotificationPanel open={open} onClose={() => setOpen(false)} />
+    </>
   );
 }
 
