@@ -1,49 +1,64 @@
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { AppText, Icon } from '@/components/ui';
-import { Spacing } from '@/constants/theme';
+import { AppText, Hanzi } from '@/components/ui';
+import { alpha } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { hskLabel } from '@/lib/hsk';
 
 /** Nghĩa ngắn: chỉ lấy nét nghĩa đầu tiên. */
 export const firstMeaning = (m: string | null | undefined) => (m ? m.split(';')[0].trim() : '');
 
-/** 1 dòng từ (gợi ý, tra gần đây, từ ghép…) — bấm để mở trang từ. */
+/**
+ * 1 dòng từ (`WordRow` của trang từ điển web): thẻ bo 16px, chữ Hán đỏ to · pinyin + ÂM HÁN VIỆT · nghĩa xám ·
+ * nhãn cấp HSK. Bấm để mở trang từ.
+ */
 export function WordRow({
   simplified,
   pinyin,
   meaning,
   hanViet,
+  hskLevel,
 }: {
   simplified: string;
   pinyin: string;
   meaning: string | null | undefined;
   hanViet?: string | null;
+  hskLevel?: number;
 }) {
   const theme = useTheme();
   return (
     <Pressable
       onPress={() => router.push(`/tu-dien/${encodeURIComponent(simplified)}`)}
       accessibilityRole="button"
-      style={({ pressed }) => [styles.row, { borderColor: theme.border }, pressed && { backgroundColor: theme.surface2 }]}>
-      <AppText variant="heading" color="primary">
+      style={({ pressed }) => [
+        styles.row,
+        { borderColor: pressed ? alpha(theme.primary, 0.3) : theme.border, backgroundColor: theme.surface },
+      ]}>
+      <Hanzi size={24} color="primary" style={styles.hanzi}>
         {simplified}
-      </AppText>
+      </Hanzi>
       <View style={styles.flex}>
-        <AppText variant="small" color="muted">
+        <AppText numberOfLines={1}>
           {pinyin}
           {hanViet ? (
-            <AppText variant="small" bold color="hanviet">
+            <AppText variant="caption" weight="700" color="hanviet" style={styles.hanViet}>
               {'  '}
-              {hanViet}
+              {hanViet.toUpperCase()}
             </AppText>
           ) : null}
         </AppText>
-        <AppText variant="small" numberOfLines={1}>
-          {firstMeaning(meaning)}
+        <AppText color="muted" numberOfLines={1}>
+          {firstMeaning(meaning) || 'Đang cập nhật'}
         </AppText>
       </View>
-      <Icon name="chevron" size={16} color="muted" />
+      {hskLevel !== undefined && (
+        <View style={[styles.level, { backgroundColor: theme.surface2 }]}>
+          <AppText variant="caption" weight="600" color="muted">
+            {hskLabel(hskLevel)}
+          </AppText>
+        </View>
+      )}
     </Pressable>
   );
 }
@@ -52,9 +67,14 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
+    gap: 16,
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
-  flex: { flex: 1 },
+  hanzi: { minWidth: 60 },
+  flex: { flex: 1, minWidth: 0 },
+  hanViet: { letterSpacing: 0.6 },
+  level: { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 },
 });
