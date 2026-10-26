@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { AppText, AudioButton, Button, Card, ErrorNote, ProgressBar } from '@/components/ui';
-import { Radius, Spacing } from '@/constants/theme';
+import { AppText, AudioButton, Button, Card, EmptyState, ErrorNote, Hanzi, Icon, ProgressBar } from '@/components/ui';
+import { alpha } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api } from '@/lib/api';
 import { playWord } from '@/lib/audio';
@@ -15,7 +15,7 @@ interface AnswerLog {
   correct: string;
 }
 
-/** Kiểm tra nhanh cuối buổi ôn. Câu nghe ẩn Hán tự/pinyin cho tới khi đã chọn đáp án. */
+/** Kiểm tra nhanh cuối buổi ôn (`QuizRunner` của web). Câu nghe ẩn Hán tự/pinyin cho tới khi đã chọn đáp án. */
 export function QuizRunner({ quiz, onDone }: { quiz: Quiz; onDone: (scorePct: number) => void }) {
   const theme = useTheme();
   const [idx, setIdx] = useState(0);
@@ -26,13 +26,14 @@ export function QuizRunner({ quiz, onDone }: { quiz: Quiz; onDone: (scorePct: nu
   const q = quiz.questions[idx];
   const total = quiz.questions.length;
   const listening = q?.mode === 'listening';
+  const revealed = !listening || picked !== null;
 
   useEffect(() => {
     if (listening) playWord(q?.audioUrl);
   }, [listening, q?.audioUrl]);
 
   async function advance() {
-    if (!q || picked === null) return;
+    if (!q || picked === null || busy) return;
     const next = [...answers, { wordId: q.wordId, isCorrect: picked === q.answer, chosen: picked, correct: q.answer }];
     if (idx + 1 < total) {
       setAnswers(next);
@@ -51,81 +52,119 @@ export function QuizRunner({ quiz, onDone }: { quiz: Quiz; onDone: (scorePct: nu
     }
   }
 
-  if (!q) return null;
+  if (!q || !total) {
+    return (
+      <EmptyState
+        title="Chưa đủ câu hỏi để kiểm tra"
+        description="Hãy học thêm từ vựng hoặc chọn một cấp độ khác rồi thử lại."
+      />
+    );
+  }
 
   return (
-    <View style={styles.wrap}>
-      <View style={styles.row}>
-        <AppText bold style={styles.flex}>
-          Câu {idx + 1}/{total}
+    <Card style={styles.card}>
+      <View style={styles.head}>
+        <AppText weight="600">
+          Câu {idx + 1} <AppText color="muted">/ {total}</AppText>
         </AppText>
-        <AppText variant="caption" color="primary">
-          {listening ? 'Phần nghe' : 'Phần đọc'}
-        </AppText>
+        <View style={[styles.mode, { backgroundColor: alpha(theme.primary, 0.08) }]}>
+          <AppText variant="caption" weight="500" color="primary">
+            {listening ? 'Phần nghe' : 'Phần đọc'}
+          </AppText>
+        </View>
       </View>
       <ProgressBar value={(idx / total) * 100} />
-
-      <Card style={styles.prompt}>
-        <AppText variant="label" color="muted">
-          {listening ? 'Nghe rồi chọn nghĩa đúng' : 'Từ này có nghĩa là gì?'}
+      <View
+        style={[
+          styles.prompt,
+          {
+            borderColor: alpha(theme.border, 0.6),
+            backgroundImage: `linear-gradient(180deg, ${alpha(theme.surface2, 0.7)}, ${alpha(theme.surface2, 0.3)})`,
+          },
+        ]}>
+        <AppText variant="caption" weight="600" color="muted" style={styles.promptLabel}>
+          {listening ? 'NGHE RỒI CHỌN NGHĨA ĐÚNG' : 'TỪ NÀY CÓ NGHĨA LÀ GÌ?'}
         </AppText>
-        {listening && <AudioButton src={q.audioUrl} big />}
-        {(!listening || picked !== null) && (
-          <>
-            <AppText style={styles.hanzi}>{q.prompt}</AppText>
-            <AppText color="primary">{q.pinyin}</AppText>
-          </>
-        )}
-      </Card>
-
-      {q.options.map((opt, i) => {
-        const selected = picked === opt;
-        return (
-          <Pressable
-            key={`${i}-${opt}`}
-            disabled={busy}
-            onPress={() => setPicked(opt)}
-            accessibilityRole="radio"
-            accessibilityState={{ checked: selected }}
-            style={[
-              styles.option,
-              selected
-                ? { borderColor: theme.primary, backgroundColor: theme.primarySoft }
-                : { borderColor: theme.border, backgroundColor: theme.surface },
-            ]}>
-            <AppText bold color={selected ? 'primary' : 'muted'}>
-              {String.fromCharCode(65 + i)}
-            </AppText>
-            <AppText style={styles.flex}>{opt}</AppText>
-          </Pressable>
-        );
-      })}
-
+        {listening && <AudioButton src={q.audioUrl} size={44} />}
+        <View style={[listening && styles.listenAnswer, { opacity: revealed ? 1 : 0 }]}>
+          <Hanzi size={listening ? 36 : 48} style={styles.hanzi}>
+            {revealed ? q.prompt : '　'}
+          </Hanzi>
+          <AppText weight="600" color="primary" style={listening ? styles.pinyinSmall : styles.pinyin}>
+            {revealed ? q.pinyin : ''}
+          </AppText>
+        </View>
+      </View>
+      <View style={styles.options} accessibilityLabel="Chọn đáp án">
+        {q.options.map((opt, i) => {
+          const selected = picked === opt;
+          return (
+            <Pressable
+              key={`${i}-${opt}`}
+              disabled={busy}
+              onPress={() => setPicked(opt)}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: selected }}
+              style={({ pressed }) => [
+                styles.option,
+                selected
+                  ? {
+                      borderColor: theme.primary,
+                      backgroundColor: alpha(theme.primary, 0.1),
+                      boxShadow: `0 4px 6px -1px ${alpha(theme.primary, 0.1)}`,
+                    }
+                  : {
+                      borderColor: pressed ? alpha(theme.primary, 0.4) : alpha(theme.border, 0.8),
+                      backgroundColor: pressed ? alpha(theme.surface2, 0.8) : theme.surface,
+                    },
+                busy && styles.dim,
+              ]}>
+              <View style={[styles.letter, { backgroundColor: selected ? theme.primary : theme.surface2 }]}>
+                <AppText variant="caption" weight="700" color={selected ? 'primaryText' : 'muted'}>
+                  {String.fromCharCode(65 + i)}
+                </AppText>
+              </View>
+              <AppText weight={selected ? '600' : '500'} style={styles.flex}>
+                {opt}
+              </AppText>
+              {selected && <Icon name="check" size={18} color="primary" />}
+            </Pressable>
+          );
+        })}
+      </View>
       {error && <ErrorNote>{error}</ErrorNote>}
       <Button
         title={busy ? 'Đang nộp bài…' : idx + 1 < total ? 'Câu tiếp theo' : error ? 'Thử nộp lại' : 'Nộp bài kiểm tra'}
         icon="arrow"
-        loading={busy}
-        disabled={picked === null}
-        onPress={advance}
+        disabled={picked === null || busy}
+        onPress={() => void advance()}
       />
-    </View>
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: Spacing.md },
-  row: { flexDirection: 'row', alignItems: 'center' },
-  flex: { flex: 1 },
-  prompt: { alignItems: 'center', paddingVertical: Spacing.xl },
-  hanzi: { fontSize: 48, lineHeight: 60, fontWeight: '700' },
+  card: { gap: 24 },
+  head: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  mode: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4 },
+  prompt: { alignItems: 'center', borderWidth: 1, borderRadius: 16, paddingHorizontal: 20, paddingVertical: 36 },
+  promptLabel: { marginBottom: 16, letterSpacing: 0.6 },
+  listenAnswer: { marginTop: 20, alignItems: 'center' },
+  hanzi: { fontWeight: '700', textAlign: 'center' },
+  pinyin: { marginTop: 12, fontSize: 18, lineHeight: 28, textAlign: 'center' },
+  pinyinSmall: { marginTop: 8, fontSize: 16, lineHeight: 24, textAlign: 'center' },
+  options: { gap: 12 },
   option: {
+    minHeight: 56,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
-    minHeight: 56,
-    borderWidth: 1.5,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.lg,
+    gap: 14,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
   },
+  letter: { width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  flex: { flex: 1, minWidth: 0 },
+  dim: { opacity: 0.6 },
 });
