@@ -9,13 +9,14 @@ import { AppText } from './text';
 /**
  * Nút chọn dạng viên thuốc. Đang chọn = lớp `.chip-on` của web (viền đỏ 50%, nền đỏ 10%, chữ đỏ đậm).
  * Mặc định = chip lọc của web (`px-3.5 py-1.5 text-xs font-semibold`); `strong` = chip cấp HSK ở trang chủ web
- * (viền 2px, chữ 14px đậm, có bóng đáy khi chọn).
+ * (viền 2px, chữ 14px đậm, có bóng đáy khi chọn); `size="md"` = viền 1px chữ 14px (vd chọn cấp ở kiểm tra trình độ).
  */
 export function Chip({
   label,
   active,
   onPress,
   strong = false,
+  size = 'sm',
   trailing,
   style,
 }: {
@@ -23,6 +24,7 @@ export function Chip({
   active: boolean;
   onPress: () => void;
   strong?: boolean;
+  size?: 'sm' | 'md';
   /** Phần đuôi trong chip, sau chữ (vd nhãn "ĐANG HỌC"). */
   trailing?: ReactNode;
   style?: StyleProp<ViewStyle>;
@@ -46,7 +48,10 @@ export function Chip({
         pressed && { transform: [{ scale: 0.97 }] },
         style,
       ]}>
-      <AppText variant={strong ? 'body' : 'caption'} weight={strong || active ? '700' : '600'} color={active ? 'primary' : 'text'}>
+      <AppText
+        variant={strong || size === 'md' ? 'body' : 'caption'}
+        weight={strong || active ? '700' : '600'}
+        color={active ? 'primary' : 'text'}>
         {label}
       </AppText>
       {trailing}

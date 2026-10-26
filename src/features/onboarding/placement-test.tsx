@@ -1,13 +1,14 @@
 import { Image } from 'expo-image';
 import { router, Stack } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AppText, Button, Card, ChipRow, ErrorNote, Icon, PageHeader, Screen, TextLink } from '@/components/ui';
-import { Radius, Spacing } from '@/constants/theme';
+import { Brand } from '@/components/app-shell/top-bar';
+import { AppText, Button, Chip, Icon, IconTile, Screen, ShareButton } from '@/components/ui';
+import { alpha } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { api } from '@/lib/api';
+import { api, WEB_ORIGIN } from '@/lib/api';
 import { playWord } from '@/lib/audio';
 import { useAuth } from '@/lib/auth';
 import { savePendingCourseLevel } from '@/lib/guest-progress';
@@ -28,7 +29,7 @@ interface LevelScore {
 
 /** "Tôi chưa biết từ này" — tính là sai nhưng không tô đỏ ô nào, chỉ hiện đáp án. */
 const SKIPPED = -1;
-const START_LEVELS = [1, 2, 3, 4, 5, 6].map((l) => ({ value: l, label: `HSK ${l}` }));
+const START_LEVELS = [1, 2, 3, 4, 5, 6];
 
 /** Cấp nên học = cấp THẤP NHẤT chưa vững; vững hết thì cấp cao nhất đã hỏi. */
 function recommendedLevel(scores: LevelScore[]) {
@@ -117,8 +118,8 @@ export function PlacementTest() {
     setPhase('result');
   }
 
-  // Lúc làm bài thì ẩn thanh tiêu đề — màn làm bài có đầu riêng (nút thoát + tiến độ).
-  const header = <Stack.Screen options={{ title: 'Kiểm tra trình độ', headerShown: phase !== 'test' }} />;
+  // Như web: màn này không dùng thanh tiêu đề chung — giới thiệu có logo Hanni, làm bài có nút thoát + tiến độ.
+  const header = <Stack.Screen options={{ title: 'Kiểm tra trình độ', headerShown: false }} />;
 
   if (phase === 'result') {
     return (
@@ -146,7 +147,9 @@ export function PlacementTest() {
           <ChoiceStep step={step} word={word} picked={picked} onPick={answer} />
           {picked === null && (
             <View style={styles.skip}>
-              <TextLink title="Tôi chưa biết từ này" color="muted" onPress={() => answer(SKIPPED)} />
+              <AppText weight="600" color="muted" onPress={() => answer(SKIPPED)}>
+                Tôi chưa biết từ này
+              </AppText>
             </View>
           )}
         </ScrollView>
@@ -158,40 +161,81 @@ export function PlacementTest() {
   }
 
   return (
-    <Screen>
+    <View style={[styles.fill, { backgroundColor: theme.background }]}>
       {header}
-      <PageHeader
-        icon="chart"
-        title="Kiểm tra trình độ"
-        description="Vài câu nghe – đọc bằng từ vựng HSK 3.0 thật, khoảng 2–5 phút."
-      />
-      <Card>
-        <AppText bold>Bắt đầu từ cấp</AppText>
-        <AppText variant="small" color="muted">
-          Chỉ là điểm xuất phát — bài sẽ tự lên/xuống theo câu trả lời.
+      <View style={[styles.brandBar, { paddingTop: insets.top + 12, borderColor: theme.border, backgroundColor: alpha(theme.surface, 0.95) }]}>
+        <Pressable onPress={() => router.dismissTo('/')} accessibilityLabel="Về trang chủ Hanni" style={styles.self}>
+          <Brand />
+        </Pressable>
+      </View>
+      <ScrollView contentContainerStyle={[styles.intro, { paddingBottom: insets.bottom + 24 }]}>
+        <IconTile icon="chart" style={styles.center} />
+        <AppText variant="caption" weight="700" color="primary" center style={styles.eyebrow}>
+          MIỄN PHÍ · KHÔNG CẦN ĐĂNG KÝ
         </AppText>
-        <ChipRow options={START_LEVELS} value={startLevel} onChange={setStartLevel} />
-      </Card>
-      {phase === 'error' && <ErrorNote>Chưa tải được đề kiểm tra. Bạn kiểm tra kết nối mạng rồi thử lại nhé.</ErrorNote>}
-      <Button
-        title={phase === 'loading' ? 'Đang chuẩn bị đề…' : 'Bắt đầu kiểm tra'}
-        icon="arrow"
-        loading={phase === 'loading'}
-        onPress={start}
-      />
-      {[
-        { icon: 'target' as const, text: 'Mỗi cấp tối đa 4 câu — đúng 3 câu là qua cấp.' },
-        { icon: 'sound' as const, text: 'Có câu nghe — nhớ bật âm thanh.' },
-        { icon: 'spark' as const, text: 'Không biết thì bấm “Tôi chưa biết” — đoán bừa làm kết quả kém chính xác.' },
-      ].map((r) => (
-        <View key={r.text} style={[styles.rule, { backgroundColor: theme.surface2 }]}>
-          <Icon name={r.icon} size={18} color="primary" />
-          <AppText variant="small" style={styles.fill}>
-            {r.text}
+        <AppText weight="800" center style={styles.title}>
+          Kiểm tra trình độ tiếng Trung
+        </AppText>
+        <AppText color="muted" center style={styles.lead}>
+          Trả lời vài câu nghe – đọc bằng từ vựng HSK 3.0 thật. Đúng thì lên cấp, sai thì xuống cấp, đủ chắc là dừng và đề
+          xuất cấp nên bắt đầu học — khoảng 2–5 phút.
+        </AppText>
+        <View style={[styles.startBox, { borderColor: theme.border, backgroundColor: theme.surface }]}>
+          <AppText weight="600">Bắt đầu từ cấp</AppText>
+          <AppText variant="caption" color="muted">
+            Chỉ là điểm xuất phát — bài sẽ tự lên/xuống theo câu trả lời.
           </AppText>
+          <View style={styles.levels} accessibilityRole="radiogroup" accessibilityLabel="Cấp bắt đầu">
+            {START_LEVELS.map((l) => (
+              <Chip
+                key={l}
+                label={`HSK ${l}`}
+                active={startLevel === l}
+                onPress={() => setStartLevel(l)}
+                size="md"
+                trailing={
+                  l === 1 ? (
+                    <AppText color={startLevel === l ? 'primary' : 'text'} style={styles.newbie}>
+                      · mới học
+                    </AppText>
+                  ) : undefined
+                }
+              />
+            ))}
+          </View>
         </View>
-      ))}
-    </Screen>
+        {phase === 'error' && (
+          <AppText color="danger" center style={styles.error}>
+            Chưa tải được đề kiểm tra. Bạn kiểm tra kết nối mạng rồi thử lại nhé.
+          </AppText>
+        )}
+        <Button
+          title={phase === 'loading' ? 'Đang chuẩn bị đề…' : 'Bắt đầu kiểm tra'}
+          icon="arrow"
+          disabled={phase === 'loading'}
+          onPress={() => void start()}
+          style={styles.startButton}
+        />
+        <View style={styles.rules}>
+          {[
+            { icon: 'target' as const, text: 'Mỗi cấp tối đa 4 câu — đúng 3 câu là qua cấp.' },
+            { icon: 'sound' as const, text: 'Có câu nghe — nhớ bật âm thanh.' },
+            { icon: 'spark' as const, text: 'Không biết thì bấm “Tôi chưa biết” — đoán bừa làm kết quả kém chính xác.' },
+          ].map((r) => (
+            <View key={r.text} style={[styles.rule, { backgroundColor: theme.surface2 }]}>
+              <Icon name={r.icon} size={18} color="primary" />
+              <AppText style={styles.fill}>{r.text}</AppText>
+            </View>
+          ))}
+        </View>
+        <AppText variant="caption" color="muted" center style={styles.newStart}>
+          Chưa học tiếng Trung bao giờ?{' '}
+          <AppText variant="caption" weight="600" color="primary" onPress={() => void startCourse(1, Boolean(user))}>
+            Học bài 1 HSK1 luôn
+          </AppText>
+        </AppText>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -211,15 +255,15 @@ function Result({ scores, isGuest, onRetry }: { scores: LevelScore[]; isGuest: b
         : `Bạn đã vững từ vựng tới ${hskLabel(level - 1)}. Học tiếp từ ${hskLabel(level)} để không phải học lại thứ đã biết.`;
 
   return (
-    <Screen contentStyle={styles.center}>
+    <Screen safeTop contentStyle={styles.result}>
       <Image source={require('@/assets/images/mascot.png')} style={styles.mascot} contentFit="contain" />
-      <AppText variant="label" color="primary">
-        Kết quả kiểm tra trình độ
+      <AppText variant="caption" weight="700" color="primary" center style={styles.resultEyebrow}>
+        KẾT QUẢ KIỂM TRA TRÌNH ĐỘ
       </AppText>
-      <AppText variant="title" center>
+      <AppText weight="800" center style={styles.title}>
         Bạn nên bắt đầu từ {hskLabel(level)}
       </AppText>
-      <AppText color="muted" center>
+      <AppText color="muted" center style={styles.summary}>
         {summary}
       </AppText>
 
@@ -230,14 +274,14 @@ function Result({ scores, isGuest, onRetry }: { scores: LevelScore[]; isGuest: b
             style={[
               styles.score,
               s.passed
-                ? { borderColor: theme.good, backgroundColor: theme.goodSoft }
-                : { borderColor: theme.danger, backgroundColor: theme.dangerSoft },
+                ? { borderColor: alpha(theme.good, 0.3), backgroundColor: alpha(theme.good, 0.05) }
+                : { borderColor: alpha(theme.danger, 0.3), backgroundColor: alpha(theme.danger, 0.05) },
             ]}>
             <Icon name={s.passed ? 'check' : 'close'} size={18} color={s.passed ? 'good' : 'danger'} />
-            <AppText bold style={styles.fill}>
+            <AppText weight="600" style={styles.scoreLevel}>
               {hskLabel(s.level)}
             </AppText>
-            <AppText variant="small" color="muted">
+            <AppText color="muted">
               đúng {s.correct}/{s.asked}
               {s.passed ? '' : ' — chưa vững'}
             </AppText>
@@ -258,32 +302,56 @@ function Result({ scores, isGuest, onRetry }: { scores: LevelScore[]; isGuest: b
         {isGuest && (
           <Button title="Tạo tài khoản để lưu lộ trình" variant="secondary" onPress={() => router.replace('/register')} />
         )}
-        <Button title="Làm lại" variant="ghost" onPress={onRetry} />
+        <AppText variant="caption" color="muted" center>
+          Kết quả ước lượng từ {scores.reduce((n, s) => n + s.asked, 0)} câu — bạn đổi cấp được bất cứ lúc nào ở Trang
+          chủ.{' '}
+          <AppText variant="caption" weight="600" color="primary" onPress={onRetry}>
+            Làm lại
+          </AppText>
+        </AppText>
       </View>
-      <AppText variant="caption" color="muted" center>
-        Kết quả ước lượng từ {scores.reduce((n, s) => n + s.asked, 0)} câu — bạn đổi cấp được bất cứ lúc nào ở
-        Trang chủ.
-      </AppText>
+      <ShareButton
+        message={`Mình vừa kiểm tra trình độ tiếng Trung trên Hanni: nên học ${hskLabel(level)}. Bạn ở cấp nào? Làm thử 3 phút, miễn phí: ${WEB_ORIGIN}/kiem-tra-trinh-do`}
+        style={styles.share}
+      />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  body: { padding: Spacing.lg, paddingBottom: 160 },
-  skip: { alignItems: 'center', marginTop: Spacing.xl },
-  rule: { flexDirection: 'row', gap: Spacing.md, padding: Spacing.md, borderRadius: Radius.lg },
-  center: { alignItems: 'center' },
-  mascot: { width: 160, height: 135 },
-  scores: { alignSelf: 'stretch', gap: Spacing.sm },
+  self: { alignSelf: 'flex-start' },
+  center: { alignSelf: 'center' },
+  body: { paddingHorizontal: 16, paddingTop: 32, paddingBottom: 160 },
+  skip: { alignItems: 'center', marginTop: 24 },
+  brandBar: { borderBottomWidth: 1, paddingHorizontal: 16, paddingBottom: 12 },
+  intro: { paddingHorizontal: 16, paddingTop: 24 },
+  eyebrow: { marginTop: 16, letterSpacing: 0.6 },
+  title: { marginTop: 6, fontSize: 24, lineHeight: 32, letterSpacing: -0.6 },
+  lead: { marginTop: 12, lineHeight: 24 },
+  startBox: { marginTop: 24, borderWidth: 1, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 12 },
+  levels: { marginTop: 10, flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  newbie: { fontWeight: '400', opacity: 0.8 },
+  error: { marginTop: 20 },
+  startButton: { marginTop: 20 },
+  rules: { marginTop: 24, gap: 8 },
+  rule: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 12 },
+  newStart: { marginTop: 20 },
+  result: { alignItems: 'center', gap: 0, paddingTop: 40 },
+  mascot: { width: 152, height: 128 },
+  resultEyebrow: { marginTop: 20, letterSpacing: 0.6 },
+  summary: { marginTop: 8 },
+  scores: { marginTop: 24, alignSelf: 'stretch', gap: 8 },
   score: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
+    gap: 12,
     borderWidth: 1,
-    borderRadius: Radius.lg,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
-  actions: { alignSelf: 'stretch', gap: Spacing.md },
+  scoreLevel: { flex: 1 },
+  actions: { marginTop: 32, alignSelf: 'stretch', gap: 12 },
+  share: { marginTop: 24, alignSelf: 'center' },
 });
