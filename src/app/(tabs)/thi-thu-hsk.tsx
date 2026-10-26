@@ -7,7 +7,7 @@ import { ExamList } from '@/features/mock-exam/exam-list';
 /** Tab Luyện thi HSK: đề thi thử đúng cấu trúc đề thật, khách cũng làm được. */
 export default function MockExamTab() {
   return (
-    <Screen safeTop>
+    <Screen>
       <PageHeader
         icon="target"
         title="Luyện thi HSK"

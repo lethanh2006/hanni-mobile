@@ -19,7 +19,7 @@ export default function StudyTab() {
   const { user, loading } = useAuth();
 
   return (
-    <Screen safeTop>
+    <Screen>
       <PageHeader
         icon="cards"
         title="Ôn tập"

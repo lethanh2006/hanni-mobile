@@ -21,7 +21,7 @@ export default function DictionaryTab() {
   const typing = query.trim().length > 0;
 
   return (
-    <Screen safeTop>
+    <Screen>
       <PageHeader icon="search" title="Từ điển" description="Tra từ kèm pinyin, âm Hán Việt và câu ví dụ." />
       <SearchBox value={query} onChange={setQuery} onSubmit={() => items[0] && openWord(items[0].simplified)} />
 

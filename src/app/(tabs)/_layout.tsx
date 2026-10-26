@@ -1,35 +1,32 @@
-import { NativeTabs } from 'expo-router/native-tabs';
+import { Tabs } from 'expo-router/js-tabs';
 
+import { BottomNav } from '@/components/app-shell/bottom-nav';
+import { TopBar } from '@/components/app-shell/top-bar';
 import { useTheme } from '@/hooks/use-theme';
+import { IN_MORE } from '@/lib/nav';
 
-/** 5 tab giống `NAV_MAIN` của web: Trang chủ · Ôn tập · Luyện thi · Luyện tập · Từ điển. */
+/**
+ * Khung app như web ở khổ điện thoại: thanh trên chung + thanh tab dưới đáy (4 tab + "Thêm").
+ * Từ điển, Xếp hạng, Lớp học, Tiến độ, Tài khoản là tab ẩn (mở từ "Thêm") để vẫn giữ 2 thanh như web.
+ * `backBehavior="history"`: nút quay lại của Android đi ngược đúng thứ tự đã mở, như trình duyệt.
+ */
 export default function TabsLayout() {
   const theme = useTheme();
   return (
-    <NativeTabs
-      backgroundColor={theme.surface}
-      tintColor={theme.primary}
-      labelStyle={{ selected: { color: theme.primary } }}>
-      <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Label>Trang chủ</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="house" md="home" />
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="study">
-        <NativeTabs.Trigger.Label>Ôn tập</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="rectangle.stack" md="style" />
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="thi-thu-hsk">
-        <NativeTabs.Trigger.Label>Luyện thi</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="target" md="ads_click" />
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="luyen-tap">
-        <NativeTabs.Trigger.Label>Luyện tập</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="square.grid.2x2" md="grid_view" />
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="tu-dien">
-        <NativeTabs.Trigger.Label>Từ điển</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="magnifyingglass" md="search" />
-      </NativeTabs.Trigger>
-    </NativeTabs>
+    <Tabs
+      backBehavior="history"
+      tabBar={(props) => <BottomNav {...props} />}
+      screenOptions={{
+        header: () => <TopBar />,
+        sceneStyle: { backgroundColor: theme.background },
+      }}>
+      <Tabs.Screen name="index" />
+      <Tabs.Screen name="study" />
+      <Tabs.Screen name="thi-thu-hsk" />
+      <Tabs.Screen name="luyen-tap" />
+      {IN_MORE.map((name) => (
+        <Tabs.Screen key={name} name={name} options={{ href: null }} />
+      ))}
+    </Tabs>
   );
 }

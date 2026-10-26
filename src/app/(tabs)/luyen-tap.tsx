@@ -25,7 +25,7 @@ function ToolCard({ tool }: { tool: PracticeTool }) {
 /** Tab Luyện tập: nghe, nói, viết, trò chơi, tra cứu — luyện thêm ngoài lộ trình. */
 export default function PracticeTab() {
   return (
-    <Screen safeTop>
+    <Screen>
       <PageHeader icon="grid" title="Luyện tập" description="Luyện thêm theo cách bạn thích, ngoài lộ trình bài học." />
       {PRACTICE_SECTIONS.map((section) => (
         <View key={section.title} style={styles.section}>

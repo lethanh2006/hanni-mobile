@@ -1,15 +1,20 @@
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { AppState, useColorScheme } from 'react-native';
 import { SWRConfig, type SWRConfiguration } from 'swr';
 
-import { Colors } from '@/constants/theme';
+import { Colors, Fonts } from '@/constants/theme';
 import { NotificationCenter } from '@/features/notifications/notification-center';
 import { fetcher } from '@/lib/api';
 import { AuthProvider, useAuth } from '@/lib/auth';
+import { restoreThemeMode } from '@/lib/theme-mode';
+import { loadWebFonts } from '@/lib/web-fonts';
 
 SplashScreen.preventAutoHideAsync();
+restoreThemeMode();
+loadWebFonts();
 
 /** SWR trên điện thoại: "trang được focus" = app quay lại từ nền. */
 const swrConfig: SWRConfiguration = {
@@ -46,8 +51,16 @@ export default function RootLayout() {
       <SWRConfig value={swrConfig}>
         <AuthProvider>
           <HideSplashWhenReady />
+          <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
           <NotificationCenter />
-          <Stack screenOptions={{ headerBackButtonDisplayMode: 'minimal' }}>
+          <Stack
+            screenOptions={{
+              headerBackButtonDisplayMode: 'minimal',
+              headerStyle: { backgroundColor: colors.surface },
+              headerTintColor: colors.text,
+              headerTitleStyle: { fontFamily: Fonts.sans, fontWeight: '600', fontSize: 16 },
+              contentStyle: { backgroundColor: colors.background },
+            }}>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           </Stack>
         </AuthProvider>
