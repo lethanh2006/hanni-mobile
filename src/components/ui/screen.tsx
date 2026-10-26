@@ -5,8 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/hooks/use-theme';
 
 /**
- * Khung chung của mọi màn — lề như `.page-wrap` của web ở khổ điện thoại (ngang 20px, trên 28px),
- * các khối cách nhau 24px (`space-y-6`).
+ * Khung chung của mọi màn — lề như `.page-wrap` trong khung app của web ở khổ điện thoại (trên 20px, ngang 16px,
+ * dưới 28px), các khối cách nhau 24px (`space-y-6`).
  * - Màn toàn màn hình (không thanh trên, vd phiên học) truyền `safeTop` để chừa tai thỏ.
  * - Có `onRefresh` thì kéo xuống để tải lại.
  * - `scroll={false}` cho màn tự quản lý cuộn (vd danh sách dài dùng FlatList).
@@ -28,7 +28,7 @@ export function Screen({
 }) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const padding = [styles.content, { paddingTop: (safeTop ? insets.top : 0) + 28 }, contentStyle];
+  const padding = [styles.content, { paddingTop: (safeTop ? insets.top : 0) + 20 }, contentStyle];
 
   if (!scroll) {
     return <View style={[styles.fill, { backgroundColor: theme.background }, padding]}>{children}</View>;
@@ -53,8 +53,8 @@ export function Screen({
 const styles = StyleSheet.create({
   fill: { flex: 1 },
   content: {
-    paddingHorizontal: 20,
-    paddingBottom: 32,
+    paddingHorizontal: 16,
+    paddingBottom: 28,
     gap: 24,
   },
 });

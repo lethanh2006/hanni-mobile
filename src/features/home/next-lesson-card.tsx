@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { AppText, Button, ErrorNote, ProgressRing, Skeleton } from '@/components/ui';
-import { alpha, Fonts, mix, panelShadow, Radius } from '@/constants/theme';
+import { Fonts, Radius, tintPanel } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { hskLabel } from '@/lib/hsk';
 import type { LearnPath } from '@/lib/types';
@@ -10,13 +10,7 @@ import { lessonMinutes, toUnits } from '@/lib/units';
 
 /** Khung `.panel.tint-primary` của thẻ Học tiếp: nền đỏ 7% nhạt dần xuống trắng. */
 function useHeroStyle() {
-  const theme = useTheme();
-  return {
-    backgroundColor: theme.surface,
-    backgroundImage: `linear-gradient(180deg, ${mix(theme.primary, theme.surface, 0.07)}, ${theme.surface})`,
-    borderColor: alpha(theme.border, 0.8),
-    boxShadow: panelShadow(theme),
-  };
+  return tintPanel(useTheme());
 }
 
 /**

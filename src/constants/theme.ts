@@ -78,6 +78,16 @@ export function panelShadow(theme: ThemeColors) {
   return `0 4px 20px -12px ${alpha(theme.text, 0.16)}, 0 1px 3px -1px ${alpha(theme.text, 0.08)}`;
 }
 
+/** Khối `.panel.tint-primary` (hoặc tông khác) của web: nền pha màu 7% nhạt dần xuống trắng, viền + bóng như `.panel`. */
+export function tintPanel(theme: ThemeColors, color: string = theme.primary, amount = 0.07) {
+  return {
+    backgroundColor: theme.surface,
+    backgroundImage: `linear-gradient(180deg, ${mix(color, theme.surface, amount)}, ${theme.surface})`,
+    borderColor: alpha(theme.border, 0.8),
+    boxShadow: panelShadow(theme),
+  };
+}
+
 /**
  * Font giống web: chữ Latin/Việt là Geist (nhúng lúc build qua plugin expo-font), chữ Hán là kiểu chữ có chân
  * (web: "Kaiti SC", "KaiTi", "Noto Serif CJK SC", "Songti SC", serif — trên Android là Noto Serif CJK).

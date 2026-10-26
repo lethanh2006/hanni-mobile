@@ -8,7 +8,8 @@ import { AppText } from './text';
 
 /**
  * Nút chọn dạng viên thuốc. Đang chọn = lớp `.chip-on` của web (viền đỏ 50%, nền đỏ 10%, chữ đỏ đậm).
- * `strong` = chip cấp HSK ở trang chủ web (viền 2px, chữ đậm, có bóng đáy khi chọn).
+ * Mặc định = chip lọc của web (`px-3.5 py-1.5 text-xs font-semibold`); `strong` = chip cấp HSK ở trang chủ web
+ * (viền 2px, chữ 14px đậm, có bóng đáy khi chọn).
  */
 export function Chip({
   label,
@@ -45,7 +46,7 @@ export function Chip({
         pressed && { transform: [{ scale: 0.97 }] },
         style,
       ]}>
-      <AppText variant={strong ? 'body' : 'small'} weight={strong || active ? '700' : '600'} color={active ? 'primary' : 'text'}>
+      <AppText variant={strong ? 'body' : 'caption'} weight={strong || active ? '700' : '600'} color={active ? 'primary' : 'text'}>
         {label}
       </AppText>
       {trailing}
@@ -85,7 +86,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: Radius.pill,
     borderWidth: 1,

@@ -57,7 +57,14 @@ export function TopBar() {
             <Pressable
               onPress={() => router.navigate('/progress')}
               accessibilityLabel={`Chuỗi ${streak.data.currentStreak} ngày học`}
-              style={[styles.streak, { backgroundColor: alpha(theme.primary, 0.08) }]}>
+              style={[
+                styles.streak,
+                {
+                  borderColor: alpha(theme.primary, 0.22),
+                  backgroundImage: `linear-gradient(135deg, ${mix(theme.primary, theme.surface, 0.14)}, ${mix(theme.accent, theme.surface, 0.1)})`,
+                  boxShadow: `0 4px 14px -6px ${alpha(theme.primary, 0.3)}`,
+                },
+              ]}>
               <Icon name="flame" size={16} color="primary" />
               <AppText variant="caption" weight="600" color="primary">
                 {streak.data.currentStreak}
@@ -80,7 +87,14 @@ export function TopBar() {
             <Pressable
               onPress={() => router.navigate('/account')}
               accessibilityLabel="Mở tài khoản"
-              style={styles.account}>
+              style={[
+                styles.account,
+                {
+                  borderColor: mix(theme.border, theme.primary, 0.9),
+                  backgroundColor: alpha(theme.surface, 0.8),
+                  boxShadow: `0 2px 8px -4px ${alpha(theme.text, 0.1)}`,
+                },
+              ]}>
               <Avatar user={user} size={36} />
             </Pressable>
           ) : (
@@ -162,7 +176,7 @@ function ThemeToggle() {
 
 const styles = StyleSheet.create({
   bar: { borderBottomWidth: 1 },
-  row: { height: 64, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16 },
+  row: { height: 64, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12 },
   actions: { marginLeft: 'auto', flexDirection: 'row', alignItems: 'center', gap: 8, minWidth: 0 },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   mark: { width: 40, height: 40, borderRadius: 12 },
@@ -171,10 +185,11 @@ const styles = StyleSheet.create({
   streak: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 4,
+    minHeight: 40,
+    borderWidth: 1,
     borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 9,
   },
   shield: { flexDirection: 'row', alignItems: 'center', gap: 2, marginLeft: 2, paddingLeft: 6, borderLeftWidth: 1 },
   crown: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
@@ -192,7 +207,7 @@ const styles = StyleSheet.create({
   },
   badgeText: { color: '#ffffff', fontSize: 11, fontWeight: '700' },
   toggle: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  account: { padding: 4, borderRadius: 12 },
+  account: { padding: 3, borderRadius: 999, borderWidth: 1 },
   guest: {
     flexDirection: 'row',
     alignItems: 'center',
