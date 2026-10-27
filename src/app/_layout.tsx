@@ -9,6 +9,7 @@ import { StackHeader } from '@/components/app-shell/stack-header';
 import { Colors, Fonts } from '@/constants/theme';
 import { AssistantWidget } from '@/features/assistant/assistant-widget';
 import { NotificationCenter } from '@/features/notifications/notification-center';
+import { ReminderSync } from '@/features/reminders/reminder-sync';
 import { AudioDecoderHost } from '@/features/tone/decode-audio';
 import { fetcher } from '@/lib/api';
 import { AuthProvider, useAuth } from '@/lib/auth';
@@ -56,6 +57,7 @@ export default function RootLayout() {
           <HideSplashWhenReady />
           <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
           <NotificationCenter />
+          <ReminderSync />
           <Stack
             screenOptions={{
               header: (props) => <StackHeader {...props} />,

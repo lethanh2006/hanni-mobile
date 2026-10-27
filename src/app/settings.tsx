@@ -5,7 +5,9 @@ import useSWR from 'swr';
 
 import { AppText, Avatar, Button, Card, ErrorNote, Icon, Loading, PageHeader, Screen } from '@/components/ui';
 import { alpha } from '@/constants/theme';
+import { CalendarReminder } from '@/features/settings/calendar-reminder';
 import { GoalSection } from '@/features/settings/goal-section';
+import { NotificationCard } from '@/features/settings/notification-card';
 import { SchedulerSection } from '@/features/settings/scheduler-section';
 import { ChoiceButton, SettingCard } from '@/features/settings/setting-card';
 import { TimezoneSection } from '@/features/settings/timezone-section';
@@ -14,7 +16,10 @@ import { api } from '@/lib/api';
 import { useRequireAuth } from '@/lib/auth';
 import type { Me, UserSettings } from '@/lib/types';
 
-/** Cài đặt học tập (trang `/settings` của web): mục tiêu mỗi ngày, cách xếp lịch ôn, múi giờ, email tổng kết tuần. */
+/**
+ * Cài đặt học tập (trang `/settings` của web): thông báo + giờ nhắc học, thêm lịch học vào lịch của máy, mục tiêu mỗi
+ * ngày, cách xếp lịch ôn, múi giờ, email tổng kết tuần.
+ */
 export default function SettingsScreen() {
   const { user, refresh } = useRequireAuth();
   const { data, error, mutate } = useSWR<UserSettings>(user ? '/users/me/settings' : null);
@@ -52,6 +57,26 @@ export default function SettingsScreen() {
               <AppText color="muted">{user.email}</AppText>
             </View>
           </Card>
+          <NotificationCard
+            reminderHour={data.reminderHour}
+            onChangeReminderHour={async (hour) => {
+              const next = await api.patch<UserSettings>('/users/me/settings', { reminderHour: hour });
+              await mutate(next, { revalidate: false });
+              await refresh();
+            }}
+            onSubscribed={async () => {
+              // Web: server tự đặt giờ nhắc mặc định khi bật thông báo — app đặt 20:00 (giờ mặc định của lịch học).
+              if (data.reminderHour !== null) return;
+              const next = await api.patch<UserSettings>('/users/me/settings', { reminderHour: 20 });
+              await mutate(next, { revalidate: false });
+              await refresh();
+            }}
+          />
+          <CalendarReminder
+            key={data.reminderHour ?? 'chua-dat'}
+            defaultHour={data.reminderHour}
+            minutes={data.dailyGoalType === 'MINUTES' ? Math.max(5, Math.round(data.dailyGoalValue)) : 15}
+          />
           <SettingsForm
             key={user.id}
             user={user}
