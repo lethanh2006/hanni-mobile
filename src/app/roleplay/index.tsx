@@ -143,11 +143,14 @@ export default function RoleplayListScreen() {
         </View>
       )}
 
-      {/* Luyện nói xong không bị cụt đường — củng cố vốn từ. Web có thêm "Luyện phát âm" (app chưa có). */}
+      {/* Luyện nói xong không bị cụt đường: luyện phát âm chuẩn, hoặc ôn lại từ vựng. */}
       <NextStep
         title="Luyện nói xong, củng cố thêm nhé"
         description="Phản xạ hội thoại tốt nhất khi phát âm chuẩn và vốn từ đủ dùng."
-        actions={[{ href: '/study', label: 'Ôn tập flashcard', icon: 'cards' }]}
+        actions={[
+          { href: '/pronunciation', label: 'Luyện phát âm', icon: 'mic' },
+          { href: '/study', label: 'Ôn tập flashcard', icon: 'cards' },
+        ]}
       />
     </Screen>
   );

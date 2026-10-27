@@ -152,15 +152,24 @@ export default function LessonDetailScreen() {
           {words.length > 0 && <Fact label="Đã học" value={`${startedWords}/${words.length} từ`} />}
           {relatedGrammar.length > 0 && <Fact label="Ngữ pháp liên quan" value={String(relatedGrammar.length)} />}
         </View>
-        {/* Web có thêm "Luyện phát âm" cạnh "Luyện nghe" — app chưa có màn đó. */}
         {words.length > 0 && (
           <View style={styles.moreButtons}>
-            <Button
-              title="Luyện nghe"
-              leftIcon="headphones"
-              variant="secondary"
-              onPress={() => router.push({ pathname: '/listening', params: { lesson: lesson.id } })}
-            />
+            <View style={styles.pair}>
+              <Button
+                title="Luyện nghe"
+                leftIcon="headphones"
+                variant="secondary"
+                onPress={() => router.push({ pathname: '/listening', params: { lesson: lesson.id } })}
+                style={styles.flex}
+              />
+              <Button
+                title="Luyện phát âm"
+                leftIcon="mic"
+                variant="secondary"
+                onPress={() => router.push({ pathname: '/pronunciation', params: { lesson: lesson.id } })}
+                style={styles.flex}
+              />
+            </View>
             <Button
               title="Bài đọc AI dùng từ của bài"
               leftIcon="book"
@@ -294,6 +303,7 @@ const styles = StyleSheet.create({
   facts: { marginTop: 20, gap: 12, borderTopWidth: 1, borderBottomWidth: 1, paddingVertical: 16 },
   fact: { flexDirection: 'row', justifyContent: 'space-between' },
   moreButtons: { marginTop: 20, gap: 10 },
+  pair: { flexDirection: 'row', gap: 10 },
   grammar: { gap: 16 },
   grammarList: { gap: 8 },
   grammarRow: {

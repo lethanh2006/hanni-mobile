@@ -7,15 +7,12 @@ import { useTheme } from '@/hooks/use-theme';
 import { useTodayQuests } from '@/lib/hooks';
 import type { TodayQuests } from '@/lib/types';
 
-/**
- * Bấm nhiệm vụ là tới đúng chỗ làm; nhiệm vụ không có ở đây ("Học 5 từ mới") mở bài đang học.
- * Luyện phát âm chưa có trong app nên mở trang Luyện tập.
- */
+/** Bấm nhiệm vụ là tới đúng chỗ làm; nhiệm vụ không có ở đây ("Học 5 từ mới") mở bài đang học. */
 const QUEST_HREF: Record<string, Href> = {
   review_words: '/study',
   complete_quiz: '/study',
   listening_practice: '/listening',
-  pronunciation_practice: '/luyen-tap',
+  pronunciation_practice: '/pronunciation',
 };
 
 /** Thẻ "Nhiệm vụ hôm nay" (`DailyQuestCard` của web): 3 nhiệm vụ mỗi ngày, xong cả 3 thì server tự cấp 1 lá chắn. */
