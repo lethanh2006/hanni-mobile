@@ -44,6 +44,8 @@ const paths = {
   mic: 'M9 5a3 3 0 0 1 6 0v6a3 3 0 0 1-6 0V5Zm-3 6a6 6 0 0 0 12 0m-6 6v4m-3 0h6',
   plus: 'M12 5v14M5 12h14',
   chevron: 'm9 5 7 7-7 7',
+  chevronUp: 'm5 15 7-7 7 7',
+  chevronLeft: 'm15 5-7 7 7 7',
   user: 'M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM4 21v-3a8 5 0 0 1 16 0v3',
   headphones: 'M3 14v-3a9 9 0 0 1 18 0v3M3 12h4v8H3v-8Zm14 0h4v8h-4v-8Z',
   pencil:

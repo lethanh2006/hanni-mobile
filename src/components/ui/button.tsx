@@ -62,8 +62,8 @@ export function Button({
   title: string;
   onPress?: () => void;
   variant?: Variant;
-  /** `lg` = nút chính to ở đầu trang (như "Bắt đầu học" ở thẻ Học tiếp). */
-  size?: 'md' | 'lg';
+  /** `lg` = nút chính to ở đầu trang (như "Bắt đầu học" ở thẻ Học tiếp); `sm` = nút chữ 12px ("Xem thêm" của danh sách). */
+  size?: 'sm' | 'md' | 'lg';
   /** Icon đặt sau chữ (vd mũi tên "Tiếp tục →"). */
   icon?: IconName;
   /** Icon đặt trước chữ (vd ▷ Bắt đầu học, 🔊 Học phát âm). */
@@ -84,6 +84,7 @@ export function Button({
       style={({ pressed }) => [
         styles.base,
         size === 'lg' && styles.lg,
+        size === 'sm' && styles.sm,
         look(variant, theme, pressed && !inactive).box,
         pressed && !inactive && { transform: [{ translateY: lift }, { scale: 0.98 }] },
         inactive && styles.disabled,
@@ -98,7 +99,7 @@ export function Button({
             <AppText
               weight={variant === 'primary' ? '700' : '600'}
               color={text}
-              style={size === 'lg' && styles.lgText}>
+              style={size === 'lg' ? styles.lgText : size === 'sm' && styles.smText}>
               {title}
             </AppText>
             {icon && !loading && <Icon name={icon} size={16} color={text} />}
@@ -120,6 +121,8 @@ const styles = StyleSheet.create({
   },
   lg: { minHeight: 52, paddingHorizontal: 22 },
   lgText: { fontSize: 15 },
+  sm: { minHeight: 40, paddingHorizontal: 13, paddingVertical: 8 },
+  smText: { fontSize: 12, lineHeight: 16 },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   disabled: { opacity: 0.5 },
 });
