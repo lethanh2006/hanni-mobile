@@ -13,6 +13,7 @@ import { CompoundsSection, MeasuresSection, RelatedSection } from '@/features/di
 import { DictionarySearch } from '@/features/dictionary/search-box';
 import type { DictTab, LookupResult } from '@/features/dictionary/types';
 import { VideoSection } from '@/features/dictionary/video-section';
+import { WordPractice } from '@/features/dictionary/word-practice';
 import { WordHeader, WordSection } from '@/features/dictionary/word-header';
 import { useTheme } from '@/hooks/use-theme';
 import { ApiError } from '@/lib/api';
@@ -130,15 +131,15 @@ export default function WordScreen() {
       <CompoundsSection words={compounds} char={firstChar} onLayout={(e) => record('tu-ghep', e.nativeEvent.layout.y)} />
       <RelatedSection words={related} topic={topic} level={main.hskLevel} onLayout={(e) => record('chu-de', e.nativeEvent.layout.y)} />
       <WordSection icon="target" title="Luyện với từ này" onLayout={(e) => record('luyen', e.nativeEvent.layout.y)}>
-        <AppText color="muted" style={styles.practice}>
-          Xem thứ tự nét từng chữ rồi tự tô lại, Hanni chấm từng nét.
-        </AppText>
-        <Button
-          title="Luyện viết"
-          leftIcon="pencil"
-          variant="secondary"
-          onPress={() => router.push({ pathname: '/writing', params: { c: firstChar } })}
-          style={styles.self}
+        <WordPractice
+          word={{
+            id: main.id,
+            simplified: main.simplified,
+            pinyin: main.pinyin,
+            pinyinNumeric: main.pinyinNumeric,
+            audioUrl: main.audioUrl,
+            meaningVi: main.meaningVi,
+          }}
         />
       </WordSection>
       {/* Nghe từ trong câu thoại thật. */}
@@ -170,8 +171,6 @@ const styles = StyleSheet.create({
   toc: { marginHorizontal: -16, borderBottomWidth: 1, paddingVertical: 8 },
   tocRow: { gap: 6, paddingHorizontal: 16 },
   tocChip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4 },
-  practice: { lineHeight: 24 },
-  self: { marginTop: 12, alignSelf: 'flex-start' },
   learn: { borderWidth: 1, borderRadius: Radius.lg, padding: 20 },
   learnText: { marginTop: 6 },
   learnButton: { marginTop: 12 },
