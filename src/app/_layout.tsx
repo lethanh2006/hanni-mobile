@@ -9,6 +9,7 @@ import { StackHeader } from '@/components/app-shell/stack-header';
 import { Colors, Fonts } from '@/constants/theme';
 import { AssistantWidget } from '@/features/assistant/assistant-widget';
 import { NotificationCenter } from '@/features/notifications/notification-center';
+import { AudioDecoderHost } from '@/features/tone/decode-audio';
 import { fetcher } from '@/lib/api';
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { restoreThemeMode } from '@/lib/theme-mode';
@@ -65,6 +66,8 @@ export default function RootLayout() {
           </Stack>
           {/* Nổi trên mọi màn như bong bóng trợ lý trong khung app của web. */}
           <AssistantWidget />
+          {/* WebView ẩn giải mã ghi âm chuẩn để chấm thanh điệu (chỉ mở khi cần). */}
+          <AudioDecoderHost />
         </AuthProvider>
       </SWRConfig>
     </ThemeProvider>

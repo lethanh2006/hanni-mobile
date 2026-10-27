@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { TonePinyin } from '@/components/tone-pinyin';
 import { AppText, Hanzi, Icon } from '@/components/ui';
 import { alpha, ToneColors } from '@/constants/theme';
+import { ToneCheck } from '@/features/tone/tone-check';
 import { useTheme } from '@/hooks/use-theme';
 import { playWord } from '@/lib/audio';
 import { TONE_RULE_TEXT } from '@/lib/tone-rules';
@@ -113,6 +114,11 @@ export function IntroStep({ word }: { word: SessionWord }) {
           </AppText>
         </View>
       )}
+
+      {/* Vừa biết thanh (mẹo Hán Việt ở trên) thì đọc thử luôn — chấm ngay trên máy. */}
+      <View style={styles.toneCheck}>
+        <ToneCheck key={word.id} hanzi={word.simplified} pinyin={word.pinyin} pinyinNumeric={word.pinyinNumeric} audioUrl={word.audioUrl} />
+      </View>
 
       {example && (
         <View style={[styles.box, styles.example, { backgroundColor: theme.surface2 }]}>
@@ -393,6 +399,7 @@ const styles = StyleSheet.create({
   hint: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
   mnemonic: { marginTop: 12, borderWidth: 1, paddingVertical: 10 },
   line24: { lineHeight: 24 },
+  toneCheck: { marginTop: 16, alignSelf: 'stretch' },
   example: { marginTop: 16, paddingVertical: 12 },
   exampleVi: { marginTop: 4 },
   prompt: { marginVertical: 28, minHeight: 112, alignItems: 'center', justifyContent: 'center' },

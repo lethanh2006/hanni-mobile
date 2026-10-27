@@ -25,6 +25,16 @@ export function playWord(src: string | null | undefined) {
   player.play();
 }
 
+/** Phát tệp ghi âm trên máy (giọng người học vừa thu — `file://` hoặc `blob:` trên web). */
+export function playRecording(uri: string) {
+  Speech.stop();
+  clearEnd();
+  if (!player) player = createAudioPlayer(uri);
+  else player.replace(uri);
+  player.setPlaybackRate(1);
+  player.play();
+}
+
 /**
  * Phát 1 từ ở tốc độ `rate` (luyện nghe 0.75×/1×/1.25×) và báo khi phát xong: có bản thu thì phát bản thu,
  * không thì đọc bằng giọng tiếng Trung của máy. Trả về nguồn đã dùng.

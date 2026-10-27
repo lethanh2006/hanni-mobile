@@ -10,6 +10,7 @@ const config = getDefaultConfig(__dirname);
 config.resolver.assetExts.push('wasm');
 
 const API_URL = (process.env.EXPO_PUBLIC_API_URL ?? 'https://hanni-api.dangpham.id.vn/api').replace(/\/$/, '');
+const SERVER_ORIGIN = API_URL.replace(/\/api$/, '');
 
 /**
  * Bản web chạy ở localhost bị server API chặn CORS (server chỉ cho web Hanni thật), nên khi dev
@@ -17,7 +18,8 @@ const API_URL = (process.env.EXPO_PUBLIC_API_URL ?? 'https://hanni-api.dangpham.
  * Bỏ Origin để server coi như request từ app; bỏ Domain của cookie để trình duyệt lưu cho localhost.
  */
 function proxyApi(req, res) {
-  const target = new URL(API_URL + req.url.slice('/api'.length));
+  // `/media/...` (ghi âm chuẩn để chấm thanh điệu) cũng bị chặn CORS như API.
+  const target = new URL(req.url.startsWith('/media/') ? SERVER_ORIGIN + req.url : API_URL + req.url.slice('/api'.length));
   const headers = { ...req.headers, host: target.host };
   delete headers.origin;
   delete headers.referer;
@@ -38,7 +40,7 @@ function proxyApi(req, res) {
 
 config.server.enhanceMiddleware = (middleware) => {
   return (req, res, next) => {
-    if (req.url?.startsWith('/api/')) return proxyApi(req, res);
+    if (req.url?.startsWith('/api/') || req.url?.startsWith('/media/')) return proxyApi(req, res);
     // Header COEP + COOP để trình duyệt cho dùng SharedArrayBuffer (kv-store đọc/ghi đồng bộ cần cái này).
     res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
     res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
