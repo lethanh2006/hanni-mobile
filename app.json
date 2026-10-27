@@ -80,6 +80,14 @@
             ]
           }
         }
+      ],
+      "expo-sharing",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/fox-mark.png",
+          "color": "#bd2b1f"
+        }
       ]
     ],
     "experiments": {
