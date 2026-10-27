@@ -12,17 +12,18 @@ import { MeaningSection } from '@/features/dictionary/meaning-section';
 import { CompoundsSection, MeasuresSection, RelatedSection } from '@/features/dictionary/related-sections';
 import { DictionarySearch } from '@/features/dictionary/search-box';
 import type { DictTab, LookupResult } from '@/features/dictionary/types';
+import { VideoSection } from '@/features/dictionary/video-section';
 import { WordHeader, WordSection } from '@/features/dictionary/word-header';
 import { useTheme } from '@/hooks/use-theme';
 import { ApiError } from '@/lib/api';
 import { hskLabel } from '@/lib/hsk';
 import { goBack } from '@/lib/navigation';
 
-type SectionId = 'nghia' | 'nho' | 'luong-tu' | 'tu-ghep' | 'chu-de' | 'luyen';
+type SectionId = 'nghia' | 'nho' | 'luong-tu' | 'tu-ghep' | 'chu-de' | 'luyen' | 'video';
 
 /**
  * Trang 1 từ (`/tu-dien/[slug]` của web ở khổ điện thoại): ô tra · mục lục dính đầu trang · đầu mục từ · Nghĩa ·
- * Nhớ bằng Hán Việt · Lượng từ · Từ ghép · Cùng chủ đề · Luyện với từ này · khung Hán tự · học trong lộ trình.
+ * Nhớ bằng Hán Việt · Lượng từ · Từ ghép · Cùng chủ đề · Luyện với từ này · Video · khung Hán tự · học trong lộ trình.
  */
 export default function WordScreen() {
   const theme = useTheme();
@@ -68,6 +69,7 @@ export default function WordScreen() {
   const compounds = data.compounds ?? [];
   const related = data.related ?? [];
   const topic = data.topic ?? null;
+  const videos = data.videos ?? [];
   const toc: { id: SectionId; label: string }[] = [
     { id: 'nghia', label: 'Nghĩa' },
     { id: 'nho', label: 'Nhớ bằng Hán Việt' },
@@ -75,6 +77,7 @@ export default function WordScreen() {
     ...(compounds.length ? [{ id: 'tu-ghep' as const, label: 'Từ ghép' }] : []),
     ...(related.length ? [{ id: 'chu-de' as const, label: 'Cùng chủ đề' }] : []),
     { id: 'luyen', label: 'Luyện tập' },
+    ...(videos.length ? [{ id: 'video' as const, label: 'Video' }] : []),
   ];
   const record = (id: SectionId, y: number) => {
     offsets.current[id] = y;
@@ -138,6 +141,8 @@ export default function WordScreen() {
           style={styles.self}
         />
       </WordSection>
+      {/* Nghe từ trong câu thoại thật. */}
+      <VideoSection word={main.simplified} videos={videos} onLayout={(e) => record('video', e.nativeEvent.layout.y)} />
 
       {(data.glyphs?.length ?? 0) > 0 && <GlyphPanel glyphs={data.glyphs!} />}
       <View style={[styles.learn, tintPanel(theme)]}>

@@ -24,6 +24,15 @@ export interface Measure {
   inDictionary: boolean;
 }
 
+/** Video có câu thoại chứa từ này. */
+export interface VideoUsage {
+  id: string;
+  title: string;
+  thumbnailUrl: string | null;
+  hskLevel: number | null;
+  lineCount: number;
+}
+
 export interface Topic {
   id: string;
   title: string;
@@ -40,6 +49,7 @@ export interface LookupResult {
   measures?: Measure[];
   topic?: Topic | null;
   glyphs?: Glyph[];
+  videos?: VideoUsage[];
 }
 
 /** 4 kiểu tra như hàng tab dưới ô tra của web (`DICT_TABS` ở `lib/dictionary.ts`). */
