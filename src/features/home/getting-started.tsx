@@ -8,11 +8,20 @@ import { AppText, Card, Icon, ProgressBar, type IconName } from '@/components/ui
 import { alpha } from '@/constants/theme';
 import { readHistory } from '@/features/dictionary/history';
 import { useTheme } from '@/hooks/use-theme';
+import { TONE_TRIED_KEY } from '@/features/tone/tone-check';
 import { useAuth } from '@/lib/auth';
-import { useStudyStats } from '@/lib/hooks';
+import { usePracticeStats, useStudyStats } from '@/lib/hooks';
 import type { MockAttempt } from '@/lib/types';
 
 const HIDDEN_KEY = 'hanni:getting-started-hidden';
+
+function readToneTried() {
+  try {
+    return Storage.getItemSync(TONE_TRIED_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
 
 function readHidden() {
   try {
@@ -23,19 +32,25 @@ function readHidden() {
 }
 
 /**
- * "Bắt đầu với Hanni" (`GettingStarted` của web): việc nên thử ở tuần đầu, mỗi việc 1 nút vào thẳng và tự đánh dấu
- * khi đã làm. Web có 5 việc; app chỉ đưa 3 việc đã có trong app (chưa có chấm phát âm, giờ nhắc học).
- * Ẩn khi xong hết hoặc bấm "Ẩn".
+ * "Bắt đầu với Hanni" (`GettingStarted` của web): 5 việc nên thử ở tuần đầu, mỗi việc 1 nút vào thẳng và tự đánh dấu
+ * khi đã làm. Ẩn khi xong hết hoặc bấm "Ẩn".
  */
 export function GettingStarted({ lessonHref }: { lessonHref: Href }) {
   const theme = useTheme();
   const { user } = useAuth();
   const [hidden, setHidden] = useState(readHidden);
   const [dictUsed, setDictUsed] = useState(() => readHistory().length > 0);
+  const [toneTried, setToneTried] = useState(readToneTried);
+  const pronunciation = usePracticeStats('PRONUNCIATION');
   const stats = useStudyStats();
   const exams = useSWR<MockAttempt[]>(user ? '/mock-exams/attempts/me' : null);
-  // Quay lại Trang chủ sau khi tra từ thì tự tick.
-  useFocusEffect(useCallback(() => setDictUsed(readHistory().length > 0), []));
+  // Quay lại Trang chủ sau khi tra từ / chấm phát âm thì tự tick.
+  useFocusEffect(
+    useCallback(() => {
+      setDictUsed(readHistory().length > 0);
+      setToneTried(readToneTried());
+    }, []),
+  );
 
   if (!user || hidden || !stats.data || !exams.data) return null;
 
@@ -47,6 +62,14 @@ export function GettingStarted({ lessonHref }: { lessonHref: Href }) {
       cta: 'Vào bài',
       href: lessonHref,
       done: stats.data.inProgress + stats.data.learnedTotal > 0,
+    },
+    {
+      icon: 'mic',
+      title: 'Chấm phát âm một từ',
+      description: 'Đường giọng bạn vẽ chồng lên giọng chuẩn',
+      cta: 'Thử ngay',
+      href: '/pronunciation',
+      done: toneTried || (pronunciation.data?.totalAttempts ?? 0) > 0,
     },
     {
       icon: 'target',
@@ -63,6 +86,14 @@ export function GettingStarted({ lessonHref }: { lessonHref: Href }) {
       cta: 'Tra thử',
       href: '/tu-dien',
       done: dictUsed,
+    },
+    {
+      icon: 'bell',
+      title: 'Bật nhắc học mỗi ngày',
+      description: 'Giữ chuỗi ngày đúng giờ bạn chọn',
+      cta: 'Bật nhắc',
+      href: '/settings',
+      done: user.settings?.reminderHour != null,
     },
   ];
   const doneCount = steps.filter((s) => s.done).length;

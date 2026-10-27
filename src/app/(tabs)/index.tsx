@@ -10,6 +10,7 @@ import { DailyQuests } from '@/features/home/daily-quests';
 import { GettingStarted } from '@/features/home/getting-started';
 import { GuestSaveCard, GuestTryCard } from '@/features/home/guest-cards';
 import { NextLessonCard, NextLessonError, NextLessonSkeleton } from '@/features/home/next-lesson-card';
+import { NotificationNudge } from '@/features/home/notification-nudge';
 import { TodayCard } from '@/features/home/today-card';
 import { TopicExplorer } from '@/features/home/topic-explorer';
 import { WordOfTheDay } from '@/features/home/word-of-the-day';
@@ -17,7 +18,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { pendingLessonIds } from '@/lib/guest-progress';
-import { useLearnPath } from '@/lib/hooks';
+import { useLearnPath, useStreak } from '@/lib/hooks';
 import { hskLabel } from '@/lib/hsk';
 import type { LearnPath } from '@/lib/types';
 
@@ -37,7 +38,7 @@ function withGuestProgress(path: LearnPath, done: Set<string>): LearnPath {
 
 /**
  * Trang chủ — bố cục `/learn` của web ở khổ điện thoại: thẻ Học tiếp · thẻ chuỗi ngày (khách: thẻ mời lưu) ·
- * "Bắt đầu với Hanni" · bài tập lớp · lộ trình theo chủ đề (tab cấp HSK) · nhiệm vụ + từ vựng hôm nay.
+ * mời bật thông báo (đã học hôm nay) · "Bắt đầu với Hanni" · bài tập lớp · lộ trình theo chủ đề (tab cấp HSK) · nhiệm vụ + từ vựng hôm nay.
  * Khách xem và học được, chỉ lưu tiến độ mới cần tài khoản.
  */
 export default function HomeTab() {
@@ -48,6 +49,7 @@ export default function HomeTab() {
   const [refreshing, setRefreshing] = useState(false);
   const viewed = useLearnPath(viewLevel);
   const course = useLearnPath();
+  const streak = useStreak();
   const guestDone = new Set(user ? [] : pendingLessonIds());
   const path = viewed.data && !user ? withGuestProgress(viewed.data, guestDone) : viewed.data;
 
@@ -104,6 +106,8 @@ export default function HomeTab() {
         {user ? <TodayCard /> : <GuestSaveCard learned={guestDone.size} />}
       </View>
 
+      {/* Mời bật thông báo SAU khi đã học hôm nay (như Duolingo hỏi sau bài đầu). */}
+      {user && streak.data?.activeToday && <NotificationNudge />}
       {user && <GettingStarted lessonHref={lessonHref} />}
       {user && <ClassAssignmentsCard />}
 

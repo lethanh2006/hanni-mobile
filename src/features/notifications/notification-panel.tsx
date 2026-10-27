@@ -1,7 +1,8 @@
+import { router } from 'expo-router';
 import { Modal, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AppText } from '@/components/ui';
+import { AppText, Icon } from '@/components/ui';
 import { alpha } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { markAllNotificationsRead, useNotifications } from '@/lib/notifications';
@@ -10,7 +11,7 @@ import { groupRows, NotificationRow } from './notification-row';
 
 /**
  * Khung thông báo thả xuống dưới chuông (`NotificationBell` của web ở khổ điện thoại): trải gần hết bề ngang,
- * cách mép 12px, ngay dưới thanh trên 64px. Bấm ra ngoài là đóng.
+ * cách mép 12px, ngay dưới thanh trên 64px; chân khung dẫn tới giờ nhắc học. Bấm ra ngoài là đóng.
  */
 export function NotificationPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
   const theme = useTheme();
@@ -55,6 +56,17 @@ export function NotificationPanel({ open, onClose }: { open: boolean; onClose: (
             ))
           )}
         </ScrollView>
+        <Pressable
+          onPress={() => {
+            onClose();
+            router.push('/settings');
+          }}
+          style={({ pressed }) => [styles.foot, { borderColor: theme.border }, pressed && { backgroundColor: theme.surface2 }]}>
+          <Icon name="settings" size={14} color="muted" />
+          <AppText variant="caption" weight="500" color="muted">
+            Nhận thông báo trên điện thoại, giờ nhắc học
+          </AppText>
+        </Pressable>
       </View>
     </Modal>
   );
@@ -71,4 +83,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   empty: { paddingHorizontal: 20, paddingVertical: 32, lineHeight: 24 },
+  foot: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    borderTopWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
 });
