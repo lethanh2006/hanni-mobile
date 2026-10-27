@@ -24,9 +24,10 @@ export function GuestSaveCard({ learned }: { learned: number }) {
   );
 }
 
-/** Lối thử ngay của web; "Học qua video" chưa có trong app nên không đưa vào. */
+/** Lối thử ngay của web. */
 const GUEST_TRY: { href: Href; label: string; hint: string; icon: IconName }[] = [
   { href: '/minigame', label: 'Trò chơi từ vựng', hint: '60 giây, dịch nhanh, ghép cặp', icon: 'trophy' },
+  { href: '/watch', label: 'Học qua video', hint: 'Phụ đề song ngữ, bấm từ để tra', icon: 'play' },
   { href: '/thi-thu-hsk', label: 'Đề thi thử HSK', hint: 'Đúng cấu trúc đề thật, chấm ngay', icon: 'target' },
   { href: '/writing', label: 'Luyện viết chữ Hán', hint: 'Xem thứ tự nét rồi tự tô', icon: 'pencil' },
 ];

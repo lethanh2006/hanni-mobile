@@ -24,7 +24,7 @@ export const PRACTICE_SECTIONS: { title: string; items: PracticeTool[] }[] = [
   {
     title: 'Học mà chơi',
     items: [
-      { label: 'Học qua video', description: 'Phim ngắn, phụ đề song ngữ, bấm từ để tra', icon: 'play', href: null },
+      { label: 'Học qua video', description: 'Phim ngắn, phụ đề song ngữ, bấm từ để tra', icon: 'play', href: '/watch' },
       { label: 'Trò chơi luyện từ', description: 'Dịch tốc độ, nghe đoán từ, ghép cặp, chọn pinyin', icon: 'trophy', href: '/minigame' },
     ],
   },
