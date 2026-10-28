@@ -1,6 +1,6 @@
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useRef, useState } from 'react';
-import { AppState } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import { mutate } from 'swr';
 
 import { errorMessage } from '@/lib/api';
@@ -21,6 +21,8 @@ export function usePremiumCheckout(userId: string) {
   const [paid, setPaid] = useState(false);
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
+  /** Trang thanh toán đang mở trong app (`CheckoutSheet`, chỉ Android/iOS). */
+  const [sheetUrl, setSheetUrl] = useState<string | null>(null);
   const lock = useRef(false);
   const mounted = useRef(true);
 
@@ -42,6 +44,7 @@ export function usePremiumCheckout(userId: string) {
       }
       savePendingCheckout(userId, null);
       setPending(null);
+      setSheetUrl(null);
       if (order.status === 'PAID') {
         setPaid(true);
         setNote('Thanh toán thành công! Premium đã được kích hoạt.');
@@ -61,9 +64,19 @@ export function usePremiumCheckout(userId: string) {
   }, [pending, revision, userId, refresh]);
 
   async function openCheckout(url: string) {
+    // Điện thoại: mở ngay trong app, cổng trả về là tấm tự đóng (`closeSheet`). Web: tab mới như trang web Hanni.
+    if (Platform.OS !== 'web') {
+      setSheetUrl(url);
+      return;
+    }
     await WebBrowser.openBrowserAsync(url);
-    // iOS trả promise khi đóng trình duyệt; Android kiểm tra thêm khi AppState về active.
     if (mounted.current) setRevision((value) => value + 1);
+  }
+
+  function closeSheet() {
+    setSheetUrl(null);
+    setError(null);
+    setRevision((value) => value + 1);
   }
 
   async function pay(planKey: string, provider: PaymentProvider) {
@@ -98,5 +111,8 @@ export function usePremiumCheckout(userId: string) {
     finally { lock.current = false; }
   }
 
-  return { pending, busy, checking, paid, note, error, pay, reopen, check: () => { setError(null); setRevision((value) => value + 1); } };
+  return {
+    pending, busy, checking, paid, note, error, pay, reopen, sheetUrl, closeSheet,
+    check: () => { setError(null); setRevision((value) => value + 1); },
+  };
 }
