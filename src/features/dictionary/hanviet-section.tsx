@@ -1,9 +1,12 @@
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 
-import { AppText, Hanzi, Icon } from '@/components/ui';
+import { AppText, Button, ErrorNote, Hanzi, Icon } from '@/components/ui';
 import { alpha, Fonts } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { api, ApiError } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
 import type { Word } from '@/lib/types';
 
 import type { CharBreakdown, RelatedWord } from './types';
@@ -14,7 +17,8 @@ const openWord = (s: string) => router.push(`/tu-dien/${encodeURIComponent(s)}`)
 
 /**
  * "Nhớ bằng Hán Việt" — thế mạnh riêng của Hanni: ghép âm Hán Việt từng chữ ra nghĩa (电脑 = điện + não);
- * từ 1 chữ thì chỉ ra chữ đó trong những từ ghép hay gặp. Có mẹo nhớ (đã có sẵn) thì hiện khung vàng như web.
+ * từ 1 chữ thì chỉ ra chữ đó trong những từ ghép hay gặp. Cuối phần là mẹo nhớ (`WordMnemonic` của web): đã có thì hiện
+ * khung vàng, chưa có thì người đã đăng nhập bấm tạo bằng AI — nên phần này luôn hiện như web.
  */
 export function HanVietSection({
   word,
@@ -30,7 +34,6 @@ export function HanVietSection({
   const theme = useTheme();
   const multiChar = Array.from(word.simplified).filter((c) => /\p{Script=Han}/u.test(c)).length > 1;
   const withHanViet = compounds.filter((c) => c.hanViet).slice(0, 4);
-  if (!(multiChar && characters.length) && !(word.hanViet && withHanViet.length) && !word.mnemonicVi) return null;
 
   return (
     <WordSection icon="spark" title="Nhớ bằng Hán Việt" onLayout={onLayout}>
@@ -90,21 +93,69 @@ export function HanVietSection({
           ))}
         </AppText>
       ) : null}
-      {word.mnemonicVi && (
-        <View style={[styles.mnemonic, { borderColor: alpha(theme.accent, 0.25), backgroundColor: alpha(theme.accent, 0.05) }]}>
-          <View style={styles.mnemonicHead}>
-            <Icon name="spark" size={13} color="accent" />
-            <AppText variant="caption" weight="600" color="accent">
-              Mẹo nhớ
-            </AppText>
-          </View>
-          <AppText style={styles.mnemonicText}>{word.mnemonicVi}</AppText>
-          <AppText variant="caption" color="muted" style={styles.mnemonicNote}>
-            AI gợi ý từ âm Hán Việt và nghĩa từng chữ.
+      <Mnemonic wordId={word.id} initial={word.mnemonicVi ?? null} />
+    </WordSection>
+  );
+}
+
+function Mnemonic({ wordId, initial }: { wordId: string; initial: string | null }) {
+  const theme = useTheme();
+  const { user, loading } = useAuth();
+  const [text, setText] = useState(initial);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  async function create() {
+    if (busy) return;
+    setBusy(true);
+    setError('');
+    try {
+      // Server tạo 1 lần rồi lưu `Word.mnemonicVi` — người mở từ này sau thấy luôn, không tốn lượt AI.
+      setText((await api.post<{ mnemonicVi: string }>(`/ai/mnemonic/${wordId}`)).mnemonicVi);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Chưa tạo được mẹo nhớ, thử lại nhé.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (text)
+    return (
+      <View style={[styles.mnemonic, { borderColor: alpha(theme.accent, 0.25), backgroundColor: alpha(theme.accent, 0.05) }]}>
+        <View style={styles.mnemonicHead}>
+          <Icon name="spark" size={13} color="accent" />
+          <AppText variant="caption" weight="600" color="accent">
+            Mẹo nhớ
           </AppText>
         </View>
+        <AppText style={styles.mnemonicText}>{text}</AppText>
+        <AppText variant="caption" color="muted" style={styles.mnemonicNote}>
+          AI gợi ý từ âm Hán Việt và nghĩa từng chữ.
+        </AppText>
+      </View>
+    );
+
+  if (loading) return null;
+  return (
+    <View style={styles.mnemonicAction}>
+      {user ? (
+        <Button
+          title={busy ? 'AI đang nghĩ mẹo nhớ…' : 'Tạo mẹo nhớ bằng AI'}
+          leftIcon="spark"
+          variant="secondary"
+          disabled={busy}
+          onPress={() => void create()}
+        />
+      ) : (
+        <Button
+          title="Đăng nhập để tạo mẹo nhớ bằng AI"
+          leftIcon="spark"
+          variant="secondary"
+          onPress={() => router.push('/login')}
+        />
       )}
-    </WordSection>
+      {error ? <ErrorNote>{error}</ErrorNote> : null}
+    </View>
   );
 }
 
@@ -127,4 +178,5 @@ const styles = StyleSheet.create({
   mnemonicHead: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   mnemonicText: { marginTop: 4, lineHeight: 24 },
   mnemonicNote: { marginTop: 4 },
+  mnemonicAction: { marginTop: 12, gap: 8, alignItems: 'flex-start' },
 });

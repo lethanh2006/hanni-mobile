@@ -1,16 +1,18 @@
 import { router } from 'expo-router';
-import { useRef, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import useSWR from 'swr';
 
-import { AppText, AudioButton, Button, Card, Hanzi, Icon, Skeleton, type IconName } from '@/components/ui';
+import { AppText, AudioButton, Button, Card, ErrorNote, Hanzi, Icon, Skeleton, type IconName } from '@/components/ui';
 import { alpha } from '@/constants/theme';
 import { HanziWriterView, type HanziWriterHandle } from '@/features/writing/hanzi-writer-view';
 import { useTheme } from '@/hooks/use-theme';
+import { api, ApiError } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
 import { hskLabel } from '@/lib/hsk';
 import type { Paginated, Word } from '@/lib/types';
 
-import type { CharInfo, ExampleHit, GrammarHit, SegToken } from './types';
+import type { AnalysisResult, CharInfo, ExampleHit, GrammarHit, SegToken } from './types';
 import { WordRow } from './word-row';
 
 const openWord = (s: string) => router.push(`/tu-dien/${encodeURIComponent(s)}`);
@@ -141,12 +143,134 @@ function Segmented({ tokens }: { tokens: SegToken[] }) {
   );
 }
 
-/** Tab Từ vựng: tách câu (nếu gõ câu) · thẻ "khớp chính xác" · danh sách từ liên quan · phân trang. */
+/**
+ * Ô tra nhận cả CÂU (`SentenceAnalysis` của web, như Hanzii dịch câu): câu tiếng Trung → AI dịch + chỉ cấu trúc ngữ pháp,
+ * từng từ kèm âm Hán Việt (bấm sang trang từ); câu tiếng Việt → dịch sang tiếng Trung rồi tách từ như trên. 1 lượt AI.
+ */
+function SentenceAnalysis({ text }: { text: string }) {
+  const theme = useTheme();
+  const { user, loading } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [result, setResult] = useState<AnalysisResult | null>(null);
+  const vi = !/\p{Script=Han}/u.test(text);
+
+  async function run() {
+    if (busy) return;
+    setBusy(true);
+    setError('');
+    try {
+      setResult(await api.post<AnalysisResult>('/ai/analyze', { text }));
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Chưa phân tích được câu này, thử lại nhé.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (loading) return null;
+  return (
+    <DictCard title={vi ? 'Nói câu này bằng tiếng Trung thế nào?' : 'Phân tích cả câu'} icon="spark">
+      <AppText variant="caption" color="muted">
+        {vi ? 'AI dịch sang tiếng Trung, tách từng từ kèm âm Hán Việt.' : 'AI dịch, chỉ ra cấu trúc ngữ pháp; từng từ kèm âm Hán Việt.'}
+      </AppText>
+      {!result &&
+        (user ? (
+          <Button
+            title={busy ? 'AI đang phân tích…' : vi ? 'Dịch bằng AI' : 'Phân tích bằng AI'}
+            leftIcon="spark"
+            disabled={busy}
+            onPress={() => void run()}
+            style={styles.self}
+          />
+        ) : (
+          <Button title="Đăng nhập để dùng AI" icon="arrow" variant="secondary" onPress={() => router.push('/login')} style={styles.self} />
+        ))}
+      {error ? <ErrorNote>{error}</ErrorNote> : null}
+      {result && (
+        <>
+          <View style={styles.tokens}>
+            {result.tokens.map((t, i) =>
+              t.wordId && t.simplified ? (
+                <Pressable
+                  key={i}
+                  onPress={() => openWord(t.simplified!)}
+                  style={({ pressed }) => [
+                    styles.aiToken,
+                    { borderColor: pressed ? alpha(theme.primary, 0.4) : theme.border },
+                  ]}>
+                  <AppText variant="caption" color="muted">
+                    {t.pinyin}
+                  </AppText>
+                  <Hanzi size={20} color="primary">
+                    {t.text}
+                  </Hanzi>
+                  {t.hanViet ? (
+                    <AppText variant="caption" weight="600" color="hanviet">
+                      {t.hanViet}
+                    </AppText>
+                  ) : null}
+                  {t.meaningVi ? (
+                    <AppText variant="caption" color="muted" numberOfLines={1} style={styles.aiMeaning}>
+                      {t.meaningVi}
+                    </AppText>
+                  ) : null}
+                </Pressable>
+              ) : (
+                <View key={i} style={styles.token}>
+                  {t.pinyin ? (
+                    <AppText variant="caption" color="muted">
+                      {t.pinyin}
+                    </AppText>
+                  ) : null}
+                  <Hanzi size={20}>{t.text}</Hanzi>
+                </View>
+              ),
+            )}
+          </View>
+          <View>
+            <AppText variant="caption" color="muted">
+              {result.pinyin}
+            </AppText>
+            <AppText weight="600" style={styles.aiTranslation}>
+              {result.translationVi}
+            </AppText>
+          </View>
+          {result.grammar.map((g) => (
+            <View key={g.pattern} style={[styles.aiGrammar, { backgroundColor: alpha(theme.surface2, 0.7) }]}>
+              <Hanzi size={14} style={styles.aiPattern}>
+                {g.pattern}
+              </Hanzi>
+              <AppText color="muted" style={styles.aiExplain}>
+                {g.explanationVi}
+              </AppText>
+            </View>
+          ))}
+          {result.notesVi ? (
+            <View style={styles.aiNote}>
+              <Icon name="info" size={15} color="muted" />
+              <AppText color="muted" style={styles.aiNoteText}>
+                {result.notesVi}
+              </AppText>
+            </View>
+          ) : null}
+          <AppText variant="caption" color="muted">
+            Bản dịch và giải thích do AI viết — đối chiếu với nghĩa từ điển ở từng từ.
+          </AppText>
+        </>
+      )}
+    </DictCard>
+  );
+}
+
+/** Tab Từ vựng: tách câu (nếu gõ câu) · phân tích câu bằng AI · thẻ "khớp chính xác" · danh sách từ liên quan · phân trang. */
 export function WordResults({ q, page, onPage }: { q: string; page: number; onPage: (p: number) => void }) {
   const { data, error } = useSWR<Paginated<Word>>(`/words?q=${encodeURIComponent(q)}&page=${page}&pageSize=24`);
   const items = data?.items ?? [];
-  const offer = !!data && offerAnalysis(q, items) && page === 1 && /\p{Script=Han}/u.test(q);
-  const seg = useSWR<{ tokens: SegToken[] }>(offer ? `/ai/segment?q=${encodeURIComponent(q)}` : null);
+  const offer = !!data && offerAnalysis(q, items);
+  const seg = useSWR<{ tokens: SegToken[] }>(
+    offer && page === 1 && /\p{Script=Han}/u.test(q) ? `/ai/segment?q=${encodeURIComponent(q)}` : null,
+  );
   if (error) return <Empty>Chưa tra được. Bạn kiểm tra kết nối rồi thử lại nhé.</Empty>;
   if (!data)
     return (
@@ -172,6 +296,7 @@ export function WordResults({ q, page, onPage }: { q: string; page: number; onPa
   return (
     <View style={styles.results}>
       {tokens.length > 0 && <Segmented tokens={tokens} />}
+      {offer && <SentenceAnalysis key={q} text={q} />}
       {exact && <ExactCard w={exact} />}
       {items.length === 0 ? (
         tokens.some((t) => t.simplified) ? null : (
@@ -550,6 +675,14 @@ const styles = StyleSheet.create({
   tokens: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-end', columnGap: 4, rowGap: 12 },
   token: { alignItems: 'center', borderRadius: 8, paddingHorizontal: 6, paddingVertical: 4 },
   segWords: { borderTopWidth: 1, paddingTop: 12, gap: 4 },
+  aiToken: { alignItems: 'center', borderWidth: 1, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6 },
+  aiMeaning: { maxWidth: 112 },
+  aiTranslation: { marginTop: 4, fontSize: 16, lineHeight: 24 },
+  aiGrammar: { borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10 },
+  aiPattern: { fontWeight: '600' },
+  aiExplain: { marginTop: 2, lineHeight: 22 },
+  aiNote: { flexDirection: 'row', gap: 8 },
+  aiNoteText: { flex: 1, lineHeight: 22 },
   exact: { gap: 16 },
   exactLine: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 12 },
   exactPinyin: { fontSize: 18, lineHeight: 28 },
