@@ -133,11 +133,6 @@ export async function deleteClassroom(id: string) {
   refreshAll();
 }
 
-export async function renameClassroom(id: string, input: { name?: string; hskLevel?: number }) {
-  await api.patch(`/classrooms/${id}`, input);
-  refreshAll(id);
-}
-
 export async function removeMember(id: string, userId: string) {
   await api.del(`/classrooms/${id}/members/${userId}`);
   refreshAll(id);

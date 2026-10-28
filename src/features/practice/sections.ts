@@ -33,7 +33,7 @@ export const PRACTICE_SECTIONS: { title: string; items: PracticeTool[] }[] = [
     items: [
       { label: 'Bảng phiên âm', description: 'Thanh điệu, phụ âm, vần — bấm nghe từng âm', icon: 'sound', href: '/phien-am' },
       { label: 'Ngữ pháp & mẫu câu', description: '235 điểm ngữ pháp giải thích bằng tiếng Việt', icon: 'book', href: '/ngu-phap' },
-      { label: 'Quét ảnh học từ', description: 'Chụp thực đơn, biển hiệu, đồ vật — ra từ kèm Hán Việt', icon: 'camera', href: null },
+      { label: 'Quét ảnh học từ', description: 'Chụp thực đơn, biển hiệu, đồ vật — ra từ kèm Hán Việt', icon: 'camera', href: '/tu-dien/quet' },
       { label: 'Từ bạn đã biết sẵn', description: 'Từ trùng nghĩa với tiếng Việt nhờ âm Hán Việt', icon: 'heart', href: null },
     ],
   },

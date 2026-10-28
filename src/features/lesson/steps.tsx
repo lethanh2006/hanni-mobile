@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { TonePinyin } from '@/components/tone-pinyin';
@@ -58,7 +57,6 @@ export function IntroStep({ word }: { word: SessionWord }) {
           TỪ MỚI
         </AppText>
       </View>
-      {word.imageUrl && <Image source={word.imageUrl} style={styles.image} contentFit="cover" />}
       <View style={styles.wordRow}>
         <TonePinyin zh={word.simplified} pinyin={word.pinyin} pinyinNum={word.pinyinNumeric} size="lg" />
         <SoundButton src={word.audioUrl} />
@@ -388,7 +386,6 @@ const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   badge: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4 },
   badgeText: { letterSpacing: 0.3 },
-  image: { marginTop: 20, width: 160, height: 112, borderRadius: 16 },
   wordRow: { marginTop: 20, flexDirection: 'row', alignItems: 'flex-end', gap: 16 },
   sound: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   soundBig: { width: 80, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center' },

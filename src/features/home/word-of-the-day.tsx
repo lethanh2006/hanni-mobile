@@ -1,4 +1,3 @@
-import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import useSWR from 'swr';
@@ -81,7 +80,6 @@ export function WordOfTheDay({ level }: { level?: number }) {
             {data.meaningVi}
           </AppText>
         </View>
-        {data.imageUrl && <Image source={data.imageUrl} style={styles.image} contentFit="cover" />}
       </View>
 
       {example && (
@@ -145,7 +143,6 @@ const styles = StyleSheet.create({
   pinyin: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
   pinyinText: { fontSize: 17, lineHeight: 24 },
   meaning: { marginTop: 7, lineHeight: 24 },
-  image: { width: 64, height: 64, borderRadius: 12 },
   example: { marginTop: 12, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10 },
   exampleVi: { marginTop: 2 },
   action: {

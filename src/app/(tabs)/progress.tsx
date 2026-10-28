@@ -59,7 +59,7 @@ export default function ProgressScreen() {
           description="Bạn đã học được gì và nên ôn gì tiếp."
         />
         <View style={styles.actions}>
-          <Button title="Tiếp tục ôn tập" leftIcon="cards" onPress={() => router.navigate('/study')} />
+          <Button title={data && data.totals.due > 0 ? `Ôn ${data.totals.due} từ đến hạn` : 'Ôn flashcard'} leftIcon="cards" onPress={() => router.navigate('/study')} />
           <Button title="Huy hiệu" leftIcon="trophy" variant="secondary" onPress={() => router.push('/achievements')} />
           <TourButton steps={TOUR} />
         </View>

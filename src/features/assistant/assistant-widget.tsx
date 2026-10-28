@@ -58,7 +58,7 @@ const TAB_PATHS = ['/', '/study', '/thi-thu-hsk', '/luyen-tap', '/tu-dien', '/le
  * học, phòng thi (màn kết quả tự bật bằng `useShowAssistant`) và luyện nói AI (đã là chat với AI).
  */
 function showsOn(path: string) {
-  if (['/login', '/register', '/forgot-password', '/onboarding', '/kiem-tra-trinh-do'].includes(path)) return false;
+  if (['/login', '/register', '/forgot-password', '/onboarding', '/kiem-tra-trinh-do', '/premium'].includes(path)) return false;
   if (path.startsWith('/bai-hoc/') || path.startsWith('/roleplay')) return false;
   if (path.startsWith('/thi-thu-hsk/') && !path.startsWith('/thi-thu-hsk/dang-bai/')) return false;
   return true;

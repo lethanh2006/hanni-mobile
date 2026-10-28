@@ -13,7 +13,6 @@ import type {
   DayActivity,
   HskLevel,
   Leaderboard,
-  LeaderboardMetric,
   LeaderboardMetricKey,
   LearnPath,
   LeechWord,
@@ -131,10 +130,6 @@ export function usePublicProfile(userId: string | null) {
 
 export function useReferralStats() {
   return useSWR<ReferralStats>('/referrals/me');
-}
-
-export function useLeaderboardMetrics() {
-  return useSWR<LeaderboardMetric[]>('/leaderboard/metrics');
 }
 
 export function useLeaderboard(metric: LeaderboardMetricKey, scope: 'global' | 'friends' = 'global') {

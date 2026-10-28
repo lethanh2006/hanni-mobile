@@ -88,6 +88,7 @@ export function ChipRow<T extends string | number>({
 
 const styles = StyleSheet.create({
   chip: {
+    minHeight: 32,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,

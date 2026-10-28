@@ -105,7 +105,7 @@ export function CoachCard({ report, name, next }: { report: InsightsReport; name
           <Button
             title="Mở Hanni Coach với Premium"
             leftIcon="crown"
-            onPress={() => router.navigate('/account')}
+            onPress={() => router.navigate('/premium')}
             style={styles.upgrade}
           />
         </View>

@@ -1,16 +1,19 @@
-# Hanni mobile
-
-App Hanni (học tiếng Trung theo HSK 3.0) cho Android/iOS, chuyển từ web `hanni-client`.
-Expo SDK 58 + expo-router, gọi cùng API với web (`hanni-server`).
 
 ## Chạy
 
 ```bash
 npm install
-npx expo start          # quét QR bằng Expo Go hoặc development build
+npm run dev            # Android: mở máy ảo, tự build/cài khi native config đổi
+npx expo start --dev-client # mở bản development build đã cài trên điện thoại
 npm run lint
 npm run typecheck
 ```
+
+Trên máy này có lối tắt **Hanni Mobile** ở Desktop. Mở lối tắt hoặc chạy `npm run dev`: máy ảo Hanni sẽ khởi động riêng và app tự mở. Lần khởi động lạnh có thể mất khoảng một phút; giữ terminal Metro đang chạy khi phát triển. Nếu Android Studio vẫn hiện “Connecting to the Emulator”, đóng tab máy ảo cũ trong Studio và dùng cửa sổ Hanni riêng. Máy ảo được cấu hình 720×1560, 2 lõi, 2 GB RAM; dữ liệu Android được giữ lại.
+
+Dùng development build cho app này. Sau khi thêm thư viện native hoặc thay đổi plugin, cần build lại; `npm run dev` tự phát hiện thay đổi trong `app.json`, `package.json`, `package-lock.json`. Có thể ép build bằng `npm run dev -- --rebuild`. Chọn máy ảo bằng `AVD=Ten_may npm run dev`, hoặc thiết bị bằng `ANDROID_SERIAL=<serial> npm run dev`.
+
+Nếu gặp `Cannot find native module 'ExponentImagePicker'` hoặc lỗi thiếu native module khác, bản app trên máy đang cũ: chạy `npm run dev -- --rebuild`. Chỉ reload Metro sẽ không thêm module vào APK.
 
 API mặc định là server production. Muốn trỏ nơi khác thì copy `.env.example` thành `.env.local`.
 

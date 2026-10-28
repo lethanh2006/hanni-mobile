@@ -117,8 +117,9 @@ function SettingsForm({
 
   async function save() {
     setError(null);
-    if (form.dailyGoalValue < 1) {
-      setError('Mục tiêu mỗi ngày cần lớn hơn 0.');
+    if (!Number.isInteger(form.dailyGoalValue) || form.dailyGoalValue < 1 ||
+      (form.maxReviewsPerDay !== null && (!Number.isInteger(form.maxReviewsPerDay) || form.maxReviewsPerDay < 0))) {
+      setError('Mục tiêu cần là số nguyên lớn hơn 0; giới hạn lượt ôn không được âm.');
       return;
     }
     setSaving(true);
@@ -126,7 +127,6 @@ function SettingsForm({
       const next = await api.patch<UserSettings>('/users/me/settings', {
         dailyGoalType: form.dailyGoalType,
         dailyGoalValue: form.dailyGoalValue,
-        newCardsPerDay: form.newCardsPerDay,
         maxReviewsPerDay: form.maxReviewsPerDay,
         srsScheduler: form.srsScheduler,
         targetRetention: form.targetRetention,

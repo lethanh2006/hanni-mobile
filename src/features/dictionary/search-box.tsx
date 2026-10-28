@@ -15,7 +15,7 @@ import { firstMeaning } from './word-row';
 /**
  * Ô tra `DictionarySearch` của web: viên thuốc cao 56px viền đỏ nhạt, kính lúp · ô gõ · nút xoá · bút viết tay · nút
  * mũi tên đỏ nổi khối; đang gõ (tab Từ vựng) thì hiện gợi ý ngay dưới; bút mở ô viết tay; hàng tab Từ vựng / Hán tự /
- * Ví dụ / Ngữ pháp bên dưới. (Web còn nút micro, quét ảnh — app chưa có.)
+ * Ví dụ / Ngữ pháp bên dưới. (Web còn nút micro — app chưa có.)
  */
 export function DictionarySearch({
   value,
@@ -82,6 +82,13 @@ export function DictionarySearch({
             writing ? { backgroundColor: alpha(theme.primary, 0.1) } : pressed && { backgroundColor: theme.surface2 },
           ]}>
           <Icon name="pencil" size={18} color={writing ? 'primary' : 'muted'} />
+        </Pressable>
+        {/* Quét ảnh để tra — như web */}
+        <Pressable
+          onPress={() => router.push('/tu-dien/quet')}
+          accessibilityLabel="Quét ảnh để tra"
+          style={({ pressed }) => [styles.clear, pressed && { backgroundColor: theme.surface2 }]}>
+          <Icon name="camera" size={18} color="muted" />
         </Pressable>
         <Pressable
           onPress={() => onSubmit(value)}

@@ -123,7 +123,7 @@ export default function LessonReadingScreen() {
           </View>
           {writeError && <ErrorNote>{writeError}</ErrorNote>}
           {!data.enabled ? (
-            <AppText color="muted">Tiện ích AI chưa được bật trên máy chủ.</AppText>
+            <AppText color="muted">Bài đọc AI đang tạm đóng — bạn thử lại sau nhé.</AppText>
           ) : user ? (
             <Button
               title={writing ? 'AI đang viết… (khoảng 10 giây)' : 'Viết bài đọc cho bài này (1 lượt AI)'}

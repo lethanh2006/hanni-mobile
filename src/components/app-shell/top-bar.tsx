@@ -136,7 +136,7 @@ function PremiumTopButton() {
   if (!data || data.active) return null;
   return (
     <Pressable
-      onPress={() => router.navigate('/account')}
+      onPress={() => router.navigate('/premium')}
       accessibilityLabel="Hanni Premium"
       style={[styles.crown, { backgroundColor: alpha(theme.accent, 0.12) }]}>
       <Icon name="crown" size={17} color="accent" />

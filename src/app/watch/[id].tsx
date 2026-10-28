@@ -1,4 +1,3 @@
-import { Image } from 'expo-image';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Animated, Modal, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
@@ -309,7 +308,6 @@ export default function WatchDetailScreen() {
                   </AppText>
                 </View>
               </View>
-              {word.imageUrl && <Image source={word.imageUrl} style={styles.image} contentFit="cover" />}
               <AppText style={styles.meaning}>{word.meaningVi ?? 'Nghĩa đang được cập nhật.'}</AppText>
               <View style={styles.sheetButtons}>
                 <Button title="Đóng" variant="secondary" onPress={() => setWordPopup(null)} style={styles.flex} />
@@ -374,7 +372,6 @@ const styles = StyleSheet.create({
   sheetHead: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 },
   sheetPinyin: { marginTop: 4 },
   hsk: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
-  image: { marginTop: 12, height: 128, width: '100%', borderRadius: 12 },
   meaning: { marginTop: 12, lineHeight: 24 },
   sheetButtons: { marginTop: 20, flexDirection: 'row', gap: 8 },
   guestNote: { marginTop: 12, lineHeight: 20 },

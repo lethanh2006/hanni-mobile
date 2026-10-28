@@ -17,7 +17,7 @@ export function TextLink({
   size?: 'small' | 'caption' | 'body';
 }) {
   return (
-    <Pressable onPress={onPress} hitSlop={8} accessibilityRole="link">
+    <Pressable style={{ minHeight: 32, justifyContent: 'center' }} onPress={onPress} hitSlop={8} accessibilityRole="link">
       {({ pressed }) => (
         <AppText variant={size} weight="600" color={color} style={pressed && { textDecorationLine: 'underline' }}>
           {title}

@@ -244,13 +244,6 @@ export function Rankings({ board }: { board: Leaderboard }) {
               <View style={styles.flex}>
                 <View style={styles.nameRow}>
                   <AppText weight="600">{row.displayName}</AppText>
-                  {row.title && (
-                    <View style={[styles.tag, { backgroundColor: alpha(theme.accent, 0.1) }]}>
-                      <AppText variant="caption" weight="600" color="accent">
-                        {row.title}
-                      </AppText>
-                    </View>
-                  )}
                   {row.isMe && (
                     <View style={[styles.tag, { backgroundColor: alpha(theme.primary, 0.1) }]}>
                       <AppText variant="caption" weight="600" color="primary">

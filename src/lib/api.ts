@@ -5,7 +5,7 @@
  */
 import { Platform } from 'react-native';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://hanni-api.dangpham.id.vn/api';
+const API_URL = (process.env.EXPO_PUBLIC_API_URL?.trim() || 'https://hanni-api.dangpham.id.vn/api').replace(/\/+$/, '');
 
 /** Web khi dev (localhost) bị server chặn CORS nên gọi qua proxy `/api` của Metro (metro.config.js). */
 export const API_BASE = Platform.OS === 'web' && __DEV__ ? '/api' : API_URL;
@@ -27,13 +27,29 @@ export class ApiError extends Error {
   }
 }
 
+// Không để khởi động app bị kẹt ở splash khi API không phản hồi.
+async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = 60_000): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } catch (err) {
+    if (controller.signal.aborted) {
+      throw new ApiError(408, 'Kết nối quá lâu. Bạn kiểm tra mạng rồi thử lại nhé.', null);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 function raw(path: string, method: string, body?: unknown): Promise<Response> {
-  return fetch(`${API_BASE}${path}`, {
+  return fetchWithTimeout(`${API_BASE}${path}`, {
     method,
     credentials: 'include',
     headers: body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
     body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  }, path.startsWith('/auth/') ? 15_000 : 60_000);
 }
 
 /**
@@ -89,10 +105,38 @@ export const api = {
   post: <T>(path: string, body?: unknown) => request<T>(path, 'POST', body),
   patch: <T>(path: string, body?: unknown) => request<T>(path, 'PATCH', body),
   del: <T>(path: string, body?: unknown) => request<T>(path, 'DELETE', body),
+  upload: <T>(path: string, form: FormData) => upload<T>(path, form),
 };
+
+/** Upload multipart (FormData) — không set Content-Type để engine tự thêm boundary. */
+async function upload<T = unknown>(path: string, form: FormData): Promise<T> {
+  let res = await fetchWithTimeout(`${API_BASE}${path}`, {
+    method: 'POST',
+    credentials: 'include',
+    body: form,
+  }, 120_000);
+  if (res.status === 401 && (await refreshSession())) {
+    res = await fetchWithTimeout(`${API_BASE}${path}`, {
+      method: 'POST',
+      credentials: 'include',
+      body: form,
+    }, 120_000);
+  }
+  const text = await res.text();
+  const data = text ? safeJson(text) : null;
+  if (!res.ok) {
+    const message =
+      data && typeof data === 'object' && 'message' in data
+        ? String((data as { message: unknown }).message)
+        : 'Có lỗi xảy ra, bạn thử lại nhé.';
+    throw new ApiError(res.status, message, data);
+  }
+  return data as T;
+}
 
 /** Fetcher mặc định cho SWR: khoá chính là đường dẫn API. */
 export const fetcher = <T>(path: string) => request<T>(path);
+export const apiFetch = <T>(path: string) => request<T>(path);
 
 /** Lời báo lỗi đọc được cho người dùng. */
 export function errorMessage(err: unknown, fallback = 'Có lỗi xảy ra, bạn thử lại nhé.') {

@@ -17,7 +17,6 @@ export interface Me {
 export interface UserSettings {
   dailyGoalType: "WORDS" | "MINUTES";
   dailyGoalValue: number;
-  newCardsPerDay: number;
   maxReviewsPerDay: number | null;
   srsScheduler: "sm2" | "fsrs";
   targetRetention: number;
@@ -28,15 +27,11 @@ export interface UserSettings {
 export interface HskLevel {
   level: number;
   band: "ELEMENTARY" | "INTERMEDIATE" | "ADVANCED";
-  isSharedBand: boolean;
   nameVi: string;
-  newWords2021: number;
-  cumulative2021: number;
   newWords2025: number;
   cumulative2025: number;
   readingChars: number | null;
   writingChars: number | null;
-  skills: string[];
   wordsInDb: number;
 }
 
@@ -54,7 +49,6 @@ export interface Word {
   hanViet: string | null;
   translationStatus: string;
   audioUrl: string | null;
-  imageUrl?: string | null;
   /** mẹo nhớ theo âm Hán Việt do AI viết (tạo 1 lần, dùng chung) */
   mnemonicVi?: string | null;
   lessonId?: string | null;
@@ -138,8 +132,6 @@ export interface StudyQueue {
   newCards: QueueItem[];
   counts: {
     due: number;
-    newRemaining: number;
-    newDoneToday: number;
     reviewsDoneToday: number;
   };
 }
@@ -151,8 +143,6 @@ export interface StudyStats {
   learnedTotal: number;
   inProgress: number;
   reviewsDoneToday: number;
-  newDoneToday: number;
-  newRemaining: number;
   leechCount: number;
   /** số từ người dùng đã tự ẩn khỏi hàng đợi ôn */
   suspendedCount: number;
@@ -293,7 +283,6 @@ export interface WordMatch {
   pinyin: string;
   meaningVi: string | null;
   hskLevel: number;
-  imageUrl: string | null;
 }
 
 export interface LineToken {
@@ -384,11 +373,7 @@ export interface GrammarDetail extends GrammarListItem {
   examples: GrammarExample[];
 }
 
-export type LeaderboardMetricKey =
-  | "learned"
-  | "streak"
-  | "longest"
-  | "lessons";
+export type LeaderboardMetricKey = "streak" | "lessons";
 
 export interface LeaderboardMetric {
   key: LeaderboardMetricKey;
@@ -401,8 +386,6 @@ export interface LeaderboardRow {
   userId: string;
   displayName: string;
   avatarUrl: string | null;
-  /** Danh hiệu đang dùng (mở theo huy hiệu đã đạt). */
-  title?: string | null;
   value: number;
   currentStreak: number;
   isMe: boolean;
@@ -466,20 +449,6 @@ export interface PublicProfileAchievement {
   unlockedAt: string;
 }
 
-/** Danh hiệu mở khi đạt huy hiệu `requirement`. */
-export interface Title {
-  key: string;
-  label: string;
-  achievementCode: string;
-  requirement: string;
-  owned: boolean;
-  equipped: boolean;
-}
-
-export interface TitleShopCatalog {
-  titles: Title[];
-}
-
 export interface PremiumPlan {
   key: string;
   name: string;
@@ -501,7 +470,6 @@ export interface PublicProfile {
   displayName: string;
   avatarUrl: string | null;
   isPremium: boolean;
-  equippedTitle: string | null;
   joinedAt: string;
   currentStreak: number;
   longestStreak: number;
@@ -665,9 +633,11 @@ export interface MinigameLeaderboardRow {
 /** Link thanh toán payOS của 1 đơn Premium — xem `hanni-server/CLAUDE.md` mục Premium. */
 export interface CheckoutResponse {
   checkoutUrl: string;
-  qrCode: string;
+  qrCode: string | null;
   orderCode: number;
 }
+
+export type PaymentProvider = "payos" | "momo";
 
 export type PaymentOrderStatus = "PENDING" | "PAID" | "CANCELLED" | "EXPIRED";
 
@@ -676,6 +646,7 @@ export interface PaymentOrder {
   amountVnd: number;
   premiumPlanKey: string | null;
   status: PaymentOrderStatus;
+  provider?: "PAYOS" | "MOMO";
 }
 
 /** Gợi ý quy luật thanh điệu Hán Việt → tiếng Trung cho 1 chữ (server tính). */
@@ -697,7 +668,6 @@ export interface SessionWord {
   meaningVi: string | null;
   meaningEn: string | null;
   audioUrl: string | null;
-  imageUrl: string | null;
   mnemonicVi?: string | null;
   examples: { zh: string; pinyin: string | null; vi: string | null }[];
   toneHints: ToneHint[] | null;

@@ -11,7 +11,7 @@ function toNumber(text: string): number | null {
   return Number.isNaN(n) ? null : n;
 }
 
-/** "Mục tiêu hằng ngày" (`/settings` của web): theo số từ ôn hoặc số phút, số từ mới mỗi ngày, giới hạn lượt ôn. */
+/** "Mục tiêu hằng ngày" (`/settings` của web): theo số từ ôn hoặc số phút và giới hạn lượt ôn. */
 export function GoalSection({
   form,
   update,
@@ -44,17 +44,6 @@ export function GoalSection({
         />
         <View>
           <TextField
-            label="Số từ mới mỗi ngày"
-            keyboardType="number-pad"
-            value={String(form.newCardsPerDay)}
-            onChangeText={(t) => update('newCardsPerDay', toNumber(t) ?? 0)}
-          />
-          <AppText variant="caption" color="muted" style={styles.hint}>
-            Đặt bằng 0 nếu bạn chỉ muốn ôn từ đã học.
-          </AppText>
-        </View>
-        <View>
-          <TextField
             label="Giới hạn số lượt ôn mỗi ngày (tuỳ chọn)"
             keyboardType="number-pad"
             placeholder="Không giới hạn"
@@ -62,7 +51,7 @@ export function GoalSection({
             onChangeText={(t) => update('maxReviewsPerDay', toNumber(t))}
           />
           <AppText variant="caption" color="muted" style={styles.hint}>
-            Để trống nếu không muốn giới hạn. Chỉ áp dụng cho lượt ôn từ đã học, không tính số từ mới ở trên.
+            Để trống nếu không muốn giới hạn. Từ mới đến từ bài học trong lộ trình, không tính vào giới hạn này.
           </AppText>
         </View>
       </View>

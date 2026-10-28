@@ -39,6 +39,13 @@
       "expo-audio",
       "expo-sqlite",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Cho phép Hanni truy cập thư viện ảnh để quét chữ Hán.",
+          "cameraPermission": "Cho phép Hanni dùng máy ảnh để chụp và quét chữ Hán."
+        }
+      ],
+      [
         "expo-font",
         {
           "android": {
@@ -88,7 +95,11 @@
           "icon": "./assets/images/fox-mark.png",
           "color": "#bd2b1f"
         }
-      ]
+      ],
+      "expo-image",
+      "expo-status-bar",
+      "expo-web-browser",
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true,

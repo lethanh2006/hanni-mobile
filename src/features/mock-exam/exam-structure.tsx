@@ -50,6 +50,20 @@ const STRUCTURES: { level: number; rows: { part: string; task: string; n: number
     ],
     total: 'Tổng 80 câu · 85 phút làm bài · 300 điểm · đạt từ 180 điểm.',
   },
+  {
+    level: 4,
+    rows: [
+      { part: "Nghe — Phần 1", task: "Nghe 1 đoạn, xét câu ★ đúng / sai", n: 10 },
+      { part: "Nghe — Phần 2", task: "Hội thoại ngắn + câu hỏi, chọn A/B/C/D", n: 15 },
+      { part: "Nghe — Phần 3", task: "Hội thoại dài hoặc đoạn văn + câu hỏi, chọn A/B/C/D", n: 20 },
+      { part: "Đọc — Phần 1", task: "Chọn từ điền chỗ trống (2 bộ)", n: 10 },
+      { part: "Đọc — Phần 2", task: "Sắp xếp 3 câu thành đoạn văn", n: 10 },
+      { part: "Đọc — Phần 3", task: "Đọc đoạn văn, chọn đáp án A/B/C/D", n: 20 },
+      { part: "Viết — Phần 1", task: "Sắp xếp từ thành câu", n: 10 },
+      { part: "Viết — Phần 2", task: "Nhìn tranh, dùng từ cho sẵn đặt câu", n: 5 },
+    ],
+    total: "Tổng 100 câu · 100 phút làm bài · 300 điểm · đạt từ 180 điểm.",
+  },
 ];
 
 /** Bảng "Cấu trúc đề thi HSK N" có nút chọn cấp. */
@@ -111,7 +125,7 @@ const styles = StyleSheet.create({
   card: { gap: 0 },
   head: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   tabs: { flexDirection: 'row', gap: 4 },
-  tab: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  tab: { minHeight: 32, justifyContent: 'center', borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
   table: { marginTop: 12 },
   row: { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 8, gap: 8 },
   part: { width: 92 },

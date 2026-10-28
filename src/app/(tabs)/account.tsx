@@ -195,9 +195,6 @@ export default function AccountScreen() {
                   {user.settings.dailyGoalType === 'MINUTES' ? 'phút / ngày' : 'từ ôn / ngày'}
                 </AppText>
               </AppText>
-              <AppText color="muted" style={styles.desc}>
-                Thêm {user.settings.newCardsPerDay} từ mới mỗi ngày.
-              </AppText>
             </>
           ) : (
             <AppText color="muted">Chọn mục tiêu và lịch ôn phù hợp trong cài đặt học tập.</AppText>

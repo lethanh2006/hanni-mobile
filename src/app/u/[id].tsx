@@ -49,13 +49,6 @@ export default function PublicProfileScreen() {
               <AppText weight="700" style={styles.nameText}>
                 {p.displayName}
               </AppText>
-              {p.equippedTitle && (
-                <View style={[styles.badge, { backgroundColor: alpha(theme.good, 0.1) }]}>
-                  <AppText variant="caption" weight="700" color="good">
-                    {p.equippedTitle}
-                  </AppText>
-                </View>
-              )}
               {p.isPremium && (
                 <View style={[styles.badge, { backgroundColor: alpha(theme.accent, 0.1) }]}>
                   <Icon name="crown" size={11} color="accent" />

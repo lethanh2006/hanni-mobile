@@ -53,16 +53,12 @@ export function useReviewSession(source: ReviewSource) {
   const [correct, setCorrect] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const sessionId = useRef<string | null>(null);
+  const ratingLock = useRef(false);
   const reviewedIds = useRef(new Set<string>());
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const session = await api
-        .post<{ id: string }>('/study/session', { source: source.kind === 'lesson' ? 'LEARN' : 'REVIEW' })
-        .catch(() => null);
-      sessionId.current = session?.id ?? null;
       const list = await loadItems(source);
       if (cancelled) return;
       setItems(list);
@@ -76,14 +72,14 @@ export function useReviewSession(source: ReviewSource) {
   }, []);
 
   async function finish() {
-    if (sessionId.current) await api.post(`/study/session/${sessionId.current}/end`).catch(() => undefined);
     refreshAfterReview();
     setPhase('done');
   }
 
   async function rate(rating: Rating, durationMs: number) {
     const item = items[pos];
-    if (!item || busy) return;
+    if (!item || ratingLock.current) return;
+    ratingLock.current = true;
     setBusy(true);
     setError(null);
     try {
@@ -91,7 +87,6 @@ export function useReviewSession(source: ReviewSource) {
         wordId: item.word.id,
         rating,
         durationMs,
-        studySessionId: sessionId.current ?? undefined,
       });
       reviewedIds.current.add(item.word.id);
       if (res.isCorrect) setCorrect((c) => c + 1);
@@ -100,6 +95,7 @@ export function useReviewSession(source: ReviewSource) {
     } catch {
       setError('Chưa lưu được kết quả. Hãy thử đánh giá lại thẻ này.');
     } finally {
+      ratingLock.current = false;
       setBusy(false);
     }
   }
@@ -107,7 +103,8 @@ export function useReviewSession(source: ReviewSource) {
   /** Ẩn từ khỏi hàng đợi và BỎ thẻ khỏi buổi ôn (không nhảy qua) để thống kê cuối buổi đúng mẫu số. */
   async function markKnown() {
     const item = items[pos];
-    if (!item || busy) return;
+    if (!item || ratingLock.current) return;
+    ratingLock.current = true;
     setBusy(true);
     setError(null);
     try {
@@ -118,6 +115,7 @@ export function useReviewSession(source: ReviewSource) {
     } catch {
       setError('Chưa ẩn được từ này. Thử lại nhé.');
     } finally {
+      ratingLock.current = false;
       setBusy(false);
     }
   }

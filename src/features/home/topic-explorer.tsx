@@ -39,9 +39,13 @@ export function TopicExplorer({
     0,
     units.findIndex((u) => u.lessons.some((l) => l.lesson.id === currentLessonId)),
   );
+  const lastStudied = variant === 'review'
+    ? units.map((u) => u.lessons.some((l) => l.lesson.startedWords > 0)).lastIndexOf(true)
+    : -1;
+  const defaultUnit = lastStudied >= 0 ? lastStudied : currentUnit;
   const [picked, setPicked] = useState<number | null>(null);
   const listRef = useRef<ScrollViewInstance>(null);
-  const active = units[picked ?? currentUnit] ?? units[0];
+  const active = units[picked ?? defaultUnit] ?? units[0];
   if (!active) return null;
   const activeDone = active.lessons.filter((l) => isDone(l.lesson, variant)).length;
   // Bài để xem trước từ vựng: lộ trình → bài nên học tiếp (hoặc bài đầu chưa xong); ôn tập → bài đầu đã học.
@@ -68,7 +72,7 @@ export function TopicExplorer({
                 onPress={() => setPicked(i)}
                 // Đưa chủ đề đang học vào tầm nhìn TRONG dải (không kéo cả trang).
                 onLayout={(e) => {
-                  if (i === currentUnit && picked === null)
+                  if (i === defaultUnit && picked === null)
                     listRef.current?.scrollTo({ x: Math.max(0, e.nativeEvent.layout.x - 8), animated: false });
                 }}
                 accessibilityState={{ selected }}
@@ -353,8 +357,8 @@ const styles = StyleSheet.create({
   tags: { marginTop: 4, flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   tag: { borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
   words: { borderTopWidth: 1, paddingHorizontal: 12, paddingTop: 14, paddingBottom: 16 },
-  wordsHead: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 12, rowGap: 4 },
-  link: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  wordsHead: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 12, rowGap: 4 },
+  link: { minHeight: 32, flexDirection: 'row', alignItems: 'center', gap: 4 },
   wordList: { marginTop: 12, gap: 8 },
   word: {
     flexDirection: 'row',
@@ -368,5 +372,5 @@ const styles = StyleSheet.create({
   wordHanzi: { fontWeight: '600' },
   extras: { marginTop: 12, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
   grammar: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
-  examples: { marginLeft: 'auto' },
+  examples: { marginLeft: 'auto', minHeight: 32, justifyContent: 'center' },
 });

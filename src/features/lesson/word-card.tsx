@@ -1,4 +1,3 @@
-import { Image } from 'expo-image';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText, AudioButton, Card, Hanzi } from '@/components/ui';
@@ -23,7 +22,6 @@ export function WordCard({ word, index, showMeaning }: { word: Word; index: numb
             {String(index + 1).padStart(2, '0')}
           </AppText>
         </View>
-        {word.imageUrl && <Image source={word.imageUrl} style={styles.image} contentFit="cover" />}
         <View style={styles.flex}>
           <View style={styles.head}>
             <Hanzi size={30}>{word.simplified}</Hanzi>
@@ -77,7 +75,6 @@ const styles = StyleSheet.create({
   card: { gap: 0 },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: 16 },
   index: { marginTop: 4, width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  image: { marginTop: 2, width: 64, height: 64, borderRadius: 12 },
   flex: { flex: 1, minWidth: 0 },
   head: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 12 },
   pos: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },

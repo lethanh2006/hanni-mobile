@@ -14,12 +14,10 @@ import {
   PageHeader,
   ProgressBar,
   Screen,
-  SectionHeading,
   ShareButton,
 } from '@/components/ui';
 import { alpha } from '@/constants/theme';
 import { MEDAL, Medal } from '@/features/achievements/medal';
-import { TitlePicker } from '@/features/achievements/title-picker';
 import { useTheme } from '@/hooks/use-theme';
 import { WEB_ORIGIN } from '@/lib/api';
 import { useRequireAuth } from '@/lib/auth';
@@ -48,7 +46,7 @@ function sortForMotivation(list: Achievement[]) {
   });
 }
 
-/** Bộ sưu tập huy hiệu (trang `/achievements` của web) — đạt mốc là mở huy hiệu, mỗi huy hiệu mở thêm một danh hiệu. */
+/** Bộ sưu tập huy hiệu (trang `/achievements` của web) — đạt mốc học thật là mở huy hiệu. */
 export default function AchievementsScreen() {
   const { user } = useRequireAuth();
   const { data, error, mutate } = useAchievements();
@@ -76,7 +74,7 @@ export default function AchievementsScreen() {
           icon="trophy"
           tone="accent"
           title="Bộ sưu tập huy hiệu"
-          description="Đạt mốc là mở huy hiệu — mỗi huy hiệu mở thêm một danh hiệu."
+          description="Mỗi mốc học thật — chuỗi ngày, số lượt ôn, số từ, xong cấp — mở một huy hiệu."
         />
         <Button
           title="Tiếp tục học"
@@ -156,16 +154,6 @@ export default function AchievementsScreen() {
             </EmptyState>
           )}
 
-          {/* Danh hiệu xuống dưới lưới huy chương như web — để danh sách dài không đẩy huy chương khỏi màn đầu. */}
-          <View style={styles.titles}>
-            <SectionHeading
-              icon="trophy"
-              tone="accent"
-              title="Danh hiệu"
-              description="Mỗi danh hiệu mở khi bạn đạt một huy hiệu ở trên — học thật mới có, không mua bằng xu."
-            />
-            <TitlePicker />
-          </View>
         </>
       )}
     </Screen>
@@ -274,5 +262,4 @@ const styles = StyleSheet.create({
   cellDesc: { marginTop: 4, lineHeight: 20 },
   status: { marginTop: 'auto', paddingTop: 8, flexDirection: 'row', alignItems: 'center', gap: 4 },
   share: { marginTop: 8 },
-  titles: { gap: 16 },
 });

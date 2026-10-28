@@ -1,7 +1,8 @@
+import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import useSWR from 'swr';
 
-import { AppText, Card, Icon } from '@/components/ui';
+import { AppText, Button, Card, Icon } from '@/components/ui';
 import { alpha } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import type { PremiumStatus } from '@/lib/types';
@@ -14,10 +15,7 @@ const BENEFITS = [
   'Quét ảnh học từ 100 ảnh/ngày (bản thường 3)',
 ];
 
-/**
- * Thẻ Premium ở Tài khoản (`PremiumSection` của web). App KHÔNG bán Premium (gói số trong app phải qua thanh toán
- * của App Store / Google Play) nên thay nút "Nâng cấp ngay" bằng quyền lợi + ghi chú.
- */
+/** Trạng thái Premium và lối vào màn chọn gói/thanh toán dùng chung API với web. */
 export function PremiumCard() {
   const theme = useTheme();
   const { data } = useSWR<PremiumStatus>('/premium/status');
@@ -67,11 +65,10 @@ export function PremiumCard() {
               </View>
             ))}
           </View>
-          <AppText variant="caption" color="muted" style={styles.note}>
-            Gói Premium hiện chưa bán trong app.
-          </AppText>
+          <Button title="Nâng cấp ngay" leftIcon="crown" onPress={() => router.push('/premium')} style={styles.note} />
         </>
       )}
+      {data.active && !data.lifetime && <Button title="Gia hạn Premium" variant="secondary" onPress={() => router.push('/premium')} style={styles.note} />}
     </Card>
   );
 }

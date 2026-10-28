@@ -1,4 +1,3 @@
-import { Image } from 'expo-image';
 import { useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 
@@ -147,9 +146,6 @@ export function Flashcard({
             </AppText>
             <AudioButton src={word.audioUrl} />
           </View>
-          {word.imageUrl && (
-            <Image source={word.imageUrl} style={styles.illustration} contentFit="cover" pointerEvents="none" />
-          )}
           <View style={styles.meaning} pointerEvents="none">
             <AppText weight="600" center style={styles.meaningText}>
               {word.meaningVi ?? word.meaningEn ?? 'Nghĩa đang được cập nhật'}
@@ -296,7 +292,6 @@ const styles = StyleSheet.create({
   },
   answerWord: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: 9 },
   answerPinyin: { fontSize: 16 },
-  illustration: { marginTop: 10, width: '100%', maxWidth: 260, height: 78, borderRadius: 14 },
   meaning: { marginTop: 15, alignItems: 'center' },
   meaningText: { fontSize: 23, lineHeight: 32, letterSpacing: -0.7 },
   chips: { marginTop: 9, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6 },
