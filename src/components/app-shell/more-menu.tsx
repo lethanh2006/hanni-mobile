@@ -1,4 +1,5 @@
 import { router, type Href } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
 import {
   Animated,
@@ -13,9 +14,10 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import useSWR from 'swr';
 
-import { AppText, Icon, type IconName } from '@/components/ui';
+import { AppText, Icon, TextLink, type IconName } from '@/components/ui';
 import { alpha, mix } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { WEB_ORIGIN } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useStudyStats } from '@/lib/hooks';
 import { ACCOUNT_LINK, NAV_MAIN, NAV_MORE } from '@/lib/nav';
@@ -97,6 +99,17 @@ export function MoreMenu({ open, onClose, current }: { open: boolean; onClose: (
   );
 }
 
+/**
+ * Trang pháp lý + ghi công nguồn dữ liệu (dải liên kết chân trang của web). Mở bản web trong trình duyệt của app —
+ * nội dung là văn bản dài, giữ 1 bản ở web để không lệch. Nguồn dữ liệu CC BY-SA bắt buộc ghi công.
+ */
+const LEGAL_LINKS = [
+  { label: 'Giới thiệu', path: '/gioi-thieu' },
+  { label: 'Điều khoản', path: '/dieu-khoan' },
+  { label: 'Chính sách bảo mật', path: '/chinh-sach-bao-mat' },
+  { label: 'Nguồn dữ liệu', path: '/nguon-du-lieu' },
+];
+
 function Footer({ current, go, onClose }: { current?: string; go: (href: Href) => void; onClose: () => void }) {
   const theme = useTheme();
   const { user, logout } = useAuth();
@@ -134,6 +147,17 @@ function Footer({ current, go, onClose }: { current?: string; go: (href: Href) =
             <NavItem small icon="plus" label="Tạo tài khoản miễn phí" active={false} onPress={() => go('/register')} />
           </>
         )}
+      </View>
+      <View style={styles.legal}>
+        {LEGAL_LINKS.map((l) => (
+          <TextLink
+            key={l.path}
+            title={l.label}
+            color="muted"
+            size="caption"
+            onPress={() => void WebBrowser.openBrowserAsync(`${WEB_ORIGIN}${l.path}`)}
+          />
+        ))}
       </View>
     </View>
   );
@@ -250,6 +274,7 @@ function NavItem({
 }
 
 const styles = StyleSheet.create({
+  legal: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 14, paddingHorizontal: 12 },
   backdrop: { backgroundColor: 'rgba(16, 23, 37, 0.44)' },
   panel: {
     position: 'absolute',
