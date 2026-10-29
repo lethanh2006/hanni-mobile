@@ -1,0 +1,74 @@
+# Build bản iOS CHƯA KÝ (.ipa) trên máy macOS của GitHub rồi gắn vào GitHub Release — chưa có tài khoản Apple Developer
+# nên không ký được: người dùng cài bằng cách sideload (AltStore, Sideloadly…) để công cụ ký lại bằng Apple ID của họ.
+# Chạy tay: Actions → "iOS (chưa ký)" → Run workflow → nhập tag (vd v1.0.0). Phát hành release mới cũng tự chạy.
+name: iOS (chưa ký)
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag của release (vd v1.0.0) — build đúng mã của tag và gắn IPA vào release đó
+        required: true
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  ios:
+    runs-on: macos-latest
+    timeout-minutes: 120
+    env:
+      TAG: ${{ inputs.tag || github.event.release.tag_name }}
+      CI: 1
+      EXPO_NO_TELEMETRY: 1
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.event.release.tag_name }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Chọn Xcode mới nhất trên máy
+        run: |
+          XCODE=$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)
+          sudo xcode-select -s "$XCODE"
+          xcodebuild -version
+
+      - run: npm ci
+
+      - name: Sinh thư mục ios/ (prebuild) và cài CocoaPods
+        run: |
+          npx expo prebuild --platform ios --no-install
+          cd ios && pod install
+
+      - name: Build Release cho iPhone (không ký)
+        run: |
+          xcodebuild -workspace ios/Hanni.xcworkspace -scheme Hanni -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            -quiet build
+
+      - name: Đóng gói IPA
+        run: |
+          VERSION=$(node -p "require('./app.json').expo.version")
+          NAME="Hanni-$VERSION-ios-unsigned"
+          mkdir Payload
+          cp -R build/Build/Products/Release-iphoneos/Hanni.app Payload/
+          zip -qry "$NAME.ipa" Payload
+          shasum -a 256 "$NAME.ipa" > "$NAME.sha256"
+          echo "NAME=$NAME" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.NAME }}
+          path: ${{ env.NAME }}.*
+
+      - name: Gắn vào release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$TAG" "$NAME.ipa" "$NAME.sha256" --clobber
