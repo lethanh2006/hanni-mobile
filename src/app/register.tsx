@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { ErrorNote, TextField } from '@/components/ui';
 import { AuthShell, AuthSubmit, AuthTitle, GuestEntry, leaveAuth, SectionLabel, SwitchLink } from '@/features/auth/auth-parts';
+import { GoogleAuthBlock } from '@/features/auth/google-button';
 import { api, errorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { pendingWordCount, saveGuestProgress } from '@/lib/guest-progress';
@@ -68,6 +69,16 @@ export default function RegisterScreen() {
             ? `${pendingWords} từ bạn vừa học sẽ được lưu ngay khi tạo tài khoản xong.`
             : 'Tạo tài khoản để lưu tiến độ và học theo nhịp của riêng bạn.'
         }
+      />
+      <GoogleAuthBlock
+        mode="signup"
+        onSuccess={async (isNewUser) => {
+          await refresh();
+          const { hasProgress } = await saveGuestProgress();
+          // Như đăng ký bằng email: tài khoản mới "tay trắng" qua khảo sát chọn cấp.
+          if (isNewUser && !next && !hasProgress) router.replace('/onboarding');
+          else leaveAuth(next);
+        }}
       />
       <View style={styles.form}>
         <TextField

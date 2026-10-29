@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View, type GestureResponderEvent } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
 import Svg, { Line, Path } from 'react-native-svg';
 
 import { AppText, Hanzi, Icon } from '@/components/ui';
@@ -32,7 +33,17 @@ function pathOf(s: Stroke) {
 }
 
 /** Nút viền nhỏ dưới ô viết ("Xoá nét cuối", "Viết lại"). */
-function PadButton({ label, icon, disabled, onPress }: { label: string; icon: 'refresh' | 'close'; disabled: boolean; onPress: () => void }) {
+function PadButton({
+  label,
+  icon,
+  disabled,
+  onPress,
+}: {
+  label: string;
+  icon: 'refresh' | 'close';
+  disabled: boolean;
+  onPress: () => void;
+}) {
   const theme = useTheme();
   return (
     <Pressable
@@ -80,10 +91,36 @@ export function HandwritingPad({
     loadTemplates().then(setTemplates, () => setFailed(true));
   }, []);
 
-  function point(e: GestureResponderEvent): [number, number] {
-    const { locationX, locationY } = e.nativeEvent;
-    return [Math.max(0, Math.min(SIZE, locationX)), Math.max(0, Math.min(SIZE, locationY))];
-  }
+  const point = (x: number, y: number): [number, number] => [
+    Math.max(0, Math.min(SIZE, x)),
+    Math.max(0, Math.min(SIZE, y)),
+  ];
+
+  // Nhận nét bằng gesture-handler (chạy trên luồng giao diện, kích hoạt ngay khi kéo) — khung cuộn của trang không
+  // giành mất nét dọc như khi dùng hệ responder của React Native.
+  const pan = usePanGesture({
+    minDistance: 0,
+    runOnJS: true,
+    onBegin: (e) => {
+      currentRef.current = [point(e.x, e.y)];
+      setCurrent(currentRef.current);
+    },
+    onUpdate: (e) => {
+      const s = currentRef.current;
+      if (!s) return;
+      const p = point(e.x, e.y);
+      const last = s[s.length - 1];
+      if (Math.hypot(p[0] - last[0], p[1] - last[1]) < 2) return;
+      currentRef.current = [...s, p];
+      setCurrent(currentRef.current);
+    },
+    onFinalize: (e) => {
+      const s = currentRef.current;
+      currentRef.current = null;
+      setCurrent(null);
+      if (s && !e.canceled) setStrokes((list) => [...list, s]);
+    },
+  });
 
   function pick(char: string) {
     onPick(char);
@@ -94,7 +131,15 @@ export function HandwritingPad({
   const half = SIZE / 2;
 
   return (
-    <View style={[styles.box, { borderColor: theme.border, backgroundColor: theme.surface, boxShadow: `0 1px 2px ${alpha(theme.text, 0.05)}` }]}>
+    <View
+      style={[
+        styles.box,
+        {
+          borderColor: theme.border,
+          backgroundColor: theme.surface,
+          boxShadow: `0 1px 2px ${alpha(theme.text, 0.05)}`,
+        },
+      ]}>
       <View style={styles.head}>
         <AppText weight="600">{title}</AppText>
         <Pressable
@@ -105,60 +150,43 @@ export function HandwritingPad({
         </Pressable>
       </View>
       <View style={styles.body}>
-        {/* Nhận cả cử chỉ kéo: trả `true` ở onResponderGrant để khung cuộn bên ngoài không giành mất nét đang viết. */}
-        <View
-          accessibilityLabel="Ô viết: vẽ chữ Hán bằng ngón tay, từng nét một"
-          onStartShouldSetResponder={() => true}
-          onMoveShouldSetResponder={() => true}
-          onResponderTerminationRequest={() => false}
-          onResponderGrant={(e) => {
-            currentRef.current = [point(e)];
-            setCurrent(currentRef.current);
-            return true;
-          }}
-          onResponderMove={(e) => {
-            const s = currentRef.current;
-            if (!s) return;
-            const p = point(e);
-            const last = s[s.length - 1];
-            if (Math.hypot(p[0] - last[0], p[1] - last[1]) < 2) return;
-            currentRef.current = [...s, p];
-            setCurrent(currentRef.current);
-          }}
-          onResponderRelease={() => {
-            const s = currentRef.current;
-            currentRef.current = null;
-            setCurrent(null);
-            if (s) setStrokes((list) => [...list, s]);
-          }}
-          onResponderTerminate={() => {
-            currentRef.current = null;
-            setCurrent(null);
-          }}
-          style={[styles.canvas, { borderColor: theme.border, backgroundColor: alpha(theme.surface2, 0.4) }]}>
-          {/* Ô chữ mễ (米字格) mờ để căn chữ như vở tập viết. */}
-          <Svg width={SIZE} height={SIZE} pointerEvents="none">
-            {[
-              [half, 0, half, SIZE],
-              [0, half, SIZE, half],
-              [0, 0, SIZE, SIZE],
-              [SIZE, 0, 0, SIZE],
-            ].map(([x1, y1, x2, y2], i) => (
-              <Line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={theme.border} strokeWidth={1} strokeDasharray="5 5" />
-            ))}
-            {drawn.map((s, i) => (
-              <Path
-                key={i}
-                d={pathOf(s)}
-                fill="none"
-                stroke={theme.text}
-                strokeWidth={6}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            ))}
-          </Svg>
-        </View>
+        <GestureDetector gesture={pan}>
+          <View
+            accessibilityLabel="Ô viết: vẽ chữ Hán bằng ngón tay, từng nét một"
+            style={[styles.canvas, { borderColor: theme.border, backgroundColor: alpha(theme.surface2, 0.4) }]}>
+            {/* Ô chữ mễ (米字格) mờ để căn chữ như vở tập viết. */}
+            <Svg width={SIZE} height={SIZE} pointerEvents="none">
+              {[
+                [half, 0, half, SIZE],
+                [0, half, SIZE, half],
+                [0, 0, SIZE, SIZE],
+                [SIZE, 0, 0, SIZE],
+              ].map(([x1, y1, x2, y2], i) => (
+                <Line
+                  key={i}
+                  x1={x1}
+                  y1={y1}
+                  x2={x2}
+                  y2={y2}
+                  stroke={theme.border}
+                  strokeWidth={1}
+                  strokeDasharray="5 5"
+                />
+              ))}
+              {drawn.map((s, i) => (
+                <Path
+                  key={i}
+                  d={pathOf(s)}
+                  fill="none"
+                  stroke={theme.text}
+                  strokeWidth={6}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              ))}
+            </Svg>
+          </View>
+        </GestureDetector>
         <View style={styles.side}>
           <View accessibilityLabel="Chữ gợi ý" style={styles.grid}>
             {Array.from({ length: 8 }, (_, i) => {
@@ -169,7 +197,10 @@ export function HandwritingPad({
                   onPress={() => pick(c)}
                   style={({ pressed }) => [
                     styles.cell,
-                    { borderColor: pressed ? alpha(theme.primary, 0.5) : theme.border, backgroundColor: pressed ? alpha(theme.primary, 0.05) : theme.surface },
+                    {
+                      borderColor: pressed ? alpha(theme.primary, 0.5) : theme.border,
+                      backgroundColor: pressed ? alpha(theme.primary, 0.05) : theme.surface,
+                    },
                   ]}>
                   <Hanzi size={30}>{c}</Hanzi>
                 </Pressable>
@@ -186,7 +217,12 @@ export function HandwritingPad({
                 : `Viết từng nét theo thứ tự, mỗi lần một chữ. ${hint}`}
           </AppText>
           <View style={styles.actions}>
-            <PadButton label="Xoá nét cuối" icon="refresh" disabled={!strokes.length} onPress={() => setStrokes((s) => s.slice(0, -1))} />
+            <PadButton
+              label="Xoá nét cuối"
+              icon="refresh"
+              disabled={!strokes.length}
+              onPress={() => setStrokes((s) => s.slice(0, -1))}
+            />
             <PadButton label="Viết lại" icon="close" disabled={!strokes.length} onPress={() => setStrokes([])} />
           </View>
         </View>
