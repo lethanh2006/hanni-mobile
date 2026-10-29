@@ -1,8 +1,11 @@
-import type { ReactNode, Ref } from 'react';
+import { useIsFocused } from 'expo-router';
+import { useEffect, useImperativeHandle, useRef, useState, type ReactNode, type Ref, type RefObject } from 'react';
 import {
+  Keyboard,
   RefreshControl,
   ScrollView,
   StyleSheet,
+  TextInput,
   View,
   type ScrollViewInstance,
   type StyleProp,
@@ -42,21 +45,33 @@ export function Screen({
 }) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const padding = [styles.content, { paddingTop: (safeTop ? insets.top : 0) + 20 }, contentStyle];
+  const list = useRef<ScrollViewInstance>(null);
+  const offset = useRef(0);
+  useImperativeHandle(scrollRef, () => list.current as ScrollViewInstance);
+  const keyboard = useKeyboardSpace(list, offset);
+  const padding = [
+    styles.content,
+    { paddingTop: (safeTop ? insets.top : 0) + 20 },
+    contentStyle,
+    keyboard > 0 && { paddingBottom: keyboard + 28 },
+  ];
 
   if (!scroll) {
     return <View style={[styles.fill, { backgroundColor: theme.background }, padding]}>{children}</View>;
   }
   return (
     <ScrollView
-      ref={scrollRef}
+      ref={list}
       stickyHeaderIndices={stickyHeaderIndices}
       style={[styles.fill, { backgroundColor: theme.background }]}
       contentContainerStyle={padding}
       // Thanh trên/header đã tự chừa tai thỏ — để iOS chèn thêm là cách trên 2 lần.
       contentInsetAdjustmentBehavior="never"
       keyboardShouldPersistTaps="handled"
-      onScroll={(e) => reportScroll(e.nativeEvent.contentOffset.y)}
+      onScroll={(e) => {
+        offset.current = e.nativeEvent.contentOffset.y;
+        reportScroll(offset.current);
+      }}
       scrollEventThrottle={32}
       refreshControl={
         onRefresh ? (
@@ -66,6 +81,39 @@ export function Screen({
       {children}
     </ScrollView>
   );
+}
+
+/**
+ * Android edge-to-edge không còn co màn lại khi bàn phím mở (`adjustResize` hết tác dụng), iOS thì xưa nay vẫn vậy:
+ * chừa đáy bằng chiều cao bàn phím để cuộn được, rồi đẩy ô đang gõ lên ngay trên bàn phím nếu nó bị che.
+ */
+function useKeyboardSpace(list: RefObject<ScrollViewInstance | null>, offset: RefObject<number>) {
+  const focused = useIsFocused();
+  const [keyboard, setKeyboard] = useState({ height: 0, top: 0 });
+
+  useEffect(() => {
+    if (!focused) return;
+    const show = Keyboard.addListener('keyboardDidShow', (e) =>
+      setKeyboard({ height: e.endCoordinates.height, top: e.endCoordinates.screenY }),
+    );
+    const hide = Keyboard.addListener('keyboardDidHide', () => setKeyboard({ height: 0, top: 0 }));
+    return () => {
+      show.remove();
+      hide.remove();
+      setKeyboard({ height: 0, top: 0 });
+    };
+  }, [focused]);
+
+  // Chạy sau khi phần đệm đáy đã vào layout, không thì cuộn bị chặn ở đáy cũ.
+  useEffect(() => {
+    if (!keyboard.height) return;
+    TextInput.State.currentlyFocusedInput()?.measureInWindow((_x, y, _w, h) => {
+      const hidden = y + h + 16 - keyboard.top;
+      if (hidden > 0) list.current?.scrollTo({ y: offset.current + hidden, animated: true });
+    });
+  }, [keyboard, list, offset]);
+
+  return keyboard.height;
 }
 
 const styles = StyleSheet.create({
