@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { AppText, ErrorNote, TextField } from '@/components/ui';
 import { AuthShell, AuthSubmit, AuthTitle, GuestEntry, leaveAuth, SectionLabel, SwitchLink } from '@/features/auth/auth-parts';
+import { GoogleAuthBlock } from '@/features/auth/google-button';
 import { api, errorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { saveGuestProgress } from '@/lib/guest-progress';
@@ -43,6 +44,14 @@ export default function LoginScreen() {
         text="Chào mừng bạn trở lại"
         mark="."
         subtitle="Góc học tập quen thuộc, những điều mới đang chờ."
+      />
+      <GoogleAuthBlock
+        mode="signin"
+        onSuccess={async () => {
+          await refresh();
+          await saveGuestProgress();
+          leaveAuth(next);
+        }}
       />
       <View style={styles.form}>
         <TextField
