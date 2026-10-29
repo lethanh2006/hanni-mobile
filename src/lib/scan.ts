@@ -1,6 +1,7 @@
+import { File } from 'expo-file-system';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { Platform } from 'react-native';
 import useSWR from 'swr';
-import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 
 import { api, fetcher } from './api';
 import type { ScanResult, ScanUsage } from './types';
@@ -40,11 +41,9 @@ export async function scanImage(imageUri: string): Promise<ScanResult> {
     const blob = await resp.blob();
     form.append('image', blob, 'scan.jpg');
   } else {
-    form.append('image', {
-      uri: imageUri,
-      name: 'scan.jpg',
-      type: 'image/jpeg',
-    } as unknown as Blob);
+    // fetch của Expo không đọc được kiểu `{ uri, name, type }` của React Native
+    // ("Unsupported FormDataPart implementation") — phải đưa File có `bytes()`.
+    form.append('image', new File(imageUri), 'scan.jpg');
   }
   return api.upload<ScanResult>('/scan', form);
 }
