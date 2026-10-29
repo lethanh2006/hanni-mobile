@@ -2,7 +2,8 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { AppState, useColorScheme } from 'react-native';
+import { AppState, StyleSheet, useColorScheme } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SWRConfig, type SWRConfiguration } from 'swr';
 
 import { StackHeader } from '@/components/app-shell/stack-header';
@@ -51,30 +52,35 @@ export default function RootLayout() {
   };
 
   return (
-    <ThemeProvider value={navTheme}>
-      <SWRConfig value={swrConfig}>
-        <AuthProvider>
-          <HideSplashWhenReady />
-          <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-          <NotificationCenter />
-          <ReminderSync />
-          <Stack
-            screenOptions={{
-              header: (props) => <StackHeader {...props} />,
-              headerTitleStyle: { fontFamily: Fonts.sans, fontWeight: '600', fontSize: 16 },
-              contentStyle: { backgroundColor: colors.background },
-            }}>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          </Stack>
-          {/* Nổi trên mọi màn như bong bóng trợ lý trong khung app của web. */}
-          <AssistantWidget />
-          {/* WebView ẩn giải mã ghi âm chuẩn để chấm thanh điệu (chỉ mở khi cần). */}
-          <AudioDecoderHost />
-        </AuthProvider>
-      </SWRConfig>
-    </ThemeProvider>
+    // Gốc cho gesture-handler (ô viết tay nhận nét ngay cả khi nằm trong khung cuộn).
+    <GestureHandlerRootView style={styles.root}>
+      <ThemeProvider value={navTheme}>
+        <SWRConfig value={swrConfig}>
+          <AuthProvider>
+            <HideSplashWhenReady />
+            <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+            <NotificationCenter />
+            <ReminderSync />
+            <Stack
+              screenOptions={{
+                header: (props) => <StackHeader {...props} />,
+                headerTitleStyle: { fontFamily: Fonts.sans, fontWeight: '600', fontSize: 16 },
+                contentStyle: { backgroundColor: colors.background },
+              }}>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            </Stack>
+            {/* Nổi trên mọi màn như bong bóng trợ lý trong khung app của web. */}
+            <AssistantWidget />
+            {/* WebView ẩn giải mã ghi âm chuẩn để chấm thanh điệu (chỉ mở khi cần). */}
+            <AudioDecoderHost />
+          </AuthProvider>
+        </SWRConfig>
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({ root: { flex: 1 } });
 
 /** Giữ màn chờ tới khi biết đã đăng nhập hay chưa, để không nháy giao diện khách. */
 function HideSplashWhenReady() {
