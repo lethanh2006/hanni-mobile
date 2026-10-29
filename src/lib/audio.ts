@@ -7,8 +7,15 @@ import { mediaUrl } from './api';
 let player: AudioPlayer | null = null;
 /** Lắng nghe "phát xong" của lần phát có theo dõi (`playClip`). */
 let endListener: { remove(): void } | null = null;
+let startTimer: ReturnType<typeof setTimeout> | null = null;
+
+function clearStartTimer() {
+  if (startTimer) clearTimeout(startTimer);
+  startTimer = null;
+}
 
 function clearEnd() {
+  clearStartTimer();
   endListener?.remove();
   endListener = null;
 }
@@ -17,36 +24,41 @@ function clearEnd() {
 export function playWord(src: string | null | undefined, onError?: () => void) {
   const url = mediaUrl(src);
   if (!url) return;
-  Speech.stop();
+  playUri(url, onError);
+}
+
+function playUri(uri: string, onError?: () => void) {
+  void Speech.stop();
   clearEnd();
-  player?.remove();
-  player = createAudioPlayer(url);
-  if (onError) {
-    const current = player;
-    endListener = current.addListener('playbackStatusUpdate', (status) => {
-      if (status.error && player === current) { clearEnd(); onError(); }
-      else if (status.didJustFinish) clearEnd();
-    });
+  try {
+    player?.remove();
+    player = createAudioPlayer(uri);
+    if (onError) {
+      const current = player;
+      endListener = current.addListener('playbackStatusUpdate', (status) => {
+        if (status.error && player === current) { clearEnd(); onError(); }
+        else if (status.didJustFinish) clearEnd();
+        else if (status.isLoaded && status.playing) clearStartTimer();
+      });
+      startTimer = setTimeout(() => {
+        if (player !== current) return;
+        clearEnd();
+        onError();
+      }, 8000);
+    }
+    player.setPlaybackRate(1);
+    player.play();
+  } catch {
+    clearEnd();
+    try { player?.remove(); } catch { /* Player có thể chưa được tạo hoàn tất. */ }
+    player = null;
+    onError?.();
   }
-  player.setPlaybackRate(1);
-  player.play();
 }
 
 /** Phát tệp ghi âm trên máy (giọng người học vừa thu — `file://` hoặc `blob:` trên web). */
 export function playRecording(uri: string, onError?: () => void) {
-  Speech.stop();
-  clearEnd();
-  player?.remove();
-  player = createAudioPlayer(uri);
-  if (onError) {
-    const current = player;
-    endListener = current.addListener('playbackStatusUpdate', (status) => {
-      if (status.error && player === current) { clearEnd(); onError(); }
-      else if (status.didJustFinish) clearEnd();
-    });
-  }
-  player.setPlaybackRate(1);
-  player.play();
+  playUri(uri, onError);
 }
 
 /**

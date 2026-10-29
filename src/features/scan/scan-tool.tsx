@@ -36,6 +36,7 @@ import {
   useScanUsage,
 } from '@/lib/scan';
 import type { ScanLine, ScanResult, ScanWord } from '@/lib/types';
+import { clearScanPickerPending, markScanPickerPending, takeRecoveredScanImage } from './pending-image';
 
 type Phase =
   | { kind: 'idle' }
@@ -60,12 +61,21 @@ export function ScanTool() {
   const [saving, setSaving] = useState<Set<string>>(new Set());
   const busy = phase.kind === 'scanning';
 
+  useEffect(() => {
+    if (loading || !user) return;
+    const asset = takeRecoveredScanImage();
+    if (asset) void processAsset(asset);
+    // Kết quả khôi phục chỉ được lấy một lần khi màn quét đã sẵn sàng.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, user]);
+
   async function processAsset(asset: ImagePicker.ImagePickerAsset) {
-    setPreview(asset.uri);
+    setPreview(null);
     setSelected(null);
     setPhase({ kind: 'scanning' });
     try {
       const preparedUri = await prepareImage(asset.uri, asset.width, asset.height);
+      setPreview(preparedUri);
       const result = await scanImage(preparedUri);
       setSaved(new Set(result.words.filter((w) => w.saved).map((w) => w.id)));
       setPhase({ kind: 'done', result });
@@ -95,13 +105,16 @@ export function ScanTool() {
       });
       return;
     }
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ['images'],
-      allowsEditing: false,
-      quality: 0.85,
-    });
-    if (!result.canceled && result.assets?.[0]) {
-      void processAsset(result.assets[0]);
+    try {
+      markScanPickerPending();
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ['images'], allowsEditing: false, quality: 0.85,
+      });
+      clearScanPickerPending();
+      if (!result.canceled && result.assets?.[0]) void processAsset(result.assets[0]);
+    } catch {
+      clearScanPickerPending();
+      setPhase({ kind: 'error', quota: false, message: 'Không mở được máy ảnh. Bạn thử lại nhé.' });
     }
   }
 
@@ -116,13 +129,16 @@ export function ScanTool() {
       });
       return;
     }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: false,
-      quality: 0.85,
-    });
-    if (!result.canceled && result.assets?.[0]) {
-      void processAsset(result.assets[0]);
+    try {
+      markScanPickerPending();
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'], allowsEditing: false, quality: 0.85,
+      });
+      clearScanPickerPending();
+      if (!result.canceled && result.assets?.[0]) void processAsset(result.assets[0]);
+    } catch {
+      clearScanPickerPending();
+      setPhase({ kind: 'error', quota: false, message: 'Không mở được thư viện ảnh. Bạn thử lại nhé.' });
     }
   }
 

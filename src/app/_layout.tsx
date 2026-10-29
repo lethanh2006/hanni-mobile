@@ -1,4 +1,4 @@
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider, router, useRootNavigationState } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -11,6 +11,7 @@ import { Colors, Fonts } from '@/constants/theme';
 import { AssistantWidget } from '@/features/assistant/assistant-widget';
 import { NotificationCenter } from '@/features/notifications/notification-center';
 import { ReminderSync } from '@/features/reminders/reminder-sync';
+import { recoverScanPicker } from '@/features/scan/pending-image';
 import { AudioDecoderHost } from '@/features/tone/decode-audio';
 import { fetcher } from '@/lib/api';
 import { AuthProvider, useAuth } from '@/lib/auth';
@@ -58,6 +59,7 @@ export default function RootLayout() {
         <SWRConfig value={swrConfig}>
           <AuthProvider>
             <HideSplashWhenReady />
+            <RecoverScanPicker />
             <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
             <NotificationCenter />
             <ReminderSync />
@@ -88,5 +90,19 @@ function HideSplashWhenReady() {
   useEffect(() => {
     if (!loading) void SplashScreen.hideAsync();
   }, [loading]);
+  return null;
+}
+
+function RecoverScanPicker() {
+  const { loading } = useAuth();
+  const navigation = useRootNavigationState();
+  useEffect(() => {
+    if (loading || !navigation?.key) return;
+    let active = true;
+    void recoverScanPicker().then((found) => {
+      if (active && found) router.replace('/tu-dien/quet');
+    });
+    return () => { active = false; };
+  }, [loading, navigation?.key]);
   return null;
 }

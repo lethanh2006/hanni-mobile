@@ -12,10 +12,11 @@ function setup() {
   } };
   const speech = { stop() {}, speak() {} };
   const exports = {};
+  const timers = new Set();
   vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/audio.ts', 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
-  }).outputText, { exports, require: (name) => name === 'expo-audio' ? expo : name === 'expo-speech' ? speech : { mediaUrl: (v) => v } });
-  return { audio: exports, players };
+  }).outputText, { exports, setTimeout: (fn) => { timers.add(fn); return fn; }, clearTimeout: (fn) => timers.delete(fn), require: (name) => name === 'expo-audio' ? expo : name === 'expo-speech' ? speech : { mediaUrl: (v) => v } });
+  return { audio: exports, players, timers };
 }
 test('Android sample, recorded WAV, sample replay use fresh players', () => {
   const { audio, players } = setup();
@@ -38,4 +39,24 @@ test('native playback failure reports error once and stops listener', () => {
   callback({ error: 'failed' });
   assert.equal(failures, 1);
   assert.equal(players[0].callback, null);
+});
+test('reports a synchronous native playback failure', () => {
+  const { audio, players } = setup();
+  audio.playWord('sample.mp3');
+  players[0].remove = () => { throw new Error('native failure'); };
+  let failures = 0;
+  audio.playRecording('file:///voice.wav', () => failures++);
+  assert.equal(failures, 1);
+});
+test('reports playback that never starts and cancels the timeout when it starts', () => {
+  const { audio, players, timers } = setup();
+  let failures = 0;
+  audio.playRecording('file:///voice.wav', () => failures++);
+  [...timers][0]();
+  assert.equal(failures, 1);
+  assert.equal(timers.size, 0);
+  audio.playWord('sample.mp3', () => failures++);
+  players[1].callback({ isLoaded: true, playing: true });
+  assert.equal(timers.size, 0);
+  assert.equal(failures, 1);
 });

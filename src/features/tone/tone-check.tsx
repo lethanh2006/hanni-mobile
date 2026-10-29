@@ -355,7 +355,7 @@ export function ToneCheck({
   async function finish() {
     if (stopping.current) return;
     stopping.current = true;
-    const voice = await recorder.stop();
+    const voice = await recorder.stop().catch(() => null);
     if (!voice) {
       setPhase('error');
       setError('Chưa thu được âm thanh. Kiểm tra micro rồi thử lại.');

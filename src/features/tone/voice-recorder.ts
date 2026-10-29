@@ -47,13 +47,15 @@ export function useVoiceRecorder() {
     if (!perm?.granted) throw new RecorderError('Chưa có quyền dùng micro — cho phép micro cho Hanni trong Cài đặt rồi thử lại.');
     stopAudio();
     try {
-      await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+      await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true, shouldRouteThroughEarpiece: false });
       chunks.current = [];
       startedAt.current = Date.now();
       level.current = onLevel;
       await stream.start();
     } catch {
       level.current = null;
+      try { stream.stop(); } catch { /* Stream có thể chưa khởi động. */ }
+      await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true, shouldRouteThroughEarpiece: false }).catch(() => undefined);
       throw new RecorderError('Không mở được micro. Kiểm tra thiết bị rồi thử lại.');
     }
     // Tệp để nghe lại — không có thì vẫn chấm được.
@@ -66,7 +68,7 @@ export function useVoiceRecorder() {
     const file = await stream.stopFileRecordingAsync().catch(() => null);
     stream.stop();
     // Trả phiên âm thanh về chế độ phát (iOS: đang ghi thì tiếng phát ra loa trong).
-    await setAudioModeAsync({ allowsRecording: false }).catch(() => undefined);
+    await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true, shouldRouteThroughEarpiece: false });
     const total = chunks.current.reduce((n, c) => n + c.length, 0);
     if (!total) return null;
     const x = new Float32Array(total);
@@ -85,7 +87,7 @@ export function useVoiceRecorder() {
     level.current = null;
     void stream.stopFileRecordingAsync().catch(() => undefined);
     stream.stop();
-    void setAudioModeAsync({ allowsRecording: false }).catch(() => undefined);
+    void setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true, shouldRouteThroughEarpiece: false }).catch(() => undefined);
   }
 
   return { start, stop, cancel };
