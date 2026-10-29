@@ -1,3 +1,4 @@
+import { File } from 'expo-file-system';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
@@ -36,7 +37,8 @@ export function AvatarEditor({ user, size = 80, onChange }: { user: Me; size?: n
       const small = await manipulateAsync(asset.uri, [{ resize: { width: SIZE } }], { compress: 0.85, format: SaveFormat.JPEG });
       const form = new FormData();
       if (Platform.OS === 'web') form.append('file', await (await fetch(small.uri)).blob(), 'avatar.jpg');
-      else form.append('file', { uri: small.uri, name: 'avatar.jpg', type: 'image/jpeg' } as unknown as Blob);
+      // fetch của Expo không đọc được kiểu `{ uri, name, type }` của React Native — phải đưa File có `bytes()`.
+      else form.append('file', new File(small.uri), 'avatar.jpg');
       await api.upload('/users/me/avatar', form);
       await onChange();
     } catch (err) {
