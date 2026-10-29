@@ -3,6 +3,8 @@ import { useRef } from 'react';
 
 import { stopAudio } from '@/lib/audio';
 
+import { pcm16ToFloat32 } from './pcm';
+
 export interface VoiceRecording {
   /** Mẫu đơn kênh, `sr` Hz. */
   x: Float32Array;
@@ -18,7 +20,7 @@ export class RecorderError extends Error {}
 
 /**
  * Thu giọng từ micro cho chấm thanh điệu: lấy mẫu PCM trực tiếp (`useAudioStream` của expo-audio, xin 16 kHz) — khỏi
- * phải giải mã tệp như web — đồng thời ghi tệp WAV để "Nghe lại giọng bạn".
+ * phải giải mã tệp như web — đồng thời ghi tệp WAV PCM 16-bit để Android/iOS phát lại rộng rãi.
  */
 export function useVoiceRecorder() {
   const chunks = useRef<Float32Array[]>([]);
@@ -28,10 +30,10 @@ export function useVoiceRecorder() {
   const { stream } = useAudioStream({
     sampleRate: 16000,
     channels: 1,
-    encoding: 'float32',
+    encoding: 'int16',
     onBuffer: (b) => {
       if (!level.current) return;
-      const x = new Float32Array(b.data.slice(0));
+      const x = pcm16ToFloat32(b.data);
       chunks.current.push(x);
       rate.current = b.sampleRate;
       let e = 0;

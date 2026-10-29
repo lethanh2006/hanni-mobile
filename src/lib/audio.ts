@@ -14,23 +14,37 @@ function clearEnd() {
 }
 
 /** Phát bản thu phát âm của từ (đường dẫn `/media/audio/...` của server). */
-export function playWord(src: string | null | undefined) {
+export function playWord(src: string | null | undefined, onError?: () => void) {
   const url = mediaUrl(src);
   if (!url) return;
   Speech.stop();
   clearEnd();
-  if (!player) player = createAudioPlayer(url);
-  else player.replace(url);
+  player?.remove();
+  player = createAudioPlayer(url);
+  if (onError) {
+    const current = player;
+    endListener = current.addListener('playbackStatusUpdate', (status) => {
+      if (status.error && player === current) { clearEnd(); onError(); }
+      else if (status.didJustFinish) clearEnd();
+    });
+  }
   player.setPlaybackRate(1);
   player.play();
 }
 
 /** Phát tệp ghi âm trên máy (giọng người học vừa thu — `file://` hoặc `blob:` trên web). */
-export function playRecording(uri: string) {
+export function playRecording(uri: string, onError?: () => void) {
   Speech.stop();
   clearEnd();
-  if (!player) player = createAudioPlayer(uri);
-  else player.replace(uri);
+  player?.remove();
+  player = createAudioPlayer(uri);
+  if (onError) {
+    const current = player;
+    endListener = current.addListener('playbackStatusUpdate', (status) => {
+      if (status.error && player === current) { clearEnd(); onError(); }
+      else if (status.didJustFinish) clearEnd();
+    });
+  }
   player.setPlaybackRate(1);
   player.play();
 }
@@ -49,11 +63,11 @@ export function playClip(
   const url = mediaUrl(src);
   Speech.stop();
   if (url) {
-    if (!player) player = createAudioPlayer(url);
-    else player.replace(url);
+    player?.remove();
+    player = createAudioPlayer(url);
     player.setPlaybackRate(rate);
     endListener = player.addListener('playbackStatusUpdate', (status) => {
-      if (!status.didJustFinish) return;
+      if (!status.didJustFinish && !status.error) return;
       clearEnd();
       onEnd();
     });

@@ -146,7 +146,7 @@ function PronunciationWord({ word, onRecorded }: { word: Word; onRecorded: () =>
   const theme = useTheme();
   const model = useWordAudio(word.simplified, word.audioUrl);
   const recorder = useVoiceRecorder();
-  const [phase, setPhase] = useState<'idle' | 'requesting' | 'recording'>('idle');
+  const [phase, setPhase] = useState<'idle' | 'requesting' | 'recording' | 'stopping'>('idle');
   const [seconds, setSeconds] = useState(0);
   const [recording, setRecording] = useState<VoiceRecording | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -172,8 +172,9 @@ function PronunciationWord({ word, onRecorded }: { word: Word; onRecorded: () =>
   async function stopRecording() {
     if (limitTimer.current) clearTimeout(limitTimer.current);
     limitTimer.current = null;
+    setPhase('stopping');
+    const voice = await recorder.stop().catch(() => null);
     setPhase('idle');
-    const voice = await recorder.stop();
     if (!voice) {
       setError('Chưa thu được âm thanh. Kiểm tra micro và thử ghi lại.');
       return;
@@ -236,7 +237,9 @@ function PronunciationWord({ word, onRecorded }: { word: Word; onRecorded: () =>
           <AppText variant="caption" color={phase === 'recording' ? 'primary' : 'muted'}>
             {phase === 'recording'
               ? `Đang ghi · 00:${String(seconds).padStart(2, '0')}`
-              : phase === 'requesting'
+              : phase === 'stopping'
+                ? 'Đang lưu bản ghi…'
+                : phase === 'requesting'
                 ? 'Đang chờ quyền micro…'
                 : 'Tối đa 45 giây'}
           </AppText>
@@ -248,7 +251,7 @@ function PronunciationWord({ word, onRecorded }: { word: Word; onRecorded: () =>
                 <Pressable
                   onPress={() => {
                     model.stop();
-                    playRecording(recording.uri!);
+                    playRecording(recording.uri!, () => setError('Không phát được bản ghi. Hãy kiểm tra âm lượng rồi thử ghi lại.'));
                   }}
                   style={[styles.play, { backgroundColor: theme.surface2 }]}>
                   <Icon name="play" size={16} color="primary" />
@@ -281,7 +284,7 @@ function PronunciationWord({ word, onRecorded }: { word: Word; onRecorded: () =>
         )}
         <Pressable
           onPress={() => (phase === 'recording' ? void stopRecording() : void startRecording())}
-          disabled={phase === 'requesting'}
+          disabled={phase === 'requesting' || phase === 'stopping'}
           style={({ pressed }) => [
             styles.record,
             phase === 'recording'

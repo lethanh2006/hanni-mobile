@@ -233,6 +233,7 @@ export function ToneResultView({
   recordingUri: string | null;
 }) {
   const theme = useTheme();
+  const [playError, setPlayError] = useState('');
   const parts = pinyin.trim().split(/\s+/);
   const numeric = pinyinNumeric.trim().split(/\s+/);
   const labels = parts.length === result.user.length ? parts : numeric;
@@ -263,9 +264,10 @@ export function ToneResultView({
           </View>
         ))}
       </View>
+      {playError ? <AppText color="danger" variant="caption">{playError}</AppText> : null}
       <View style={styles.actions}>
-        {audioUrl && <SmallButton icon="sound" label="Nghe mẫu" onPress={() => playWord(audioUrl)} />}
-        {recordingUri && <SmallButton icon="play" label="Nghe lại giọng bạn" onPress={() => playRecording(recordingUri)} />}
+        {audioUrl && <SmallButton icon="sound" label="Nghe mẫu" onPress={() => { setPlayError(''); playWord(audioUrl, () => setPlayError('Không phát được âm mẫu. Hãy kiểm tra kết nối và âm lượng.')); }} />}
+        {recordingUri && <SmallButton icon="play" label="Nghe lại giọng bạn" onPress={() => { setPlayError(''); playRecording(recordingUri, () => setPlayError('Không phát được bản ghi. Hãy kiểm tra âm lượng rồi thử ghi lại.')); }} />}
       </View>
     </View>
   );
