@@ -1,4 +1,5 @@
-import { useEffect, useSyncExternalStore } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useSyncExternalStore } from 'react';
 import useSWR from 'swr';
 
 import { api, API_BASE, refreshSession } from './api';
@@ -143,15 +144,21 @@ export function useAssistantForced() {
   return useSyncExternalStore(subscribeForced, () => forced > 0, () => false);
 }
 
-/** Gọi trong màn muốn hiện nút trợ lý dù màn đó bình thường không có (vd kết quả thi thử). */
+/**
+ * Gọi trong màn muốn hiện nút trợ lý dù màn đó bình thường không có (vd kết quả thi thử). Chỉ tính lúc màn đang
+ * hiển thị: màn nằm dưới ngăn xếp vẫn còn gắn, tính theo mount thì nút trợ lý hiện cả ở màn khác — đè nút Gửi của
+ * luyện nói AI.
+ */
 export function useShowAssistant(enabled: boolean) {
-  useEffect(() => {
-    if (!enabled) return;
-    forced += 1;
-    forcedListeners.forEach((l) => l());
-    return () => {
-      forced -= 1;
+  useFocusEffect(
+    useCallback(() => {
+      if (!enabled) return;
+      forced += 1;
       forcedListeners.forEach((l) => l());
-    };
-  }, [enabled]);
+      return () => {
+        forced -= 1;
+        forcedListeners.forEach((l) => l());
+      };
+    }, [enabled]),
+  );
 }

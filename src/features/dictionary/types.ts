@@ -93,6 +93,19 @@ export interface SegToken {
   meaningVi: string | null;
 }
 
+/** `POST /ai/analyze` — AI dịch + phân tích cả câu (câu tiếng Việt thì dịch sang tiếng Trung). */
+export interface AnalysisResult {
+  source: 'zh' | 'vi';
+  input: string;
+  zh: string;
+  pinyin: string;
+  translationVi: string;
+  grammar: { pattern: string; explanationVi: string }[];
+  notesVi: string | null;
+  tokens: (SegToken & { wordId: string | null; hskLevel: number | null })[];
+  cached: boolean;
+}
+
 /** `GET /grammar/search` — tab Ngữ pháp. */
 export interface GrammarHit {
   slug: string;

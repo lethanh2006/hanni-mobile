@@ -9,6 +9,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { providerAvailable, type PaymentsConfigured } from '@/lib/payments';
 import type { PaymentProvider, PremiumStatus } from '@/lib/types';
 
+import { CheckoutSheet } from './checkout-sheet';
 import { BENEFITS, durationLabel, money, validity } from './plans';
 import { usePremiumCheckout } from './use-premium-checkout';
 
@@ -37,7 +38,7 @@ export function PremiumCheckout({ userId }: { userId: string }) {
       {checkout.pending ? (
         <Card>
           <AppText variant="heading">Đơn #{checkout.pending.orderCode}</AppText>
-          <AppText color="muted">Đơn được giữ trên máy. Sau khi thanh toán, đóng trang thanh toán để quay lại Hanni; app sẽ kiểm tra với hệ thống.</AppText>
+          <AppText color="muted">Đơn được giữ trên máy. Thanh toán xong, Hanni tự kiểm tra với hệ thống; lỡ đóng trang giữa chừng thì mở lại hoặc bấm kiểm tra.</AppText>
           <Button title="Mở lại trang thanh toán" onPress={() => void checkout.reopen()} />
           <Button title={checkout.checking ? 'Đang kiểm tra…' : 'Kiểm tra thanh toán'} variant="secondary"
             loading={checkout.checking} onPress={checkout.check} />
@@ -99,6 +100,7 @@ export function PremiumCheckout({ userId }: { userId: string }) {
             onPress={() => { if (confirming && selected) void checkout.pay(selected.key, provider); else { setConfirming(true); scrollRef.current?.scrollTo({ y: 0, animated: false }); } }} />
         </>
       )}
+      {checkout.sheetUrl ? <CheckoutSheet url={checkout.sheetUrl} onClose={checkout.closeSheet} /> : null}
     </Screen>
   );
 }

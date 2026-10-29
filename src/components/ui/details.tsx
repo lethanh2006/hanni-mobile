@@ -39,7 +39,8 @@ export function Details({ title, children }: { title: string; children: ReactNod
 
 const styles = StyleSheet.create({
   card: { gap: 0 },
-  summary: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  // Vùng bấm ≥ 44 (HIG/Material) — câu hỏi 1 dòng chỉ cao ~21px.
+  summary: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, minHeight: 44 },
   title: { flex: 1 },
   body: { marginTop: 12, lineHeight: 28 },
   bodyBox: { marginTop: 12 },

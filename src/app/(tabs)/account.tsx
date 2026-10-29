@@ -2,8 +2,9 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { AppText, Avatar, Button, Card, Hanzi, Icon, IconTile, Loading, PageHeader, Screen, SectionHeading, type IconName } from '@/components/ui';
+import { AppText, Button, Card, Hanzi, Icon, IconTile, Loading, PageHeader, Screen, SectionHeading, type IconName } from '@/components/ui';
 import { alpha, Fonts } from '@/constants/theme';
+import { AvatarEditor } from '@/features/account/avatar-editor';
 import { DangerZone } from '@/features/account/danger-zone';
 import { PasswordForm } from '@/features/account/password-form';
 import { PremiumCard } from '@/features/account/premium-card';
@@ -120,9 +121,7 @@ export default function AccountScreen() {
           </View>
           <View style={styles.profileBody}>
             <View style={styles.avatarRow}>
-              <View style={[styles.avatarRing, { backgroundColor: theme.surface }]}>
-                <Avatar user={user} size={80} />
-              </View>
+              <AvatarEditor user={user} onChange={refresh} />
               <View style={[styles.verified, { backgroundColor: theme.surface2 }]}>
                 <Icon name={user.emailVerifiedAt ? 'check' : 'info'} size={13} color="muted" />
                 <AppText variant="caption" color="muted">
@@ -264,7 +263,6 @@ const styles = StyleSheet.create({
   ghost: { fontSize: 128, lineHeight: 140, fontWeight: '700', marginBottom: -24 },
   profileBody: { paddingHorizontal: 24, paddingBottom: 24 },
   avatarRow: { marginTop: -36, marginBottom: 20, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16 },
-  avatarRing: { borderRadius: 999, padding: 3 },
   verified: { marginBottom: 4, flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
   name: { fontSize: 20, lineHeight: 28 },
   email: { marginTop: 4 },
