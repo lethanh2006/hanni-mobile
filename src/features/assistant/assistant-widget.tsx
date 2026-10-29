@@ -6,7 +6,6 @@ import {
   Animated,
   BackHandler,
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -349,7 +348,7 @@ export function AssistantWidget() {
 
       {open && (
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior="padding"
           style={[styles.panel, { backgroundColor: theme.surface, paddingTop: insets.top }]}
           accessibilityLabel="Trợ lý Hanni">
           <View style={[styles.header, { borderColor: theme.border }]}>
@@ -432,6 +431,8 @@ export function AssistantWidget() {
                   contentContainerStyle={styles.messages}
                   keyboardShouldPersistTaps="handled"
                   scrollEventThrottle={32}
+                  // Bàn phím mở làm khung thấp lại → đang ở cuối thì giữ tin mới nhất trong tầm nhìn.
+                  onLayout={() => atBottomRef.current && list.current?.scrollToEnd({ animated: true })}
                   onScroll={(e) => {
                     const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
                     const near = contentSize.height - contentOffset.y - layoutMeasurement.height < 80;

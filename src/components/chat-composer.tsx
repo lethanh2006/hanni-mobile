@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { useEffect, useState, type ReactNode } from 'react';
+import { Keyboard, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { AppText, Icon } from '@/components/ui';
 import { alpha, Fonts } from '@/constants/theme';
@@ -33,11 +33,12 @@ export function ChatComposer({
 }) {
   const theme = useTheme();
   const [focused, setFocused] = useState(false);
+  const keyboardOpen = useKeyboardOpen();
   const length = value.length;
   const canSend = value.trim().length > 0 && length <= maxLength && !busy;
 
   return (
-    <View style={[styles.composer, { borderColor: theme.border, backgroundColor: theme.surface, paddingBottom: bottomInset + 12 }]}>
+    <View style={[styles.composer, { borderColor: theme.border, backgroundColor: theme.surface, paddingBottom: (keyboardOpen ? 0 : bottomInset) + 12 }]}>
       <View style={styles.row}>
         {before}
         <TextInput
@@ -79,6 +80,20 @@ export function ChatComposer({
       )}
     </View>
   );
+}
+
+/** Bàn phím đang mở thì nó đã che thanh điều hướng, ô soạn không cần chừa `bottomInset` nữa. */
+function useKeyboardOpen() {
+  const [open, setOpen] = useState(Keyboard.isVisible());
+  useEffect(() => {
+    const show = Keyboard.addListener('keyboardDidShow', () => setOpen(true));
+    const hide = Keyboard.addListener('keyboardDidHide', () => setOpen(false));
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
+  return open;
 }
 
 const styles = StyleSheet.create({

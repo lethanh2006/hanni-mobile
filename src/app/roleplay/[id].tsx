@@ -3,7 +3,6 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -132,7 +131,7 @@ export default function RoleplayChatScreen() {
   return (
     <KeyboardAvoidingView
       style={[styles.fill, { backgroundColor: theme.surface }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      behavior="padding">
       <Stack.Screen options={{ headerShown: false }} />
       <View style={[styles.bar, { paddingTop: insets.top + 12, borderColor: theme.border }]}>
         <Pressable onPress={() => router.back()} style={styles.back} hitSlop={6}>
@@ -192,7 +191,9 @@ export default function RoleplayChatScreen() {
             ref={scroll}
             style={[styles.fill, { backgroundColor: theme.surface }]}
             contentContainerStyle={styles.messages}
-            onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: true })}>
+            onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: true })}
+            // Bàn phím mở làm khung thấp lại → giữ tin mới nhất trong tầm nhìn.
+            onLayout={() => scroll.current?.scrollToEnd({ animated: true })}>
             {!messages ? <Loading /> : messages.map((m) => <ChatBubble key={m.id} message={m} />)}
           </ScrollView>
 
