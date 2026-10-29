@@ -82,8 +82,9 @@ export function ChatComposer({
   );
 }
 
-/** Bàn phím đang mở thì nó đã che thanh điều hướng, ô soạn không cần chừa `bottomInset` nữa. */
-function useKeyboardOpen() {
+/** Bàn phím đang mở thì nó đã che thanh điều hướng, ô soạn không cần chừa `bottomInset` nữa (trợ lý AI cũng dùng để thu
+ * gọn sân khấu cáo). */
+export function useKeyboardOpen() {
   const [open, setOpen] = useState(Keyboard.isVisible());
   useEffect(() => {
     const show = Keyboard.addListener('keyboardDidShow', () => setOpen(true));

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Reanimated, { useReducedMotion } from 'react-native-reanimated';
 
 import { TonePinyin } from '@/components/tone-pinyin';
-import { AppText, Hanzi, Icon } from '@/components/ui';
+import { AppText, Hanzi, Icon, Mascot } from '@/components/ui';
 import { alpha, ToneColors } from '@/constants/theme';
 import { ToneCheck } from '@/features/tone/tone-check';
 import { useTheme } from '@/hooks/use-theme';
@@ -12,6 +13,19 @@ import type { SessionStep, SessionWord } from '@/lib/types';
 
 type ChoiceStepData = Extract<SessionStep, { kind: 'choice' }>;
 type SentenceStepData = Extract<SessionStep, { kind: 'sentence' }>;
+
+/** `.answer-pop` / `.answer-shake` của web: đáp án đúng nảy nhẹ, phương án chọn sai lắc ngang. */
+const POP = { '0%': { transform: [{ scale: 1 }] }, '40%': { transform: [{ scale: 1.045 }] }, '100%': { transform: [{ scale: 1 }] } };
+const SHAKE = {
+  '0%': { transform: [{ translateX: 0 }] },
+  '25%': { transform: [{ translateX: -5 }] },
+  '75%': { transform: [{ translateX: 5 }] },
+  '100%': { transform: [{ translateX: 0 }] },
+};
+function motion(kind: 'pop' | 'shake' | null, reduce: boolean) {
+  if (!kind || reduce) return null;
+  return { animationName: kind === 'pop' ? POP : SHAKE, animationDuration: kind === 'pop' ? '380ms' : '300ms' } as const;
+}
 
 /** Nghĩa ngắn cho phương án — khớp `shortMeaning()` phía server. */
 export function shortMeaning(meaning: string): string {
@@ -72,28 +86,32 @@ export function IntroStep({ word }: { word: SessionWord }) {
             styles.hanvietBox,
             { borderColor: alpha(theme.hanviet, 0.2), backgroundColor: alpha(theme.hanviet, 0.05) },
           ]}>
-          <AppText center>
-            Âm Hán Việt:{' '}
-            <AppText weight="700" color="hanviet">
-              {word.hanViet}
+          {/* Cáo "À ha!" chỉ vào âm Hán Việt — lợi thế riêng của người Việt, đáng được chú ý nhất trên thẻ. */}
+          <Mascot emote="e11-a-ha" size={56} style={styles.hanvietFox} />
+          <View style={styles.flex}>
+            <AppText>
+              Âm Hán Việt:{' '}
+              <AppText weight="700" color="hanviet">
+                {word.hanViet}
+              </AppText>
             </AppText>
-          </AppText>
-          {hints.length > 0 && (
-            <View style={styles.hints}>
-              {hints.map((h, i) => (
-                <View
-                  key={`${h.char}-${i}`}
-                  accessibilityHint={h.follows ? TONE_RULE_TEXT[h.rule] : 'Ngoại lệ — chữ này không theo quy luật, nhớ riêng nhé'}
-                  style={[styles.hint, { backgroundColor: theme.surface }]}>
-                  <AppText variant="caption" color="muted">
-                    {h.hanViet} →{' '}
-                    <Text style={{ color: ToneColors[String(h.tone)] ?? theme.muted, fontWeight: '700' }}>thanh {h.tone}</Text>
-                    {h.follows ? ' ✓' : ' (ngoại lệ)'}
-                  </AppText>
-                </View>
-              ))}
-            </View>
-          )}
+            {hints.length > 0 && (
+              <View style={styles.hints}>
+                {hints.map((h, i) => (
+                  <View
+                    key={`${h.char}-${i}`}
+                    accessibilityHint={h.follows ? TONE_RULE_TEXT[h.rule] : 'Ngoại lệ — chữ này không theo quy luật, nhớ riêng nhé'}
+                    style={[styles.hint, { backgroundColor: theme.surface }]}>
+                    <AppText variant="caption" color="muted">
+                      {h.hanViet} →{' '}
+                      <Text style={{ color: ToneColors[String(h.tone)] ?? theme.muted, fontWeight: '700' }}>thanh {h.tone}</Text>
+                      {h.follows ? ' ✓' : ' (ngoại lệ)'}
+                    </AppText>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
         </View>
       )}
 
@@ -148,6 +166,7 @@ export function OptionList({
   onPick: (i: number) => void;
 }) {
   const theme = useTheme();
+  const reduce = useReducedMotion();
   return (
     <View style={styles.options}>
       {options.map((opt, i) => {
@@ -159,33 +178,34 @@ export function OptionList({
               ? { borderColor: theme.danger, backgroundColor: alpha(theme.danger, 0.1) }
               : { borderColor: theme.border, backgroundColor: theme.surface };
         return (
-          <Pressable
-            key={`${opt}-${i}`}
-            disabled={picked !== null}
-            onPress={() => onPick(i)}
-            accessibilityRole="button"
-            style={({ pressed }) => [
-              styles.option,
-              look,
-              state === 'idle' &&
-                pressed && { borderColor: alpha(theme.primary, 0.4), backgroundColor: alpha(theme.primary, 0.05) },
-              state === 'dim' && styles.dim,
-            ]}>
-            <View style={[styles.optionIndex, { borderColor: theme.border }]}>
-              <AppText variant="caption" color="muted">
-                {i + 1}
-              </AppText>
-            </View>
-            {hanzi ? (
-              <Hanzi size={24} style={styles.flex}>
-                {opt}
-              </Hanzi>
-            ) : (
-              <AppText weight="600" style={styles.flex}>
-                {opt}
-              </AppText>
-            )}
-          </Pressable>
+          <Reanimated.View key={`${opt}-${i}`} style={motion(state === 'right' ? 'pop' : state === 'wrong' ? 'shake' : null, reduce)}>
+            <Pressable
+              disabled={picked !== null}
+              onPress={() => onPick(i)}
+              accessibilityRole="button"
+              style={({ pressed }) => [
+                styles.option,
+                look,
+                state === 'idle' &&
+                  pressed && { borderColor: alpha(theme.primary, 0.4), backgroundColor: alpha(theme.primary, 0.05) },
+                state === 'dim' && styles.dim,
+              ]}>
+              <View style={[styles.optionIndex, { borderColor: theme.border }]}>
+                <AppText variant="caption" color="muted">
+                  {i + 1}
+                </AppText>
+              </View>
+              {hanzi ? (
+                <Hanzi size={24} style={styles.flex}>
+                  {opt}
+                </Hanzi>
+              ) : (
+                <AppText weight="600" style={styles.flex}>
+                  {opt}
+                </AppText>
+              )}
+            </Pressable>
+          </Reanimated.View>
         );
       })}
     </View>
@@ -391,8 +411,9 @@ const styles = StyleSheet.create({
   soundBig: { width: 80, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center' },
   meaning: { marginTop: 20, fontSize: 24, lineHeight: 32 },
   box: { alignSelf: 'stretch', borderRadius: 16, paddingHorizontal: 16 },
-  hanvietBox: { marginTop: 16, borderWidth: 1, paddingVertical: 12 },
-  hints: { marginTop: 8, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6 },
+  hanvietBox: { marginTop: 16, borderWidth: 1, paddingVertical: 8, paddingLeft: 4, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  hanvietFox: { marginVertical: -4 },
+  hints: { marginTop: 8, flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   hint: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
   mnemonic: { marginTop: 12, borderWidth: 1, paddingVertical: 10 },
   line24: { lineHeight: 24 },

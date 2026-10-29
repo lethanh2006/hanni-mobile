@@ -16,10 +16,10 @@ import Reanimated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { mutate as revalidate } from 'swr';
 
-import { ChatComposer } from '@/components/chat-composer';
+import { ChatComposer, useKeyboardOpen } from '@/components/chat-composer';
 import { MarkdownLite } from '@/components/markdown-lite';
-import { AppText, Icon } from '@/components/ui';
-import { alpha } from '@/constants/theme';
+import { AppText, Hanzi, Icon, LauncherFox, Mascot, type MascotEmote } from '@/components/ui';
+import { alpha, mix } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import {
   createAssistantSession,
@@ -48,6 +48,53 @@ const STARTERS = [
   'Khi nào dùng 了?',
   'Mình nên bắt đầu học HSK mấy?',
 ];
+
+/** Biểu cảm của cáo trên "sân khấu" giữa khung chat theo từng lúc (`MascotStage` của web; bảng tình huống ở manifest-v11). */
+type Mood = 'greet' | 'idle' | 'typing' | 'thinking' | 'answering';
+const MOOD: Record<Mood, { emote: MascotEmote; status: string }> = {
+  greet: { emote: 'e01-chao', status: 'Xin chào! 你好 — hỏi mình bất cứ điều gì nhé' },
+  idle: { emote: 'e00-nghi', status: 'Hanni đang chờ câu hỏi tiếp theo' },
+  typing: { emote: 'e42-cham-chu', status: 'Hanni đang chăm chú nghe bạn hỏi…' },
+  thinking: { emote: 'e02-suy-nghi', status: 'Để mình nghĩ một chút…' },
+  answering: { emote: 'e10-doc-mau', status: 'Hanni đang giải thích…' },
+};
+
+/** Sân khấu của cáo: to, ở giữa, đổi biểu cảm ngay tại chỗ + quầng màu theo lúc. Bàn phím mở → cáo nhỏ lại nằm cạnh
+ * dòng trạng thái để vẫn thấy cáo phản ứng khi gõ. */
+function MascotStage({ mood, size, compact }: { mood: Mood; size: number; compact: boolean }) {
+  const theme = useTheme();
+  const { emote, status } = MOOD[mood];
+  const glow = { greet: theme.hanviet, idle: theme.hanviet, typing: theme.accent, thinking: theme.lavender, answering: theme.primary }[mood];
+  return (
+    <View
+      style={[
+        styles.stage,
+        compact && styles.stageCompact,
+        { borderColor: theme.border, backgroundColor: mix(theme.primary, theme.surface, 0.05) },
+      ]}>
+      <View
+        pointerEvents="none"
+        style={[
+          styles.glow,
+          compact && styles.glowCompact,
+          { backgroundColor: alpha(glow, 0.14), boxShadow: `0 0 60px 40px ${alpha(glow, 0.14)}` },
+        ]}
+      />
+      {!compact && (
+        <>
+          <Hanzi size={44} style={[styles.stageChar, styles.charLeft, { color: alpha(theme.primary, 0.12) }]}>你</Hanzi>
+          <Hanzi size={44} style={[styles.stageChar, styles.charRight, { color: alpha(theme.primary, 0.12) }]}>好</Hanzi>
+        </>
+      )}
+      <Mascot key={emote} emote={emote} size={size} pop />
+      <View style={[styles.status, { borderColor: theme.border, backgroundColor: theme.surface }]}>
+        <AppText variant="caption" weight="600" color={mood === 'answering' ? 'primary' : 'muted'} numberOfLines={1}>
+          {status}
+        </AppText>
+      </View>
+    </View>
+  );
+}
 
 /** Các màn trong khung tab có thanh dưới đáy — nút nổi đặt trên thanh đó. */
 const TAB_PATHS = ['/', '/study', '/thi-thu-hsk', '/luyen-tap', '/tu-dien', '/leaderboard', '/lop-hoc', '/progress', '/account'];
@@ -148,6 +195,17 @@ export function AssistantWidget() {
   const [sending, setSending] = useState(false);
   const [streamingId, setStreamingId] = useState<string | null>(null);
   const closeStreamRef = useRef<(() => void) | null>(null);
+  const streamingText = streamingId ? (pending.find((m) => m.id === streamingId)?.text ?? '') : '';
+  const keyboardOpen = useKeyboardOpen();
+  const mood: Mood = streamingId
+    ? streamingText
+      ? 'answering'
+      : 'thinking'
+    : input.trim() || keyboardOpen
+      ? 'typing'
+      : messages.length === 0
+        ? 'greet'
+        : 'idle';
 
   // Cuộn: đang ở cuối thì bám theo tin mới; đang đọc lại tin cũ thì hiện "Xuống tin mới" kèm số tin mới.
   const list = useRef<ScrollViewInstance>(null);
@@ -333,16 +391,8 @@ export function AssistantWidget() {
               transitionDuration: 300,
             },
           ]}>
-          <Pressable
-            onPress={() => setOpen(true)}
-            accessibilityLabel="Mở trợ lý Hanni"
-            style={({ pressed }) => [
-              styles.fab,
-              { backgroundColor: theme.primary, boxShadow: `0 10px 15px -3px rgba(0,0,0,0.15), 0 4px 6px -4px rgba(0,0,0,0.15)` },
-              pressed && { transform: [{ translateY: 1 }] },
-            ]}>
-            <HanniLogo size={48} />
-          </Pressable>
+          {/* Cáo trong bát đỏ (ảnh đã có hình tròn đỏ) thỉnh thoảng nháy mắt, vẫy tay, ló lên. */}
+          <LauncherFox size={52} onPress={() => setOpen(true)} label="Mở trợ lý Hanni" />
         </Reanimated.View>
       )}
 
@@ -353,10 +403,9 @@ export function AssistantWidget() {
           accessibilityLabel="Trợ lý Hanni">
           <View style={[styles.header, { borderColor: theme.border }]}>
             <View style={styles.brand}>
-              <HanniLogo size={32} />
               <View style={styles.flex}>
                 <AppText weight="700">Trợ lý Hanni</AppText>
-                <AppText variant="caption" color="muted">
+                <AppText variant="caption" color="muted" numberOfLines={1}>
                   Hỏi về tiếng Trung, ngữ pháp, lộ trình học
                 </AppText>
               </View>
@@ -424,6 +473,7 @@ export function AssistantWidget() {
             </ScrollView>
           ) : (
             <>
+              <MascotStage mood={mood} size={keyboardOpen ? 60 : messages.length === 0 ? 168 : 124} compact={keyboardOpen} />
               <View style={styles.flex}>
                 <ScrollView
                   ref={list}
@@ -445,11 +495,10 @@ export function AssistantWidget() {
                       Đang tải…
                     </AppText>
                   ) : messages.length === 0 ? (
-                    <View style={styles.msgRow}>
-                      <HanniLogo size={28} />
+                    <View style={styles.greet}>
                       <View style={styles.welcome}>
                         <View style={[styles.bubble, styles.welcomeBubble, { backgroundColor: theme.surface2 }]}>
-                          <AppText style={styles.bubbleText}>
+                          <AppText center style={styles.bubbleText}>
                             Chào {user.displayName ?? 'bạn'}! Mình là Hanni 👋 Mình có thể giúp gì cho bạn hôm nay — hỏi về từ
                             vựng, ngữ pháp, phát âm, hay lộ trình học đều được nhé.
                           </AppText>
@@ -542,7 +591,15 @@ const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   faded: { opacity: 0.5 },
   fabWrap: { position: 'absolute', right: 16, zIndex: 40 },
-  fab: { width: 48, height: 48, borderRadius: 24, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  greet: { alignItems: 'center', gap: 10 },
+  stage: { alignItems: 'center', overflow: 'hidden', borderBottomWidth: 1, paddingTop: 8, paddingBottom: 12, paddingHorizontal: 16 },
+  stageCompact: { flexDirection: 'row', justifyContent: 'center', gap: 10, paddingVertical: 4 },
+  glow: { position: 'absolute', top: '30%', left: '50%', width: 120, height: 120, marginLeft: -60, borderRadius: 60 },
+  glowCompact: { top: 4, left: '30%', width: 60, height: 60, marginLeft: -30, borderRadius: 30 },
+  stageChar: { position: 'absolute' },
+  charLeft: { left: 20, top: 14 },
+  charRight: { right: 20, bottom: 40 },
+  status: { marginTop: 2, borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5, maxWidth: '100%' },
   panel: { ...StyleSheet.absoluteFill, zIndex: 40 },
   header: {
     flexDirection: 'row',
@@ -567,7 +624,7 @@ const styles = StyleSheet.create({
   bubble: { maxWidth: '78%', gap: 8, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 },
   welcomeBubble: { maxWidth: '100%' },
   bubbleText: { fontSize: 14, lineHeight: 24 },
-  starters: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  starters: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6 },
   starter: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
   dots: { flexDirection: 'row', gap: 4, paddingVertical: 4 },
   dot: { width: 6, height: 6, borderRadius: 3 },

@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import useSWR from 'swr';
 
-import { AppText, Avatar, Icon } from '@/components/ui';
+import { AppText, Avatar, Flicker, Icon } from '@/components/ui';
 import { alpha, mix } from '@/constants/theme';
 import { NotificationPanel } from '@/features/notifications/notification-panel';
 import { useTheme } from '@/hooks/use-theme';
@@ -67,7 +67,9 @@ export function TopBar() {
                   boxShadow: `0 4px 14px -6px ${alpha(theme.primary, 0.3)}`,
                 },
               ]}>
-              <Icon name="flame" size={16} color="primary" />
+              <Flicker on={streak.data.activeToday}>
+                <Icon name="flame" size={16} color="primary" />
+              </Flicker>
               <AppText variant="caption" weight="600" color="primary">
                 {streak.data.currentStreak}
               </AppText>

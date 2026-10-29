@@ -1,11 +1,10 @@
-import { Image } from 'expo-image';
 import { router, Stack } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Brand } from '@/components/app-shell/top-bar';
-import { AppText, Button, Chip, Icon, IconTile, Screen, ShareButton } from '@/components/ui';
+import { AppText, Button, Chip, Icon, IconTile, Mascot, Screen, ShareButton } from '@/components/ui';
 import { alpha } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api, WEB_ORIGIN } from '@/lib/api';
@@ -256,7 +255,7 @@ function Result({ scores, isGuest, onRetry }: { scores: LevelScore[]; isGuest: b
 
   return (
     <Screen safeTop contentStyle={styles.result}>
-      <Image source={require('@/assets/images/mascot.png')} style={styles.mascot} contentFit="contain" />
+      <Mascot emote="e04-vui-mung" size={140} pop />
       <AppText variant="caption" weight="700" color="primary" center style={styles.resultEyebrow}>
         KẾT QUẢ KIỂM TRA TRÌNH ĐỘ
       </AppText>
@@ -338,7 +337,6 @@ const styles = StyleSheet.create({
   rule: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 12 },
   newStart: { marginTop: 20 },
   result: { alignItems: 'center', gap: 0, paddingTop: 40 },
-  mascot: { width: 152, height: 128 },
   resultEyebrow: { marginTop: 20, letterSpacing: 0.6 },
   summary: { marginTop: 8 },
   scores: { marginTop: 24, alignSelf: 'stretch', gap: 8 },

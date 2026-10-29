@@ -1,10 +1,9 @@
-import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View, type HostInstance, type ScrollViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AppText, Button, Hanzi, Icon, ShareButton } from '@/components/ui';
+import { AppText, Button, Confetti, Hanzi, Icon, Mascot, ShareButton } from '@/components/ui';
 import { alpha } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { WEB_ORIGIN } from '@/lib/api';
@@ -143,7 +142,7 @@ export function ExamResult({
         <View ref={contentRef} style={styles.main}>
           {/* Điểm */}
           <View style={[styles.card, styles.center, { borderColor: theme.border, backgroundColor: theme.surface }]}>
-            <Image source={require('@/assets/images/mascot.png')} style={styles.mascot} contentFit="contain" />
+            <Mascot emote={result.passed ? 'e04-vui-mung' : 'e05-co-len'} size={136} pop />
             <AppText variant="caption" weight="700" color="primary" center style={styles.eyebrow}>
               KẾT QUẢ · {paper.title.toUpperCase()}
             </AppText>
@@ -516,6 +515,8 @@ export function ExamResult({
           </View>
         </View>
       </ScrollView>
+      {/* Thi đạt = khoảnh khắc hiếm: pháo giấy. */}
+      {result.passed && <Confetti />}
     </View>
   );
 }
@@ -537,7 +538,6 @@ const styles = StyleSheet.create({
   main: { paddingHorizontal: 16, paddingTop: 32, gap: 24 },
   card: { borderWidth: 1, borderRadius: 16, padding: 24 },
   center: { alignItems: 'center' },
-  mascot: { width: 133, height: 112 },
   eyebrow: { marginTop: 12, letterSpacing: 0.6 },
   score: { marginTop: 8, fontSize: 48, lineHeight: 56, letterSpacing: -1.2 },
   scoreMax: { fontSize: 24 },
