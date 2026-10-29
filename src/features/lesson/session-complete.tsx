@@ -1,9 +1,9 @@
-import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { AppText, Button, Card, Hanzi, Icon, Screen, ShareButton } from '@/components/ui';
+import { AppText, Button, Card, Confetti, Hanzi, Icon, Mascot, Screen, ShareButton } from '@/components/ui';
 import { alpha } from '@/constants/theme';
+import { useCountUp } from '@/hooks/use-count-up';
 import { useTheme } from '@/hooks/use-theme';
 import { WEB_ORIGIN } from '@/lib/api';
 import { goBack } from '@/lib/navigation';
@@ -37,117 +37,124 @@ export function SessionComplete({
   const next = result?.nextLesson ?? session.nextLesson;
   const total = session.words.length;
   const pct = Math.round(outcome.accuracy * 100);
+  const shownWords = useCountUp(result?.newWords ?? total);
+  const shownPct = useCountUp(pct);
 
   return (
-    <Screen safeTop contentStyle={styles.page}>
-      <Image source={require('@/assets/images/mascot.png')} style={styles.mascot} contentFit="contain" />
-      <AppText variant="caption" weight="700" color="primary" style={styles.eyebrow}>
-        HOÀN THÀNH BÀI {session.lesson.orderIndex}/{session.lesson.totalLessons}
-      </AppText>
-      <AppText weight="800" center style={styles.title}>
-        {session.lesson.title}
-      </AppText>
-      <AppText color="muted" center style={styles.praise}>
-        {praise(pct)}
-      </AppText>
-
-      <View style={styles.stats}>
-        {[
-          { label: 'Từ mới', value: String(result?.newWords ?? total) },
-          { label: 'Chính xác', value: `${pct}%` },
-          { label: 'Thời gian', value: formatDuration(outcome.durationMs) },
-        ].map((s) => (
-          <Card key={s.label} style={styles.stat}>
-            <AppText variant="caption" color="muted" center>
-              {s.label}
-            </AppText>
-            <AppText weight="700" center style={styles.statValue}>
-              {s.value}
-            </AppText>
-          </Card>
-        ))}
-      </View>
-
-      {result && result.currentStreak > 0 && (
-        <View style={[styles.streak, { backgroundColor: alpha(theme.danger, 0.1) }]}>
-          <Icon name="flame" size={16} color="danger" />
-          <AppText weight="600" color="danger">
-            Chuỗi {result.currentStreak} ngày học
-          </AppText>
-        </View>
-      )}
-      {outcome.saveError && (
-        <AppText color="danger" center style={styles.saveError}>
-          Chưa lưu được kết quả bài này — bạn kiểm tra kết nối mạng nhé.
+    <View style={styles.root}>
+      <Screen safeTop contentStyle={styles.page}>
+        <Mascot emote="e04-vui-mung" size={168} pop style={styles.mascot} />
+        <AppText variant="caption" weight="700" color="primary" style={styles.eyebrow}>
+          HOÀN THÀNH BÀI {session.lesson.orderIndex}/{session.lesson.totalLessons}
         </AppText>
-      )}
+        <AppText weight="800" center style={styles.title}>
+          {session.lesson.title}
+        </AppText>
+        <AppText color="muted" center style={styles.praise}>
+          {praise(pct)}
+        </AppText>
 
-      <View style={styles.words}>
-        {session.words.map((w) => (
-          <View key={w.id} style={[styles.wordChip, { borderColor: theme.border, backgroundColor: theme.surface }]}>
-            <AppText>
-              <Hanzi size={18}>{w.simplified}</Hanzi>{' '}
-              <AppText variant="caption" color="muted">
-                {shortMeaning(w.meaningVi ?? '')}
+        <View style={styles.stats}>
+          {[
+            { label: 'Từ mới', value: String(shownWords) },
+            { label: 'Chính xác', value: `${shownPct}%` },
+            { label: 'Thời gian', value: formatDuration(outcome.durationMs) },
+          ].map((s) => (
+            <Card key={s.label} style={styles.stat}>
+              <AppText variant="caption" color="muted" center>
+                {s.label}
               </AppText>
+              <AppText weight="700" center style={styles.statValue}>
+                {s.value}
+              </AppText>
+            </Card>
+          ))}
+        </View>
+
+        {result && result.currentStreak > 0 && (
+          <View style={[styles.streak, { backgroundColor: alpha(theme.danger, 0.1) }]}>
+            <Icon name="flame" size={16} color="danger" />
+            <AppText weight="600" color="danger">
+              Chuỗi {result.currentStreak} ngày học
             </AppText>
           </View>
-        ))}
-      </View>
-
-      <View style={styles.actions}>
-        {isGuest ? (
-          <>
-            <Button title="Lưu tiến độ — tạo tài khoản miễn phí" icon="arrow" onPress={() => router.replace('/register')} />
-            {next && (
-              <Button
-                title={`Học tiếp bài ${next.orderIndex}: ${next.title}`}
-                variant="secondary"
-                onPress={() => router.replace(`/bai-hoc/${next.id}`)}
-              />
-            )}
-            <AppText variant="caption" color="muted" center>
-              Đã có tài khoản?{' '}
-              <AppText variant="caption" color="primary" onPress={() => router.replace('/login')}>
-                Đăng nhập để lưu
-              </AppText>{' '}
-              · Toàn bộ bài học miễn phí.
-            </AppText>
-          </>
-        ) : (
-          <>
-            {next ? (
-              <Button
-                title={`Học bài tiếp theo: ${next.title}`}
-                icon="arrow"
-                onPress={() => router.replace(`/bai-hoc/${next.id}`)}
-              />
-            ) : (
-              <Button title="Bạn đã học hết cấp này — xem lộ trình" icon="arrow" onPress={goBack} />
-            )}
-            {/* Bài đọc AI chỉ dùng từ của bài vừa học — đọc ngay khi từ còn mới. */}
-            <Button
-              title={`Đọc hội thoại dùng ${total} từ vừa học`}
-              leftIcon="book"
-              variant="secondary"
-              onPress={() => router.replace(`/bai-doc/${session.lesson.id}`)}
-            />
-            <Button title="Về lộ trình" variant="ghost" onPress={goBack} />
-          </>
         )}
-      </View>
+        {outcome.saveError && (
+          <AppText color="danger" center style={styles.saveError}>
+            Chưa lưu được kết quả bài này — bạn kiểm tra kết nối mạng nhé.
+          </AppText>
+        )}
 
-      <ShareButton
-        message={`Mình vừa học xong ${total} từ tiếng Trung (${session.lesson.title}) trên Hanni — học qua âm Hán Việt, nhớ nhanh hơn hẳn. Thử bài 1 miễn phí nhé: ${WEB_ORIGIN}`}
-        style={styles.share}
-      />
-    </Screen>
+        <View style={styles.words}>
+          {session.words.map((w) => (
+            <View key={w.id} style={[styles.wordChip, { borderColor: theme.border, backgroundColor: theme.surface }]}>
+              <AppText>
+                <Hanzi size={18}>{w.simplified}</Hanzi>{' '}
+                <AppText variant="caption" color="muted">
+                  {shortMeaning(w.meaningVi ?? '')}
+                </AppText>
+              </AppText>
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.actions}>
+          {isGuest ? (
+            <>
+              <Button title="Lưu tiến độ — tạo tài khoản miễn phí" icon="arrow" onPress={() => router.replace('/register')} />
+              {next && (
+                <Button
+                  title={`Học tiếp bài ${next.orderIndex}: ${next.title}`}
+                  variant="secondary"
+                  onPress={() => router.replace(`/bai-hoc/${next.id}`)}
+                />
+              )}
+              <AppText variant="caption" color="muted" center>
+                Đã có tài khoản?{' '}
+                <AppText variant="caption" color="primary" onPress={() => router.replace('/login')}>
+                  Đăng nhập để lưu
+                </AppText>{' '}
+                · Toàn bộ bài học miễn phí.
+              </AppText>
+            </>
+          ) : (
+            <>
+              {next ? (
+                <Button
+                  title={`Học bài tiếp theo: ${next.title}`}
+                  icon="arrow"
+                  onPress={() => router.replace(`/bai-hoc/${next.id}`)}
+                />
+              ) : (
+                <Button title="Bạn đã học hết cấp này — xem lộ trình" icon="arrow" onPress={goBack} />
+              )}
+              {/* Bài đọc AI chỉ dùng từ của bài vừa học — đọc ngay khi từ còn mới. */}
+              <Button
+                title={`Đọc hội thoại dùng ${total} từ vừa học`}
+                leftIcon="book"
+                variant="secondary"
+                onPress={() => router.replace(`/bai-doc/${session.lesson.id}`)}
+              />
+              <Button title="Về lộ trình" variant="ghost" onPress={goBack} />
+            </>
+          )}
+        </View>
+
+        <ShareButton
+          message={`Mình vừa học xong ${total} từ tiếng Trung (${session.lesson.title}) trên Hanni — học qua âm Hán Việt, nhớ nhanh hơn hẳn. Thử bài 1 miễn phí nhé: ${WEB_ORIGIN}`}
+          style={styles.share}
+        />
+      </Screen>
+      {/* Vừa xong bài = khoảnh khắc hiếm: cáo vỗ tay + pháo giấy. */}
+      <Confetti />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1 },
   page: { alignItems: 'center', gap: 0, paddingTop: 40 },
-  mascot: { width: 171, height: 144 },
+  mascot: { marginBottom: -8 },
   eyebrow: { marginTop: 20, letterSpacing: 0.6 },
   title: { marginTop: 6, fontSize: 24, lineHeight: 32, letterSpacing: -0.6 },
   praise: { marginTop: 8 },

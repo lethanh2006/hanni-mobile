@@ -2,7 +2,6 @@ import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   Animated,
   Image,
   Pressable,
@@ -19,6 +18,7 @@ import {
   Hanzi,
   Icon,
   IconTile,
+  Mascot,
   Skeleton,
 } from '@/components/ui';
 import { alpha, Radius, tintPanel } from '@/constants/theme';
@@ -297,9 +297,9 @@ export function ScanTool() {
           {busy ? (
             <Card style={styles.statusCard}>
               <View style={styles.statusHead}>
-                <ActivityIndicator size="small" color={theme.primary} />
-                <AppText weight="600">
-                  Hanni đang đọc ảnh… (khoảng 5–10 giây)
+                <Mascot emote="e19-tim-kiem" size={52} pop style={styles.scanFox} />
+                <AppText weight="600" style={styles.flexText}>
+                  Hanni đang soi ảnh… (khoảng 5–10 giây)
                 </AppText>
               </View>
               <Skeleton height={12} width="88%" />
@@ -781,6 +781,8 @@ const styles = StyleSheet.create({
 
   statusCard: { gap: 12 },
   statusHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  scanFox: { marginVertical: -8 },
+  flexText: { flex: 1 },
 
   resultContainer: { gap: 20 },
   emptyCard: { padding: 16 },

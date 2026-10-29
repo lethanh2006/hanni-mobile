@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { AppText, Card, Icon, ProgressBar } from '@/components/ui';
+import { AppText, Card, Flicker, Icon, ProgressBar } from '@/components/ui';
 import { alpha } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useStreak, useStreakHistory, useStudyStats } from '@/lib/hooks';
@@ -78,7 +78,9 @@ export function TodayCard() {
             styles.flame,
             { backgroundColor: s?.activeToday ? alpha(theme.danger, 0.12) : theme.surface2 },
           ]}>
-          <Icon name="flame" size={26} color={s?.activeToday ? 'danger' : 'muted'} />
+          <Flicker on={!!s?.activeToday}>
+            <Icon name="flame" size={26} color={s?.activeToday ? 'danger' : 'muted'} />
+          </Flicker>
         </View>
         <View style={styles.flex}>
           <AppText weight="800" style={styles.count}>

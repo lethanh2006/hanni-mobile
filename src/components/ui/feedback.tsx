@@ -7,6 +7,7 @@ import { useTheme } from '@/hooks/use-theme';
 
 import { Card } from './card';
 import { Icon } from './icon';
+import { Mascot } from './mascot';
 import { AppText } from './text';
 
 /**
@@ -79,7 +80,7 @@ export function ErrorNote({ children }: { children: ReactNode }) {
   );
 }
 
-/** Trạng thái rỗng có cáo Hanni nguyên con (1 trong 3 vai của linh vật trên web) — kèm việc tiếp theo nếu có. */
+/** Trạng thái rỗng (`EmptyState` của web): cáo cầm kính lúp "chưa tìm thấy" (E19) — kèm việc tiếp theo nếu có. */
 export function EmptyState({
   title,
   description,
@@ -91,7 +92,7 @@ export function EmptyState({
 }) {
   return (
     <Card style={styles.empty}>
-      <Image source={require('@/assets/images/mascot.png')} style={styles.fox} contentFit="contain" />
+      <Mascot emote="e19-tim-kiem" size={112} style={styles.fox} />
       <AppText weight="600" center style={styles.emptyTitle}>
         {title}
       </AppText>
@@ -139,7 +140,7 @@ const styles = StyleSheet.create({
   },
   flex: { flex: 1 },
   empty: { alignItems: 'center', paddingVertical: 48, gap: 0 },
-  fox: { width: 114, height: 96, marginBottom: 16 },
+  fox: { alignSelf: 'center', marginBottom: 12 },
   emptyTitle: { fontSize: 16 },
   emptyText: { marginTop: 8, lineHeight: 24, maxWidth: 420 },
   emptyActions: { marginTop: 20, alignSelf: 'stretch', alignItems: 'center', gap: 10 },

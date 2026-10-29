@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Line, Path } from 'react-native-svg';
 
-import { AppText, Icon } from '@/components/ui';
+import { AppText, Icon, Mascot } from '@/components/ui';
 import { ToneColors, type ThemeColor } from '@/constants/theme';
 import { stopListening } from '@/features/mock-exam/listening';
 import { TONES } from '@/features/practice/pinyin-data';
@@ -415,24 +415,28 @@ export function ToneCheck({
   const recording = phase === 'recording';
   return (
     <View style={styles.wrap}>
-      <Pressable
-        onPress={() => void start()}
-        disabled={phase === 'analyzing'}
-        accessibilityState={{ selected: recording }}
-        style={({ pressed }) => [
-          styles.button,
-          center && styles.center,
-          recording
-            ? { backgroundColor: theme.primary, borderColor: theme.primary }
-            : { backgroundColor: theme.surface, borderColor: pressed ? theme.primary : theme.border },
-          phase === 'analyzing' && styles.faded,
-          pressed && { transform: [{ translateY: 1 }] },
-        ]}>
-        <Icon name="mic" size={17} color={recording ? 'primaryText' : 'text'} />
-        <AppText weight="600" color={recording ? 'primaryText' : 'text'}>
-          {recording ? 'Đang nghe… (bấm để dừng)' : phase === 'analyzing' ? 'Đang chấm…' : result ? 'Đọc lại' : 'Đọc thử — chấm thanh điệu'}
-        </AppText>
-      </Pressable>
+      <View style={[styles.row, center && styles.center]}>
+        {/* Đang thu âm: cáo khum tay sau tai (E09) — margin âm để không đẩy nội dung bên dưới. */}
+        {recording && <Mascot emote="e09-lang-nghe" size={52} pop style={styles.fox} />}
+        <Pressable
+          onPress={() => void start()}
+          disabled={phase === 'analyzing'}
+          accessibilityState={{ selected: recording }}
+          style={({ pressed }) => [
+            styles.button,
+            center && styles.center,
+            recording
+              ? { backgroundColor: theme.primary, borderColor: theme.primary }
+              : { backgroundColor: theme.surface, borderColor: pressed ? theme.primary : theme.border },
+            phase === 'analyzing' && styles.faded,
+            pressed && { transform: [{ translateY: 1 }] },
+          ]}>
+          <Icon name="mic" size={17} color={recording ? 'primaryText' : 'text'} />
+          <AppText weight="600" color={recording ? 'primaryText' : 'text'}>
+            {recording ? 'Đang nghe… (bấm để dừng)' : phase === 'analyzing' ? 'Đang chấm…' : result ? 'Đọc lại' : 'Đọc thử — chấm thanh điệu'}
+          </AppText>
+        </Pressable>
+      </View>
       {recording && (
         <View style={[styles.meter, center && styles.center, { backgroundColor: theme.surface2 }]}>
           <Animated.View
@@ -469,6 +473,8 @@ const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   wrap: { width: '100%' },
   center: { alignSelf: 'center' },
+  row: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 4 },
+  fox: { marginVertical: -6 },
   faded: { opacity: 0.6 },
   button: {
     alignSelf: 'flex-start',
