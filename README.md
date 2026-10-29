@@ -13,6 +13,14 @@ Trên máy này có lối tắt **Hanni Mobile** ở Desktop. Mở lối tắt h
 
 Dùng development build cho app này. Sau khi thêm thư viện native hoặc thay đổi plugin, cần build lại; `npm run dev` tự phát hiện thay đổi trong `app.json`, `package.json`, `package-lock.json`. Có thể ép build bằng `npm run dev -- --rebuild`. Chọn máy ảo bằng `AVD=Ten_may npm run dev`, hoặc thiết bị bằng `ANDROID_SERIAL=<serial> npm run dev`.
 
+## Cập nhật Android qua EAS Update
+
+Sau mỗi lần push lên `master`, workflow `Cập nhật Android (EAS Update)` kiểm tra và phát hành thay đổi JavaScript, giao diện và tài nguyên lên kênh `production-apk`. GitHub Actions cần repository secret `EXPO_TOKEN` có quyền truy cập dự án Expo; các biến `EXPO_PUBLIC_*` dùng khi build bản cập nhật được quản lý trong EAS environment `production` và cần cập nhật tại đó khi thay đổi cấu hình.
+
+APK 1.0.1 phát hành trên GitHub dùng kênh `production-apk` và runtime 1.0.1. Khi có mạng, app kiểm tra cập nhật lúc mở; bản tải về thường được áp dụng ở lần mở tiếp theo. Expo Go, development build, các kênh khác và bản iOS build riêng không nhận cập nhật từ workflow này.
+
+OTA không thay đổi được thư viện hay cấu hình native. Workflow sẽ dừng nếu cấu hình hoặc dependency khác tag `v<phiên bản>`; hãy tăng phiên bản, build và phát hành APK mới, tạo tag đúng commit build, rồi chạy lại workflow. Đảm bảo tag trỏ đúng mã đã build, không tạo tag chỉ để vượt qua bước kiểm tra. Việc này không thay thế việc kiểm thử trên thiết bị.
+
 Nếu gặp `Cannot find native module 'ExponentImagePicker'` hoặc lỗi thiếu native module khác, bản app trên máy đang cũ: chạy `npm run dev -- --rebuild`. Chỉ reload Metro sẽ không thêm module vào APK.
 
 API mặc định là server production. Muốn trỏ nơi khác thì copy `.env.example` thành `.env.local`.
