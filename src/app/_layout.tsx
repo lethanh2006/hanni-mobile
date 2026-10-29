@@ -2,7 +2,7 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { AppState, useColorScheme } from 'react-native';
+import { AppState } from 'react-native';
 import { SWRConfig, type SWRConfiguration } from 'swr';
 
 import { StackHeader } from '@/components/app-shell/stack-header';
@@ -13,7 +13,7 @@ import { ReminderSync } from '@/features/reminders/reminder-sync';
 import { AudioDecoderHost } from '@/features/tone/decode-audio';
 import { fetcher } from '@/lib/api';
 import { AuthProvider, useAuth } from '@/lib/auth';
-import { restoreThemeMode } from '@/lib/theme-mode';
+import { restoreThemeMode, useColorScheme } from '@/lib/theme-mode';
 import { loadWebFonts } from '@/lib/web-fonts';
 
 SplashScreen.preventAutoHideAsync();

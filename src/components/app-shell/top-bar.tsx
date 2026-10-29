@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, useColorScheme, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import useSWR from 'swr';
 
@@ -12,7 +12,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
 import { useStreak } from '@/lib/hooks';
 import { useNotifications } from '@/lib/notifications';
-import { setThemeMode } from '@/lib/theme-mode';
+import { setThemeMode, useColorScheme } from '@/lib/theme-mode';
 import type { PremiumStatus } from '@/lib/types';
 
 /** Logo cáo (`Brand` của web). `compact` = chỉ mặt cáo (thanh trên điện thoại). */
