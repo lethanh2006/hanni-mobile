@@ -59,7 +59,7 @@ while :; do
 done
 
 # Stamp nằm trên từng thiết bị: checkout mới hoặc native config mới đều cần build lại.
-signature=$(sha256sum package.json package-lock.json app.json | sha256sum | cut -d ' ' -f 1)
+signature=$(sha256sum package.json package-lock.json app.json app.config.js | sha256sum | cut -d ' ' -f 1)
 installed_signature=$("$ADB" -s "$ANDROID_SERIAL" shell cat "$STAMP" 2>/dev/null | tr -d '\r' || true)
 if [ "${1:-}" = "--rebuild" ] || [ "$signature" != "$installed_signature" ] || ! "$ADB" -s "$ANDROID_SERIAL" shell pm path "$APP_ID" 2>/dev/null | grep -q '^package:'; then
   echo "Build và cài native app để khớp thư viện/cấu hình hiện tại..."

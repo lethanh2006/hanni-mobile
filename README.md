@@ -11,7 +11,9 @@ npm run typecheck
 
 Trên máy này có lối tắt **Hanni Mobile** ở Desktop. Mở lối tắt hoặc chạy `npm run dev`: máy ảo Hanni sẽ khởi động riêng và app tự mở. Lần khởi động lạnh có thể mất khoảng một phút; giữ terminal Metro đang chạy khi phát triển. Nếu Android Studio vẫn hiện “Connecting to the Emulator”, đóng tab máy ảo cũ trong Studio và dùng cửa sổ Hanni riêng. Máy ảo được cấu hình 720×1560, 2 lõi, 2 GB RAM; dữ liệu Android được giữ lại.
 
-Dùng development build cho app này. Sau khi thêm thư viện native hoặc thay đổi plugin, cần build lại; `npm run dev` tự phát hiện thay đổi trong `app.json`, `package.json`, `package-lock.json`. Có thể ép build bằng `npm run dev -- --rebuild`. Chọn máy ảo bằng `AVD=Ten_may npm run dev`, hoặc thiết bị bằng `ANDROID_SERIAL=<serial> npm run dev`.
+Dùng development build cho app này. Sau khi thêm thư viện native hoặc thay đổi plugin, cần build lại; `npm run dev` tự phát hiện thay đổi trong `app.json`, `app.config.js`, `package.json`, `package-lock.json`. Có thể ép build bằng `npm run dev -- --rebuild`. Chọn máy ảo bằng `AVD=Ten_may npm run dev`, hoặc thiết bị bằng `ANDROID_SERIAL=<serial> npm run dev`.
+
+Máy ít RAM có thể đặt `METRO_WORKERS=1` khi chạy lệnh build; giới hạn này áp dụng cả cho bước đóng gói tài nguyên của Expo Updates.
 
 ## Cập nhật Android qua EAS Update
 
@@ -24,6 +26,27 @@ OTA không thay đổi được thư viện hay cấu hình native. Workflow s�
 Nếu gặp `Cannot find native module 'ExponentImagePicker'` hoặc lỗi thiếu native module khác, bản app trên máy đang cũ: chạy `npm run dev -- --rebuild`. Chỉ reload Metro sẽ không thêm module vào APK.
 
 API mặc định là server production. Muốn trỏ nơi khác thì copy `.env.example` thành `.env.local`.
+
+## Đăng nhập Google
+
+App đã lấy Google ID token bằng native Google Sign-In và gửi `POST /api/auth/google`; server xác minh token rồi
+đặt cookie phiên như web. Android dùng `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` trong `.env` (client loại **Web application**,
+đuôi `h0qat6jqr0j309m1326blhmu7516g0rj`). Đây là `GOOGLE_GAME_CLIENT_ID_ANDROID` được dùng lại từ project Google của game;
+không dùng `GOOGLE_GAME_CLIENT_ID` loại Desktop (đuôi `mtgqrosdib14ulgd185mkbcgk7gi4cpf`).
+
+Để chạy trên thiết bị:
+
+1. Server khai `GOOGLE_MOBILE_CLIENT_IDS` theo `docs/google-login-backend.env.example`, deploy code rồi restart.
+   Giữ `GOOGLE_CLIENT_ID` hiện tại của web Hanni; request mobile không cần thêm `platform`.
+2. Trong **cùng project Google**, tạo OAuth client loại Android cho package `com.hanni.app` + SHA-1 đúng khóa ký
+   bản APK đang dùng (xem `.env.example`). Client Android của game không thay thế cấu hình package Hanni.
+3. Kiểm tra `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` trong từng EAS environment đang build/update; giá trị cũ ở EAS có thể
+   ghi đè `.env`. Bản app thiếu native Google Sign-In cần build APK mới, OTA không thêm được native module.
+4. Thử đăng nhập trên máy: chọn tài khoản → vào Hanni; hủy chọn → giữ màn đăng nhập; mở lại app và thử đăng xuất.
+
+iOS cần OAuth client loại iOS cho bundle `com.hanni.app`: khai `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` và thêm audience
+tương ứng vào server. `app.config.js` tự đăng ký URL scheme đảo ngược client ID khi build; phải build lại iOS sau
+khi đổi ID. Khi chưa có ID iOS thì app ẩn nút Google trên iPhone. Bản web chạy bằng Expo ẩn nút này; dùng website Hanni.
 
 ## Cấu trúc
 

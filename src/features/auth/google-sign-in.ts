@@ -1,17 +1,20 @@
 /**
  * Lấy `idToken` Google để gửi `POST /auth/google` như nút Google của web (server tự xác minh token, không cần secret).
- * App dùng OAuth client RIÊNG (khai trong `.env` của app, xem `.env.example`) — server phải nhận client ID này là
+ * App dùng OAuth client loại Web (khai trong `.env` của app, xem `.env.example`) — server phải nhận client ID này là
  * audience hợp lệ (xem `docs/google-login-backend.env.example`). Thư viện native chỉ nạp khi bấm: bản app cài từ
  * trước khi có thư viện vẫn chạy, chỉ báo cần cập nhật.
  */
+import { Platform } from 'react-native';
+
 const WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID?.trim() ?? '';
 const IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?.trim() || undefined;
 
 /** Chưa khai client ID thì ẩn nút Google, như web ẩn khi thiếu `NEXT_PUBLIC_GOOGLE_CLIENT_ID`. */
-export const googleSignInEnabled = WEB_CLIENT_ID.length > 0;
+export const googleSignInEnabled = WEB_CLIENT_ID.length > 0 && (Platform.OS !== 'ios' || Boolean(IOS_CLIENT_ID));
 
 /** `null` = người dùng đóng bảng chọn tài khoản. */
 export async function getGoogleIdToken(): Promise<string | null> {
+  if (!googleSignInEnabled) throw new Error('Đăng nhập Google chưa được cấu hình cho ứng dụng này.');
   let lib: typeof import('@react-native-google-signin/google-signin');
   try {
     lib = await import('@react-native-google-signin/google-signin');
@@ -21,7 +24,9 @@ export async function getGoogleIdToken(): Promise<string | null> {
   const { GoogleSignin, isErrorWithCode, isSuccessResponse, statusCodes } = lib;
   try {
     GoogleSignin.configure({ webClientId: WEB_CLIENT_ID, iosClientId: IOS_CLIENT_ID });
-    await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+    if (Platform.OS === 'android') {
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+    }
     const res = await GoogleSignin.signIn();
     if (!isSuccessResponse(res)) return null;
     // Chỉ cần token để đăng nhập Hanni — thoát phiên Google trên máy để lần sau vẫn được chọn tài khoản.
