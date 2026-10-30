@@ -6,6 +6,10 @@ const { getDefaultConfig } = require('expo/metro-config');
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname);
 
+// Áp dụng cả cho tiến trình Metro riêng của expo-updates khi build trên máy ít RAM.
+const maxWorkers = Number(process.env.METRO_WORKERS);
+if (Number.isInteger(maxWorkers) && maxWorkers > 0) config.maxWorkers = maxWorkers;
+
 // expo-sqlite trên web chạy SQLite bằng WebAssembly (dùng cho "tra gần đây", bài thi làm dở).
 config.resolver.assetExts.push('wasm');
 

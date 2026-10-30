@@ -13,6 +13,8 @@ Trên máy này có lối tắt **Hanni Mobile** ở Desktop. Mở lối tắt h
 
 Dùng development build cho app này. Sau khi thêm thư viện native hoặc thay đổi plugin, cần build lại; `npm run dev` tự phát hiện thay đổi trong `app.json`, `app.config.js`, `package.json`, `package-lock.json`. Có thể ép build bằng `npm run dev -- --rebuild`. Chọn máy ảo bằng `AVD=Ten_may npm run dev`, hoặc thiết bị bằng `ANDROID_SERIAL=<serial> npm run dev`.
 
+Máy ít RAM có thể đặt `METRO_WORKERS=1` khi chạy lệnh build; giới hạn này áp dụng cả cho bước đóng gói tài nguyên của Expo Updates.
+
 ## Cập nhật Android qua EAS Update
 
 Sau mỗi lần push lên `master`, workflow `Cập nhật Android (EAS Update)` kiểm tra và phát hành thay đổi JavaScript, giao diện và tài nguyên lên kênh `production-apk`. GitHub Actions cần repository secret `EXPO_TOKEN` có quyền truy cập dự án Expo; các biến `EXPO_PUBLIC_*` dùng khi build bản cập nhật được quản lý trong EAS environment `production` và cần cập nhật tại đó khi thay đổi cấu hình.
