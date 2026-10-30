@@ -21,7 +21,7 @@ Sau mỗi lần push lên `master`, workflow `Cập nhật Android (EAS Update)`
 
 APK 1.0.1 phát hành trên GitHub dùng kênh `production-apk` và runtime 1.0.1. Khi có mạng, app kiểm tra cập nhật lúc mở; bản tải về thường được áp dụng ở lần mở tiếp theo. Expo Go, development build, các kênh khác và bản iOS build riêng không nhận cập nhật từ workflow này.
 
-OTA không thay đổi được thư viện hay cấu hình native. Workflow sẽ dừng nếu cấu hình hoặc dependency khác tag `v<phiên bản>`; hãy tăng phiên bản, build và phát hành APK mới, tạo tag đúng commit build, rồi chạy lại workflow. Đảm bảo tag trỏ đúng mã đã build, không tạo tag chỉ để vượt qua bước kiểm tra. Việc này không thay thế việc kiểm thử trên thiết bị.
+OTA không thay đổi được thư viện hay cấu hình native. Workflow so sánh fingerprint Android với APK 1.0.1 đã phát hành và dừng nếu không khớp. Khi cần native mới, hãy tăng phiên bản, build và phát hành APK, rồi cập nhật phiên bản và build ID trong workflow theo bản build mới. Việc này không thay thế việc kiểm thử trên thiết bị.
 
 Nếu gặp `Cannot find native module 'ExponentImagePicker'` hoặc lỗi thiếu native module khác, bản app trên máy đang cũ: chạy `npm run dev -- --rebuild`. Chỉ reload Metro sẽ không thêm module vào APK.
 

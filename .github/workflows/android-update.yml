@@ -24,27 +24,38 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - run: npm ci
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: 25.3.0
+          token: ${{ secrets.EXPO_TOKEN }}
       - name: Kiểm tra tương thích với APK đã phát hành
         shell: bash
         run: |
           set -euo pipefail
           version=$(node -p "require('./app.json').expo.version")
-          tag="v$version"
-          if ! git rev-parse --verify "refs/tags/$tag^{commit}" >/dev/null 2>&1; then
-            echo "Không có tag $tag: cần build và phát hành APK cho phiên bản này trước."
+          # APK đang phát hành trên GitHub: version 1.0.1, runtime 1.0.1, kênh production-apk.
+          # Khi phát hành APK mới, cập nhật cả version và build ID sau khi kiểm tra bản build.
+          if [ "$version" != "1.0.1" ]; then
+            echo "Phiên bản không khớp APK 1.0.1; cần build APK mới và cập nhật build ID trong workflow."
             exit 1
           fi
-          if ! git diff --quiet "$tag" HEAD -- app.json app.config.js app.config.ts eas.json package.json package-lock.json plugins android ios; then
-            echo "Cấu hình hoặc dependency native đã thay đổi so với $tag; cần kiểm tra và build APK mới trước khi cập nhật OTA."
-            exit 1
-          fi
-      - run: npm ci
+          eas fingerprint:compare --build-id c36bec3d-eea9-41cf-ba0d-c3d61b408645 --environment production --json --non-interactive > "$RUNNER_TEMP/hanni-fingerprint.json"
+          node - "$RUNNER_TEMP/hanni-fingerprint.json" <<'NODE'
+          const fs = require('fs');
+          const output = fs.readFileSync(process.argv[2], 'utf8');
+          const start = output.indexOf('{');
+          if (start < 0) throw new Error('Không đọc được fingerprint từ EAS.');
+          const result = JSON.parse(output.slice(start));
+          const original = result.fingerprint1?.hash;
+          const current = result.fingerprint2?.hash;
+          if (!original || !current || original !== current) {
+            throw new Error('Native Android đã thay đổi so với APK đang phát hành; cần build APK mới trước khi cập nhật OTA.');
+          }
+          console.log('Fingerprint Android khớp APK đang phát hành.');
+          NODE
       - run: npm test
       - run: npm run typecheck
       - run: npm run lint
-      - uses: expo/expo-github-action@v8
-        with:
-          eas-version: 25.3.0
-          token: ${{ secrets.EXPO_TOKEN }}
       - name: Đưa bản cập nhật đến APK Android
         run: eas update --channel production-apk --platform android --environment production --message "GitHub $GITHUB_SHA" --non-interactive
