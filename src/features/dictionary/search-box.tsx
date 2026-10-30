@@ -98,7 +98,7 @@ export function DictionarySearch({
             {
               backgroundColor: theme.primary,
               boxShadow: pressed ? undefined : `0 3px 0 ${mix(theme.primary, '#000000', 0.62)}`,
-              transform: pressed ? [{ translateY: 1 }] : undefined,
+              transform: [{ translateY: pressed ? 1 : 0 }],
             },
           ]}>
           <Icon name="arrow" size={20} color="primaryText" />

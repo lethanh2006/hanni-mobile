@@ -33,7 +33,7 @@ function CalendarButton({ icon, label, onPress }: { icon: IconName; label: strin
           borderColor: theme.border,
           backgroundColor: pressed ? theme.surface2 : theme.surface,
           boxShadow: `0 ${pressed ? 1 : 3}px 0 ${theme.border}`,
-          transform: pressed ? [{ translateY: 2 }] : undefined,
+          transform: [{ translateY: pressed ? 2 : 0 }],
         },
       ]}>
       <Icon name={icon} size={16} />

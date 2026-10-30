@@ -130,7 +130,7 @@ export function WordHeader({ word, topic }: { word: Word; topic: Topic | null })
               {
                 backgroundColor: theme.primary,
                 boxShadow: pressed ? undefined : `0 3px 0 ${mix(theme.primary, '#000000', 0.62)}`,
-                transform: pressed ? [{ translateY: 2 }] : undefined,
+                transform: [{ translateY: pressed ? 2 : 0 }],
               },
             ]}>
             <Icon name="sound" size={22} color="primaryText" />

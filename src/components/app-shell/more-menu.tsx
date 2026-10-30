@@ -205,7 +205,7 @@ function PremiumNavCard({ go }: { go: (href: Href) => void }) {
             backgroundColor: theme.primary,
             borderColor: theme.primary,
             boxShadow: pressed ? undefined : `0 3px 0 ${mix(theme.primary, '#000000', 0.62)}`,
-            transform: pressed ? [{ translateY: 2 }] : undefined,
+            transform: [{ translateY: pressed ? 2 : 0 }],
           },
         ]}>
         <AppText variant="caption" weight="700" color="primaryText">
