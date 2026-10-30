@@ -84,7 +84,7 @@ export function TodayCard() {
         </View>
         <View style={styles.flex}>
           <AppText weight="800" style={styles.count}>
-            {(s?.currentStreak ?? 0) + 1}
+            {s?.currentStreak ?? 0}
             <Text style={[styles.countUnit, { color: theme.muted }]}> ngày liên tiếp</Text>
           </AppText>
           <AppText variant="caption" color="muted" style={styles.note}>
