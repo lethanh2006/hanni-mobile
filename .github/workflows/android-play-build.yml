@@ -1,0 +1,62 @@
+# Build tệp .aab cho CH Play trên máy chủ Expo (profile `production`, kênh cập nhật `production`).
+# Đẩy tag vX.Y.Z trùng `version` trong app.json là tự chạy; chạy tay: Actions → "Build AAB cho CH Play" → Run workflow.
+# Xong thì trang tóm tắt của lần chạy có mã build + đường dẫn tải .aab để tải lên Play Console.
+# Sau mỗi bản mới: sửa version + mã build trong android-update.yml rồi mới gộp vào master.
+name: Build AAB cho CH Play
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-play-build
+  cancel-in-progress: false
+
+jobs:
+  aab:
+    runs-on: ubuntu-latest
+    # Gói miễn phí của Expo có thể phải xếp hàng khá lâu trước khi build.
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Tag phải trùng version trong app.json
+        if: github.ref_type == 'tag'
+        shell: bash
+        run: |
+          version=$(node -p "require('./app.json').expo.version")
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "Tag $GITHUB_REF_NAME không trùng version $version trong app.json."
+            exit 1
+          fi
+      - run: npm test
+      - run: npm run typecheck
+      - run: npm run lint
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: 25.3.0
+          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Build AAB trên máy chủ Expo
+        shell: bash
+        run: |
+          set -euo pipefail
+          eas build --platform android --profile production --non-interactive --wait --json > "$RUNNER_TEMP/build.json"
+          node - "$RUNNER_TEMP/build.json" >> "$GITHUB_STEP_SUMMARY" <<'NODE'
+          const fs = require('fs');
+          const output = fs.readFileSync(process.argv[2], 'utf8');
+          const builds = JSON.parse(output.slice(output.indexOf('[')));
+          for (const b of builds) {
+            const file = b.artifacts?.applicationArchiveUrl ?? b.artifacts?.buildUrl ?? '(chưa có tệp)';
+            const line = `- Android ${b.appVersion} (versionCode ${b.appBuildVersion}) · mã build \`${b.id}\` · trạng thái ${b.status} · tệp .aab: ${file}`;
+            console.log(line);
+            console.error(line);
+          }
+          NODE
