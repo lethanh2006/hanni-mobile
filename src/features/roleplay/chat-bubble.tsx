@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { ReportButton } from '@/components/report-button';
 import { AppText, Icon } from '@/components/ui';
 import { alpha } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -22,12 +23,15 @@ export function ChatBubble({ message }: { message: RoleplayMessage }) {
           </AppText>
         )}
         {!mine && (
-          <Pressable onPress={() => speakChinese(message.text)} hitSlop={6} style={styles.listen} accessibilityLabel="Nghe">
-            <Icon name="sound" size={13} color="muted" />
-            <AppText variant="caption" weight="500" color="muted">
-              Nghe
-            </AppText>
-          </Pressable>
+          <View style={styles.tools}>
+            <Pressable onPress={() => speakChinese(message.text)} hitSlop={6} style={styles.listen} accessibilityLabel="Nghe">
+              <Icon name="sound" size={13} color="muted" />
+              <AppText variant="caption" weight="500" color="muted">
+                Nghe
+              </AppText>
+            </Pressable>
+            <ReportButton kind="ai" feature="roleplay" content={message.text} />
+          </View>
         )}
       </View>
     </View>
@@ -39,5 +43,6 @@ const styles = StyleSheet.create({
   mine: { justifyContent: 'flex-end' },
   bubble: { maxWidth: '78%', gap: 4, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10 },
   text: { lineHeight: 24 },
+  tools: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   listen: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingTop: 2, alignSelf: 'flex-start' },
 });

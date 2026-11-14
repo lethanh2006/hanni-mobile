@@ -16,11 +16,19 @@ export const WEB_ORIGIN = 'https://hanni.dangpham.id.vn';
 /** Gốc của server (bỏ "/api") — dùng cho file tĩnh như audio phát âm. */
 export const SERVER_ORIGIN = API_URL.replace(/\/api\/?$/, '');
 
+/**
+ * App trên CH Play không bán Premium, nên không được mời "Nâng cấp Premium" (chính sách thanh toán của Google Play).
+ * Server dùng chung với web và gắn câu mời đó vào thông báo hết lượt AI/quét ảnh: bỏ câu đó, giữ phần còn lại.
+ */
+export function withoutUpsell(message: string): string {
+  return message.replace(/\s*Nâng cấp Premium[^.!]*[.!]?/g, '').trim() || message;
+}
+
 export class ApiError extends Error {
   status: number;
   body: unknown;
   constructor(status: number, message: string, body: unknown) {
-    super(message);
+    super(withoutUpsell(message));
     this.name = 'ApiError';
     this.status = status;
     this.body = body;

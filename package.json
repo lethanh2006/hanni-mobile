@@ -1,6 +1,6 @@
 {
   "name": "hanni-mobile",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "main": "expo-router/entry",
   "dependencies": {
     "@expo-google-fonts/geist": "^0.4.2",

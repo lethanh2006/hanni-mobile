@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import useSWR from 'swr';
 
 import { ChatComposer } from '@/components/chat-composer';
+import { ReportButton } from '@/components/report-button';
 import { AppText, Button, ErrorNote, Icon, IconTile, Loading } from '@/components/ui';
 import { alpha } from '@/constants/theme';
 import { ChatBubble } from '@/features/roleplay/chat-bubble';
@@ -172,6 +173,7 @@ export default function RoleplayChatScreen() {
           {feedback ? (
             <View style={[styles.feedbackBox, { borderColor: theme.border, backgroundColor: theme.surface2 }]}>
               <SimpleMarkdown text={feedback} />
+              <ReportButton kind="ai" feature="roleplay" content={feedback} targetId={id} />
             </View>
           ) : (
             <AppText color="muted" center>
@@ -207,6 +209,12 @@ export default function RoleplayChatScreen() {
                     {hint.meaningVi}
                   </AppText>
                 ) : null}
+                <ReportButton
+                  kind="ai"
+                  feature="roleplay"
+                  content={`${hint.suggestionZh}\n${hint.meaningVi}`.trim()}
+                  targetId={id}
+                />
               </View>
               <AppText
                 variant="caption"

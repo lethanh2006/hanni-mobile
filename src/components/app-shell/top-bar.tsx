@@ -3,7 +3,6 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import useSWR from 'swr';
 
 import { AppText, Avatar, Flicker, Icon } from '@/components/ui';
 import { alpha, mix } from '@/constants/theme';
@@ -13,7 +12,6 @@ import { useAuth } from '@/lib/auth';
 import { useStreak } from '@/lib/hooks';
 import { useNotifications } from '@/lib/notifications';
 import { setThemeMode, useColorScheme } from '@/lib/theme-mode';
-import type { PremiumStatus } from '@/lib/types';
 
 /** Logo cáo (`Brand` của web). `compact` = chỉ mặt cáo (thanh trên điện thoại). */
 export function Brand({ compact = false }: { compact?: boolean }) {
@@ -84,7 +82,6 @@ export function TopBar() {
               )}
             </Pressable>
           )}
-          {user && <PremiumTopButton />}
           {user && <BellButton />}
           <ThemeToggle />
           {user ? (
@@ -128,21 +125,6 @@ export function TopBar() {
         </View>
       </View>
     </View>
-  );
-}
-
-/** Vương miện trên thanh trên (chưa Premium). App không bán Premium nên mở phần Premium ở Tài khoản. */
-function PremiumTopButton() {
-  const theme = useTheme();
-  const { data } = useSWR<PremiumStatus>('/premium/status');
-  if (!data || data.active) return null;
-  return (
-    <Pressable
-      onPress={() => router.navigate('/premium')}
-      accessibilityLabel="Hanni Premium"
-      style={[styles.crown, { backgroundColor: alpha(theme.accent, 0.12) }]}>
-      <Icon name="crown" size={17} color="accent" />
-    </Pressable>
   );
 }
 
@@ -201,7 +183,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 9,
   },
   shield: { flexDirection: 'row', alignItems: 'center', gap: 2, marginLeft: 2, paddingLeft: 6, borderLeftWidth: 1 },
-  crown: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   bell: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   badge: {
     position: 'absolute',

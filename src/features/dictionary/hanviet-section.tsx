@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 
+import { ReportButton } from '@/components/report-button';
 import { AppText, Button, ErrorNote, Hanzi, Icon } from '@/components/ui';
 import { alpha, Fonts } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -132,6 +133,7 @@ function Mnemonic({ wordId, initial }: { wordId: string; initial: string | null 
         <AppText variant="caption" color="muted" style={styles.mnemonicNote}>
           AI gợi ý từ âm Hán Việt và nghĩa từng chữ.
         </AppText>
+        <ReportButton kind="ai" feature="mnemonic" content={text} targetId={wordId} />
       </View>
     );
 

@@ -630,25 +630,6 @@ export interface MinigameLeaderboardRow {
   durationMs: number;
 }
 
-/** Link thanh toán payOS của 1 đơn Premium — xem `hanni-server/CLAUDE.md` mục Premium. */
-export interface CheckoutResponse {
-  checkoutUrl: string;
-  qrCode: string | null;
-  orderCode: number;
-}
-
-export type PaymentProvider = "payos" | "momo";
-
-export type PaymentOrderStatus = "PENDING" | "PAID" | "CANCELLED" | "EXPIRED";
-
-export interface PaymentOrder {
-  orderCode: number;
-  amountVnd: number;
-  premiumPlanKey: string | null;
-  status: PaymentOrderStatus;
-  provider?: "PAYOS" | "MOMO";
-}
-
 /** Gợi ý quy luật thanh điệu Hán Việt → tiếng Trung cho 1 chữ (server tính). */
 export interface ToneHint {
   char: string;

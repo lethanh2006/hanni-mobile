@@ -24,11 +24,7 @@ export function AvatarEditor({ user, size = 80, onChange }: { user: Me; size?: n
   async function pick() {
     if (busy) return;
     setError('');
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      setError('Cần cấp quyền thư viện ảnh để đổi ảnh đại diện.');
-      return;
-    }
+    // Bộ chọn ảnh của hệ thống không cần quyền đọc thư viện ảnh.
     const picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1] });
     const asset = picked.canceled ? undefined : picked.assets?.[0];
     if (!asset) return;

@@ -66,3 +66,12 @@ test('upload preserves multipart body and retries after refresh', async () => {
   assert.equal((await api.api.upload('/scan', form)).ok, true);
   assert.equal(attempts, 2);
 });
+
+test('quota messages drop the Premium upsell sentence', () => {
+  const { withoutUpsell } = loadApi(async () => reply({}));
+  assert.equal(
+    withoutUpsell('Bạn đã dùng hết 15 lượt hỏi miễn phí hôm nay. Nâng cấp Premium để hỏi không giới hạn.'),
+    'Bạn đã dùng hết 15 lượt hỏi miễn phí hôm nay.',
+  );
+  assert.equal(withoutUpsell('Mật khẩu không đúng'), 'Mật khẩu không đúng');
+});

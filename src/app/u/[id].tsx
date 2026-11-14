@@ -1,6 +1,7 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { ReportButton } from '@/components/report-button';
 import { AppText, Avatar, Card, ErrorNote, Icon, IconTile, Loading, Screen, ShareButton, Stat } from '@/components/ui';
 import { alpha } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -63,10 +64,12 @@ export default function PublicProfileScreen() {
             </AppText>
           </View>
         </View>
-        {p.isMe && (
+        {p.isMe ? (
           <ShareButton
             message={`Mình đã học được ${p.learnedWordsCount} từ và giữ chuỗi ${p.currentStreak} ngày trên Hanni — cùng học tiếng Trung nhé! ${WEB_ORIGIN}/u/${p.id}`}
           />
+        ) : (
+          <ReportButton kind="user" content={p.displayName} targetId={p.id} label="Báo cáo người dùng" />
         )}
       </Card>
 

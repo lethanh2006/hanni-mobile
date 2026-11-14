@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import useSWR from 'swr';
 
 import { AppText, Icon, TextLink, type IconName } from '@/components/ui';
-import { alpha, mix } from '@/constants/theme';
+import { alpha } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { WEB_ORIGIN } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -163,57 +163,19 @@ function Footer({ current, go, onClose }: { current?: string; go: (href: Href) =
   );
 }
 
-/** Thẻ "Hanni Premium" ở chân menu (`PremiumNavCard` của web). App không bán Premium nên nút mở Tài khoản. */
+/** Mục "Đang dùng Premium" ở chân menu, chỉ cho tài khoản đã có Premium: app trên CH Play không bán Premium. */
 function PremiumNavCard({ go }: { go: (href: Href) => void }) {
-  const theme = useTheme();
   const { data } = useSWR<PremiumStatus>('/premium/status');
-  if (!data) return null;
-  if (data.active)
-    return (
-      <NavItem
-        small
-        icon="crown"
-        label={data.lifetime ? 'Premium trọn đời' : 'Đang dùng Premium'}
-        active={false}
-        accent
-        onPress={() => go('/account')}
-      />
-    );
+  if (!data?.active) return null;
   return (
-    <View
-      style={[
-        styles.premium,
-        {
-          borderColor: alpha(theme.accent, 0.3),
-          backgroundImage: `linear-gradient(135deg, ${alpha(theme.accent, 0.15)}, ${theme.surface} 50%, ${alpha(theme.primary, 0.08)})`,
-        },
-      ]}>
-      <View style={styles.premiumTitle}>
-        <View style={[styles.crown, { backgroundColor: alpha(theme.accent, 0.15) }]}>
-          <Icon name="crown" size={16} color="accent" />
-        </View>
-        <AppText weight="700">Hanni Premium</AppText>
-      </View>
-      <AppText variant="caption" color="muted" style={styles.premiumText}>
-        Trợ lý AI không giới hạn, Hanni Coach nhận xét kết quả, quét ảnh 100 lượt/ngày.
-      </AppText>
-      <Pressable
-        onPress={() => go('/account')}
-        style={({ pressed }) => [
-          styles.upgrade,
-          {
-            backgroundColor: theme.primary,
-            borderColor: theme.primary,
-            boxShadow: pressed ? undefined : `0 3px 0 ${mix(theme.primary, '#000000', 0.62)}`,
-            transform: [{ translateY: pressed ? 2 : 0 }],
-          },
-        ]}>
-        <AppText variant="caption" weight="700" color="primaryText">
-          Nâng cấp
-        </AppText>
-        <Icon name="arrow" size={13} color="primaryText" />
-      </Pressable>
-    </View>
+    <NavItem
+      small
+      icon="crown"
+      label={data.lifetime ? 'Premium trọn đời' : 'Đang dùng Premium'}
+      active={false}
+      accent
+      onPress={() => go('/account')}
+    />
   );
 }
 
@@ -311,18 +273,4 @@ const styles = StyleSheet.create({
   },
   itemLabel: { flex: 1 },
   count: { minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 6, alignItems: 'center', justifyContent: 'center' },
-  premium: { marginBottom: 12, borderWidth: 1, borderRadius: 16, padding: 14 },
-  premiumTitle: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  crown: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  premiumText: { marginTop: 8, lineHeight: 19 },
-  upgrade: {
-    marginTop: 12,
-    minHeight: 36,
-    borderWidth: 1,
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-  },
 });

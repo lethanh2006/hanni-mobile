@@ -18,6 +18,7 @@ import { mutate as revalidate } from 'swr';
 
 import { ChatComposer, useKeyboardOpen } from '@/components/chat-composer';
 import { MarkdownLite } from '@/components/markdown-lite';
+import { ReportButton } from '@/components/report-button';
 import { AppText, Hanzi, Icon, LauncherFox, Mascot, type MascotEmote } from '@/components/ui';
 import { alpha, mix } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -104,7 +105,7 @@ const TAB_PATHS = ['/', '/study', '/thi-thu-hsk', '/luyen-tap', '/tu-dien', '/le
  * học, phòng thi (màn kết quả tự bật bằng `useShowAssistant`) và luyện nói AI (đã là chat với AI).
  */
 function showsOn(path: string) {
-  if (['/login', '/register', '/forgot-password', '/onboarding', '/kiem-tra-trinh-do', '/premium'].includes(path)) return false;
+  if (['/login', '/register', '/forgot-password', '/onboarding', '/kiem-tra-trinh-do'].includes(path)) return false;
   if (path.startsWith('/bai-hoc/') || path.startsWith('/roleplay')) return false;
   if (path.startsWith('/thi-thu-hsk/') && !path.startsWith('/thi-thu-hsk/dang-bai/')) return false;
   return true;
@@ -540,6 +541,14 @@ export function AssistantWidget() {
                             )}
                             {!mine && lastAction && m.text === lastAction.text && (
                               <ActionButton action={lastAction.action} onOpen={() => setOpen(false)} />
+                            )}
+                            {!mine && m.text && m.id !== streamingId && (
+                              <ReportButton
+                                kind="ai"
+                                feature="assistant"
+                                content={m.text}
+                                targetId={effectiveSessionId ?? undefined}
+                              />
                             )}
                           </View>
                         </View>

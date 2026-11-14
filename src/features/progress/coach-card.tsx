@@ -2,7 +2,8 @@ import { router, type Href } from 'expo-router';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import useSWR from 'swr';
 
-import { AppText, Button, Card, ErrorNote, Hanzi, Icon, Skeleton, type IconName } from '@/components/ui';
+import { ReportButton } from '@/components/report-button';
+import { AppText, Card, ErrorNote, Hanzi, Icon, Skeleton, type IconName } from '@/components/ui';
 import { alpha, type ThemeColor } from '@/constants/theme';
 import { partInfo, SECTION_SHORT } from '@/features/mock-exam/part-info';
 import { useTheme } from '@/hooks/use-theme';
@@ -86,29 +87,9 @@ export function CoachCard({ report, name, next }: { report: InsightsReport; name
       </View>
 
       {!report.ai.premium ? (
-        <View style={[styles.upsell, { borderColor: alpha(theme.accent, 0.25), backgroundColor: alpha(theme.accent, 0.05) }]}>
-          <AppText style={styles.body}>
-            Hanni Coach đọc số liệu {name.toLowerCase()} rồi viết riêng cho bạn: điều làm tốt, điều cần chú ý, mẹo nhớ những
-            từ bạn hay quên theo <AppText weight="700">âm Hán Việt</AppText> và kế hoạch {next} có con số cụ thể.
-          </AppText>
-          <AppText variant="caption" weight="600" color="muted" style={styles.example}>
-            VÍ DỤ
-          </AppText>
-          <View
-            accessibilityElementsHidden
-            importantForAccessibility="no-hide-descendants"
-            style={[styles.blurBox, { backgroundColor: theme.surface, filter: [{ blur: 2.5 }] }]}>
-            <AppText>Tuần này bạn học 4/7 ngày, nhiều hơn 2 ngày so với tuần trước, thêm 32 từ mới.</AppText>
-            <AppText>便宜 (tiện nghi): đồ “tiện nghi” mà giá lại “rẻ” — nhớ ngay nghĩa rẻ.</AppText>
-            <AppText>Tuần tới: luyện 10 câu nghe ghép tranh, ôn 30 thẻ mỗi ngày.</AppText>
-          </View>
-          <Button
-            title="Mở Hanni Coach với Premium"
-            leftIcon="crown"
-            onPress={() => router.navigate('/premium')}
-            style={styles.upgrade}
-          />
-        </View>
+        <AppText color="muted" style={styles.body}>
+          Hanni Coach (AI nhận xét số liệu và gợi ý kế hoạch {next}) dành cho tài khoản Premium. Số liệu bên trên vẫn đầy đủ.
+        </AppText>
       ) : !report.ai.enabled ? (
         <AppText color="muted">Hanni Coach đang tạm tắt — số liệu bên trên vẫn đầy đủ.</AppText>
       ) : !active ? (
@@ -163,6 +144,17 @@ export function CoachCard({ report, name, next }: { report: InsightsReport; name
               · AI có thể nhầm — số liệu chính xác ở thẻ bên trên.
             </AppText>
           )}
+          <ReportButton
+            kind="ai"
+            feature="coach"
+            content={[
+              summary.overview,
+              ...summary.wins,
+              ...summary.watch,
+              ...summary.plan,
+              ...summary.mnemonics.map((t) => `${t.zh}: ${t.tip}`),
+            ].join('\n')}
+          />
         </View>
       )}
 
@@ -242,11 +234,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   titleRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
   badge: { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 },
-  upsell: { borderWidth: 1, borderRadius: 16, padding: 16 },
   body: { lineHeight: 24 },
-  example: { marginTop: 12, letterSpacing: 0.6 },
-  blurBox: { marginTop: 4, gap: 6, borderRadius: 12, padding: 12 },
-  upgrade: { marginTop: 16, alignSelf: 'flex-start' },
   empty: { borderRadius: 16, padding: 16 },
   waiting: { gap: 12 },
   summary: { gap: 20 },

@@ -42,7 +42,7 @@ type Phase =
   | { kind: 'idle' }
   | { kind: 'scanning' }
   | { kind: 'done'; result: ScanResult }
-  | { kind: 'error'; message: string; quota: boolean };
+  | { kind: 'error'; message: string };
 
 /**
  * Quét ảnh học từ: chụp/chọn ảnh → server (Gemini) đọc chữ Hán từng dòng
@@ -84,7 +84,6 @@ export function ScanTool() {
       const quota = err instanceof ApiError && err.status === 403;
       setPhase({
         kind: 'error',
-        quota,
         message:
           err instanceof ApiError
             ? err.message
@@ -100,7 +99,6 @@ export function ScanTool() {
     if (!permission.granted) {
       setPhase({
         kind: 'error',
-        quota: false,
         message: 'Cần cấp quyền máy ảnh để chụp và quét chữ Hán.',
       });
       return;
@@ -114,21 +112,13 @@ export function ScanTool() {
       if (!result.canceled && result.assets?.[0]) void processAsset(result.assets[0]);
     } catch {
       clearScanPickerPending();
-      setPhase({ kind: 'error', quota: false, message: 'Không mở được máy ảnh. Bạn thử lại nhé.' });
+      setPhase({ kind: 'error', message: 'Không mở được máy ảnh. Bạn thử lại nhé.' });
     }
   }
 
+  // Bộ chọn ảnh của hệ thống không cần quyền đọc thư viện ảnh (CH Play yêu cầu dùng bộ chọn này thay cho quyền).
   async function pickImage() {
     if (busy) return;
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      setPhase({
-        kind: 'error',
-        quota: false,
-        message: 'Cần cấp quyền thư viện ảnh để chọn ảnh quét.',
-      });
-      return;
-    }
     try {
       markScanPickerPending();
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -138,7 +128,7 @@ export function ScanTool() {
       if (!result.canceled && result.assets?.[0]) void processAsset(result.assets[0]);
     } catch {
       clearScanPickerPending();
-      setPhase({ kind: 'error', quota: false, message: 'Không mở được thư viện ảnh. Bạn thử lại nhé.' });
+      setPhase({ kind: 'error', message: 'Không mở được thư viện ảnh. Bạn thử lại nhé.' });
     }
   }
 
@@ -264,32 +254,12 @@ export function ScanTool() {
 
         <AppText variant="caption" color="muted" style={styles.noteText}>
           Ảnh chỉ dùng để đọc rồi bỏ, Hanni không lưu lại.
-          {u && !u.premium && (
-            <AppText
-              variant="caption"
-              weight="600"
-              color="primary"
-              onPress={() => router.push('/premium')}>
-              {' '}Premium quét 100 ảnh/ngày
-            </AppText>
-          )}
         </AppText>
       </Card>
 
       {/* Thông báo lỗi */}
       {phase.kind === 'error' && (
-        <ErrorNote>
-          {phase.message}
-          {phase.quota && !u?.premium && (
-            <AppText
-              variant="caption"
-              weight="600"
-              color="primary"
-              onPress={() => router.push('/premium')}>
-              {' '}Xem Premium
-            </AppText>
-          )}
-        </ErrorNote>
+        <ErrorNote>{phase.message}</ErrorNote>
       )}
 
       {/* Khung hiển thị ảnh và kết quả quét */}

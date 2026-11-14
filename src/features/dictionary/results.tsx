@@ -3,6 +3,7 @@ import { useRef, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import useSWR from 'swr';
 
+import { ReportButton } from '@/components/report-button';
 import { AppText, AudioButton, Button, Card, ErrorNote, Hanzi, Icon, Skeleton, type IconName } from '@/components/ui';
 import { alpha } from '@/constants/theme';
 import { HanziWriterView, type HanziWriterHandle } from '@/features/writing/hanzi-writer-view';
@@ -257,6 +258,13 @@ function SentenceAnalysis({ text }: { text: string }) {
           <AppText variant="caption" color="muted">
             Bản dịch và giải thích do AI viết — đối chiếu với nghĩa từ điển ở từng từ.
           </AppText>
+          <ReportButton
+            kind="ai"
+            feature="analyze"
+            content={[result.translationVi, ...result.grammar.map((g) => `${g.pattern}: ${g.explanationVi}`), result.notesVi]
+              .filter(Boolean)
+              .join('\n')}
+          />
         </>
       )}
     </DictCard>

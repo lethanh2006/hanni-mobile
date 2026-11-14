@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
+import { ReportButton } from '@/components/report-button';
 import { AppText, Button, ErrorNote, Hanzi, Icon } from '@/components/ui';
 import { alpha, Fonts, type ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -155,6 +156,12 @@ export function SentencePractice({ word }: { word: { id: string; simplified: str
               </AppText>
             </View>
           )}
+          <ReportButton
+            kind="ai"
+            feature="sentence-check"
+            content={[result.corrected, result.explanationVi, result.tipVi].filter(Boolean).join('\n')}
+            targetId={word.id}
+          />
         </View>
       )}
     </View>

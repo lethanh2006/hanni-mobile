@@ -1,74 +1,41 @@
-import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import useSWR from 'swr';
 
-import { AppText, Button, Card, Icon } from '@/components/ui';
+import { AppText, Card, Icon } from '@/components/ui';
 import { alpha } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import type { PremiumStatus } from '@/lib/types';
 
-/** Quyền lợi Premium — chỉ ghi những gì server thật sự đã có (giống bảng so sánh của web). */
-const BENEFITS = [
-  'Hanni Coach: AI nhận xét báo cáo tuần/tháng/quý',
-  'Luyện nói với AI và trợ lý AI không giới hạn (bản thường 15 lượt/ngày)',
-  'AI chấm câu, mẹo nhớ, dịch câu 200 lượt/ngày (bản thường 10)',
-  'Quét ảnh học từ 100 ảnh/ngày (bản thường 3)',
-];
-
-/** Trạng thái Premium và lối vào màn chọn gói/thanh toán dùng chung API với web. */
+/**
+ * Trạng thái Premium của tài khoản. App phát hành trên CH Play không bán Premium (chính sách thanh toán của Google Play
+ * cấm dẫn người dùng tới cổng thanh toán khác), nên chỉ hiện cho tài khoản đang có Premium, không nút mua hay gia hạn.
+ */
 export function PremiumCard() {
   const theme = useTheme();
   const { data } = useSWR<PremiumStatus>('/premium/status');
-  if (!data) return null;
-  const tile = (
-    <View style={[styles.tile, { backgroundColor: alpha(theme.accent, 0.1), borderColor: theme.border }]}>
-      <Icon name="crown" size={20} color="accent" />
-    </View>
-  );
+  if (!data?.active) return null;
   return (
     <Card style={styles.card}>
-      {data.active ? (
-        <View style={styles.head}>
-          {tile}
-          <View style={styles.flex}>
-            <View style={styles.titleRow}>
-              <AppText weight="600">Hanni Premium</AppText>
-              <View style={[styles.badge, { backgroundColor: alpha(theme.accent, 0.1) }]}>
-                <AppText variant="caption" weight="700" color="accent">
-                  ĐANG DÙNG
-                </AppText>
-              </View>
-            </View>
-            <AppText color="muted" style={styles.desc}>
-              {data.lifetime
-                ? 'Gói trọn đời — dùng mãi mãi.'
-                : `Còn hiệu lực đến ${data.until ? new Date(data.until).toLocaleDateString('vi-VN') : '—'}.`}
-            </AppText>
-          </View>
+      <View style={styles.head}>
+        <View style={[styles.tile, { backgroundColor: alpha(theme.accent, 0.1), borderColor: theme.border }]}>
+          <Icon name="crown" size={20} color="accent" />
         </View>
-      ) : (
-        <>
-          <View style={styles.head}>
-            {tile}
-            <View style={styles.flex}>
-              <AppText weight="600">Nâng cấp Premium</AppText>
-              <AppText color="muted" style={styles.desc}>
-                Hanni Coach nhận xét bằng AI, quét ảnh 100 lượt/ngày, trợ lý AI không giới hạn — không khoá bài học nào.
+        <View style={styles.flex}>
+          <View style={styles.titleRow}>
+            <AppText weight="600">Hanni Premium</AppText>
+            <View style={[styles.badge, { backgroundColor: alpha(theme.accent, 0.1) }]}>
+              <AppText variant="caption" weight="700" color="accent">
+                ĐANG DÙNG
               </AppText>
             </View>
           </View>
-          <View style={styles.list}>
-            {BENEFITS.map((b) => (
-              <View key={b} style={styles.item}>
-                <Icon name="check" size={15} color="good" />
-                <AppText style={styles.itemText}>{b}</AppText>
-              </View>
-            ))}
-          </View>
-          <Button title="Nâng cấp ngay" leftIcon="crown" onPress={() => router.push('/premium')} style={styles.note} />
-        </>
-      )}
-      {data.active && !data.lifetime && <Button title="Gia hạn Premium" variant="secondary" onPress={() => router.push('/premium')} style={styles.note} />}
+          <AppText color="muted" style={styles.desc}>
+            {data.lifetime
+              ? 'Gói trọn đời — dùng mãi mãi.'
+              : `Còn hiệu lực đến ${data.until ? new Date(data.until).toLocaleDateString('vi-VN') : '—'}.`}
+          </AppText>
+        </View>
+      </View>
     </Card>
   );
 }
@@ -81,8 +48,4 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   badge: { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 },
   desc: { marginTop: 4, lineHeight: 22 },
-  list: { marginTop: 16, gap: 8 },
-  item: { flexDirection: 'row', gap: 8 },
-  itemText: { flex: 1, lineHeight: 20 },
-  note: { marginTop: 12 },
 });
