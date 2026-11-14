@@ -29,18 +29,19 @@ jobs:
         with:
           eas-version: 25.3.0
           token: ${{ secrets.EXPO_TOKEN }}
-      - name: Kiểm tra tương thích với APK đã phát hành
+      - name: Kiểm tra tương thích với bản đã phát hành
         shell: bash
         run: |
           set -euo pipefail
           version=$(node -p "require('./app.json').expo.version")
-          # APK đang phát hành trên GitHub: version 1.0.1, runtime 1.0.1, kênh production-apk.
-          # Khi phát hành APK mới, cập nhật cả version và build ID sau khi kiểm tra bản build.
-          if [ "$version" != "1.0.1" ]; then
-            echo "Phiên bản không khớp APK 1.0.1; cần build APK mới và cập nhật build ID trong workflow."
+          # Bản đang phát hành: AAB 1.1.0 cho CH Play (profile production, kênh production), build bằng android-play-build.yml
+          # khi đẩy tag v1.1.0. APK 1.0.1 trên GitHub (kênh production-apk) khác runtime nên không nhận được cập nhật của 1.1.x.
+          # Khi phát hành bản mới, cập nhật cả version và build ID sau khi kiểm tra bản build.
+          if [ "$version" != "1.1.0" ]; then
+            echo "Phiên bản không khớp bản 1.1.0 đang phát hành; cần build bản mới và cập nhật build ID trong workflow."
             exit 1
           fi
-          eas fingerprint:compare --build-id c36bec3d-eea9-41cf-ba0d-c3d61b408645 --environment production --json --non-interactive > "$RUNNER_TEMP/hanni-fingerprint.json"
+          eas fingerprint:compare --build-id 3bf96dbb-290a-4d60-9449-a5cdf670c674 --environment production --json --non-interactive > "$RUNNER_TEMP/hanni-fingerprint.json"
           node - "$RUNNER_TEMP/hanni-fingerprint.json" <<'NODE'
           const fs = require('fs');
           const output = fs.readFileSync(process.argv[2], 'utf8');
@@ -50,12 +51,12 @@ jobs:
           const original = result.fingerprint1?.hash;
           const current = result.fingerprint2?.hash;
           if (!original || !current || original !== current) {
-            throw new Error('Native Android đã thay đổi so với APK đang phát hành; cần build APK mới trước khi cập nhật OTA.');
+            throw new Error('Native Android đã thay đổi so với bản đang phát hành; cần build bản mới trước khi cập nhật OTA.');
           }
-          console.log('Fingerprint Android khớp APK đang phát hành.');
+          console.log('Fingerprint Android khớp bản đang phát hành.');
           NODE
       - run: npm test
       - run: npm run typecheck
       - run: npm run lint
-      - name: Đưa bản cập nhật đến APK Android
-        run: eas update --channel production-apk --platform android --environment production --message "GitHub $GITHUB_SHA" --non-interactive
+      - name: Đưa bản cập nhật đến bản CH Play
+        run: eas update --channel production --platform android --environment production --message "GitHub $GITHUB_SHA" --non-interactive
